@@ -1,0 +1,80 @@
+/* Basic button-like styles */
+.date-picker-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 2px solid #4CAF50; /* Green border */
+  border-radius: 5px;
+  background-color: #fff;
+  color: #4CAF50; /* Default text color for light mode */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left; /* Align the label and DatePicker */
+  width: auto;
+}
+
+/* Button label styles */
+.date-picker-btn label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Input field style */
+.date-input {
+  padding: 5px;
+  border: none;
+  font-size: 14px;
+  background-color: transparent;
+  color: #333; /* Default text color for light mode */
+  width: 150px; /* Control the width of the DatePicker */
+}
+
+/* Hover effect */
+.date-picker-btn:hover {
+  background-color: #4CAF50;
+  color: #fff;
+  border-color: #45a049;
+}
+
+/* Active effect */
+.date-picker-btn:active {
+  background-color: #388e3c;
+  color: #fff;
+  border-color: #2c6d2e;
+}
+
+/* Focus effect for accessibility */
+.date-picker-btn:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+}
+
+/* Optional: Adding spacing between the buttons */
+.ml-4 {
+  margin-left: 16px;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .date-picker-btn {
+    background-color: #333; /* Dark background for button */
+    color: #4CAF50; /* Green text in dark mode */
+    border: 2px solid #4CAF50; /* Green border in dark mode */
+  }
+
+  .date-input {
+    color: #fff; /* White text for input in dark mode */
+  }
+
+  .date-picker-btn:hover {
+    background-color: #4CAF50;
+    color: #fff;
+    border-color: #45a049;
+  }
+
+  .date-picker-btn:active {
+    background-color: #388e3c;
+    color: #fff;
+    border-color: #2c6d2e;
+  }
+}
