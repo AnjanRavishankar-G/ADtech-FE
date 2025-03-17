@@ -1,7 +1,9 @@
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
+
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchKeywords() {
-  const res = await fetch(`${backendURL}/get_report/keyword_report`, {
+  const res = await fetchWithAuth(`${backendURL}/get_report/keyword_report`, {
     cache: "no-store",
   });
 

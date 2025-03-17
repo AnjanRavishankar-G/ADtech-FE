@@ -13,6 +13,7 @@ import DateRangePicker from "@/app/components/ui/datePicker";
 import BasicPieChart from "@/app/components/ui/bargraph";
 import Footer from "@/app/components/ui/footer";
 import Layout from "@/app/components/ui/Layout";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type CampaignData = {
   SN: number;
@@ -39,12 +40,9 @@ type CampaignData = {
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-async function fetchCampaignData(
-  startDate: string | null,
-  endDate: string | null
-) {
+async function fetchCampaignData() {
   try {
-    const res = await fetch(`${backendURL}/get_report/ad_group_table`, {
+    const res = await fetchWithAuth(`${backendURL}/get_report/ad_group_table`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch campaign data");
@@ -62,8 +60,8 @@ export default function PerformanceTable() {
   const [error, setError] = useState<string | null>(null);
 
   // Date Range Picker State
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate] = useState<Date | null>(null);
+  const [endDate] = useState<Date | null>(null);
 
   // State to manage date range picker visibility
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -71,12 +69,7 @@ export default function PerformanceTable() {
   useEffect(() => {
     async function loadData() {
       try {
-        const startStr = startDate
-          ? startDate.toISOString().split("T")[0]
-          : null;
-        const endStr = endDate ? endDate.toISOString().split("T")[0] : null;
-
-        const results = await fetchCampaignData(startStr, endStr);
+        const results = await fetchCampaignData();
         setCampaignData(results);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");

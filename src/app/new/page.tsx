@@ -25,12 +25,10 @@ import {
   Download,
   Filter,
   ArrowUpRight,
-  Plus,
-  Minus,
   Search,
 } from "lucide-react";
 import Layout from "../components/ui/Layout";
-import { time } from "console";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 // Types for Interest Over Time
 type TimeData = {
@@ -75,7 +73,7 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 async function fetchInterestOverTime(keywords: string[]) {
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${backendURL}/interestOverTime?q=${keywordsParam}`,
       { cache: "no-store" }
     );
@@ -94,7 +92,7 @@ async function fetchInterestOverTime(keywords: string[]) {
 async function fetchGeographicData(keywords: string[]) {
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${backendURL}/comparedBy?q=${keywordsParam}&geo=IN`,
       { cache: "no-store" }
     );
@@ -113,7 +111,7 @@ async function fetchGeographicData(keywords: string[]) {
 async function fetchRelatedQueries(keywords: string[]) {
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${backendURL}/multiQueryRelatedQueries?keywords=${keywordsParam}`,
       { cache: "no-store" }
     );

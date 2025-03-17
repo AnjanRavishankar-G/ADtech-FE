@@ -4,7 +4,6 @@ const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Import types from 'react-apexcharts' for type safety
 import { ApexOptions } from "apexcharts";
-import { useState } from "react";
 
 type BasicPieChartProps = {
   series: number[]; // Array of data values for each slice
@@ -27,7 +26,7 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
     dataLabels: {
       enabled: false, // This will remove the percentage labels
       style: {
-        colors: ['#FFFFFF'], // Set data label colors to white
+        colors: ["#FFFFFF"], // Set data label colors to white
       },
     },
     series: series,
@@ -36,14 +35,13 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
       type: "pie",
     },
     labels: labels,
-    colors: colors.length > 0 ? colors : undefined , // Use custom colors if provided
+    colors: colors.length > 0 ? colors : undefined, // Use custom colors if provided
     legend: {
       labels: {
-        colors: 'var(--label-color)', // Use CSS variable for dynamic color
+        colors: "var(--label-color)", // Use CSS variable for dynamic color
       },
     },
-  
-    
+
     responsive: [
       {
         breakpoint: responsiveBreakpoint,
@@ -54,9 +52,9 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
           legend: {
             position: "bottom", // Move legend to the bottom for smaller screens
             labels: {
-              colors: '#FFFFFF', // Set legend label color to white in dark mode
+              colors: "#FFFFFF", // Set legend label color to white in dark mode
             },
-          }, 
+          },
         },
       },
     ],
@@ -64,7 +62,7 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
 
   return (
     <div className="text-black dark:text-white">
-      <ApexCharts 
+      <ApexCharts
         options={chartOptions}
         series={chartOptions.series}
         type="pie"

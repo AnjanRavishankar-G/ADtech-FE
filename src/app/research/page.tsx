@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import Layout from "../components/ui/Layout";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type AmazonProductData = {
   asin: string;
@@ -21,7 +22,7 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchProductData(asin: string) {
   try {
-    const res = await fetch(`${backendURL}/scrap/${asin}`, {
+    const res = await fetchWithAuth(`${backendURL}/scrap/${asin}`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch product data");
@@ -55,7 +56,7 @@ export default function AmazonProductSearch() {
       const data = await fetchProductData(asin);
       setProductData(data);
     } catch (err) {
-      setError("Product not found or error occurred");
+      setError(`Product not found or error occurred ${err}`);
     } finally {
       setIsLoading(false);
     }

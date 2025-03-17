@@ -11,6 +11,7 @@ import {
 
 import Sidebar from "@/app/components/ui/sidebar"; // Import the Sidebar component
 import Footer from "@/app/components/ui/footer";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type AsinData = {
   SN: number;
@@ -72,7 +73,7 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchNegativeKeywords(adGroupId: string) {
   try {
-    const res = await fetch(`${backendURL}/negative_keywords`, {
+    const res = await fetchWithAuth(`${backendURL}/negative_keywords`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch negative keywords");
@@ -90,9 +91,12 @@ async function fetchNegativeKeywords(adGroupId: string) {
 
 async function fetchAsinData(adGroupId: string) {
   try {
-    const res = await fetch(`${backendURL}/get_report/asin_level_table`, {
-      cache: "no-store",
-    });
+    const res = await fetchWithAuth(
+      `${backendURL}/get_report/asin_level_table`,
+      {
+        cache: "no-store",
+      }
+    );
     if (!res.ok) throw new Error("Failed to fetch ASIN data");
     const data = await res.json();
     return data.filter(
@@ -108,7 +112,7 @@ async function fetchAsinData(adGroupId: string) {
 
 async function fetchKeywordData(campaignId: string, adGroupId: string) {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${backendURL}/keyword/recommendation/${campaignId}/${adGroupId}`,
       { cache: "no-store" }
     );
@@ -122,7 +126,7 @@ async function fetchKeywordData(campaignId: string, adGroupId: string) {
 }
 
 async function fetchKeywordPerformance() {
-  const res = await fetch(`${backendURL}/get_report/keyword_report`, {
+  const res = await fetchWithAuth(`${backendURL}/get_report/keyword_report`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);

@@ -4,10 +4,10 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useForm } from 'react-hook-form';
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from 'next-auth/react';
-import { toast } from 'react-hot-toast';
+import { signIn } from "next-auth/react";
+import { toast } from "react-hot-toast";
 
 const schema = z.object({
   email: z.string().email({ message: "Your email is invalid." }),
@@ -38,7 +38,7 @@ const LogInForm = () => {
 
   const onSubmit = (data: { email: string; password: string }) => {
     startTransition(async () => {
-      let response = await signIn("credentials", {
+      const response = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
@@ -58,26 +58,32 @@ const LogInForm = () => {
       <div className="hidden md:block md:w-1/2 bg-blue-100 dark:bg-gray-800 relative">
         <div className="absolute inset-0 flex items-center justify-center p-6">
           <div className="relative w-full h-full">
-            <Image 
-              src="/login-image.jpg" 
-              alt="Login" 
+            <Image
+              src="/form.jpg"
+              alt="Login"
               fill
-              style={{ objectFit: 'cover' }}
+              style={{ objectFit: "cover" }}
               className="rounded-lg"
               priority
             />
             <div className="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black/70 to-transparent w-full">
-              <h2 className="text-white text-2xl font-bold">Welcome to Ad Tech Platform</h2>
-              <p className="text-white/80 mt-2">Manage your advertising campaigns efficiently</p>
+              <h2 className="text-white text-2xl font-bold">
+                Welcome to Ad Tech Platform
+              </h2>
+              <p className="text-white/80 mt-2">
+                Manage your advertising campaigns efficiently
+              </p>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div className="w-full md:w-1/2 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md dark:bg-black">
-          <Link href="/dashboard" className="inline-block">
-            <div className="h-10 w-10 2xl:w-14 2xl:h-14 text-primary">Logo</div>
+          <Link href="/" className="inline-block">
+            <div className="h-10 w-10 2xl:w-14 2xl:h-14 text-primary">
+              Ad Tech
+            </div>
           </Link>
           <div className="2xl:mt-8 mt-6 2xl:text-3xl text-2xl font-bold text-gray-900 dark:text-white">
             Hey, Hello 👋
@@ -87,7 +93,10 @@ const LogInForm = () => {
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="mt-5 2xl:mt-7">
             <div>
-              <label htmlFor="email" className="mb-2 font-medium text-gray-600 dark:text-white">
+              <label
+                htmlFor="email"
+                className="mb-2 font-medium text-gray-600 dark:text-white"
+              >
                 Email
               </label>
               <input
@@ -95,7 +104,9 @@ const LogInForm = () => {
                 {...register("email")}
                 type="email"
                 id="email"
-                className={`w-full p-2 border rounded ${errors.email ? 'border-red-500' : 'border-gray-300'} dark:text-white dark:bg-[#1e1e1e]`}
+                className={`w-full p-2 border rounded ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } dark:text-white dark:bg-[#1e1e1e]`}
                 placeholder="Email"
               />
             </div>
@@ -104,7 +115,10 @@ const LogInForm = () => {
             )}
 
             <div className="mt-3.5">
-              <label htmlFor="password" className="mb-2 font-medium text-gray-600 dark:text-white">
+              <label
+                htmlFor="password"
+                className="mb-2 font-medium text-gray-600 dark:text-white"
+              >
                 Password
               </label>
               <div className="relative">
@@ -131,12 +145,22 @@ const LogInForm = () => {
 
             <div className="mt-5 mb-8 flex flex-wrap gap-2">
               <div className="flex-1 flex items-center gap-1.5">
-                <input type="checkbox" id="isRemebered" className="border-default-300 mt-[1px]" />
-                <label htmlFor="isRemebered" className="text-sm text-gray-600 cursor-pointer dark:text-white">
+                <input
+                  type="checkbox"
+                  id="isRemebered"
+                  className="border-default-300 mt-[1px]"
+                />
+                <label
+                  htmlFor="isRemebered"
+                  className="text-sm text-gray-600 cursor-pointer dark:text-white"
+                >
                   Remember me
                 </label>
               </div>
-              <Link href="/auth/forgot" className="flex-none text-sm text-blue-500">
+              <Link
+                href="/auth/forgot"
+                className="flex-none text-sm text-blue-500"
+              >
                 Forget Password?
               </Link>
             </div>
@@ -149,23 +173,47 @@ const LogInForm = () => {
               {isPending ? "Loading..." : "Sign In"}
             </button>
           </form>
-          <div className="mt-6 xl:mt-8 flex flex-wrap justify-center gap-4">
+          {/* <div className="mt-6 xl:mt-8 flex flex-wrap justify-center gap-4">
             <button type="button" className="p-2 border rounded-full">
-              <img src="path/to/googleIcon.png" alt="google" className="w-5 h-5" />
+              <Image
+                src="path/to/googleIcon.png"
+                alt="google"
+                className="w-5 h-5"
+                width={20}
+                height={20}
+              />
             </button>
             <button type="button" className="p-2 border rounded-full">
-              <img src="path/to/GithubIcon.png" alt="github" className="w-5 h-5" />
+              <Image
+                src="path/to/GithubIcon.png"
+                alt="github"
+                className="w-5 h-5"
+                width={20}
+                height={20}
+              />
             </button>
             <button type="button" className="p-2 border rounded-full">
-              <img src="path/to/facebook.png" alt="facebook" className="w-5 h-5" />
+              <Image
+                src="path/to/facebook.png"
+                alt="facebook"
+                className="w-5 h-5"
+                width={20}
+                height={20}
+              />
             </button>
             <button type="button" className="p-2 border rounded-full">
-              <img src="path/to/twitter.png" alt="twitter" className="w-5 h-5" />
+              <Image
+                src="path/to/twitter.png"
+                alt="twitter"
+                className="w-5 h-5"
+                width={20}
+                height={20}
+              />
             </button>
-          </div>
+          </div> */}
 
           <div className="mt-5 2xl:mt-8 text-center text-base text-gray-600 dark:text-white">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/register" className="text-blue-500">
               Sign Up
             </Link>

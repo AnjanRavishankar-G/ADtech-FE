@@ -3,8 +3,7 @@ import dynamic from "next/dynamic";
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Import types from 'react-apexcharts' for type safety
-import { ApexOptions } from 'apexcharts';
-import { useState } from "react";
+import { ApexOptions } from "apexcharts";
 
 type BasicRadialBarProps = {
   series: number[]; // Array of progress values for each brand
@@ -14,7 +13,13 @@ type BasicRadialBarProps = {
   hollowSize?: string; // Allow custom hollow size
 };
 
-const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels, combined, hollowSize }) => {
+const BasicRadialBar: React.FC<BasicRadialBarProps> = ({
+  series,
+  height,
+  labels,
+  combined,
+  hollowSize,
+}) => {
   const chartOptions: ApexOptions = {
     chart: {
       type: "radialBar",
@@ -26,7 +31,7 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
         startAngle: -90,
         endAngle: 90,
         hollow: {
-          size: hollowSize ,
+          size: hollowSize,
         },
         track: {
           background: "#e7e7e7",
@@ -49,7 +54,16 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
     },
     colors: combined
       ? ["#2196F3"]
-      : ["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0", "#2a40f1", "#2af1c7", "#79f728"],
+      : [
+          "#F44336",
+          "#2196F3",
+          "#4CAF50",
+          "#FFC107",
+          "#9C27B0",
+          "#2a40f1",
+          "#2af1c7",
+          "#79f728",
+        ],
     series: combined
       ? [Math.round(series.reduce((acc, val) => acc + val, 0) / series.length)]
       : series,
@@ -70,8 +84,13 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
 
   return (
     <div>
-      <ApexCharts options={chartOptions} series={chartOptions.series} type="radialBar" height={height} />
-      
+      <ApexCharts
+        options={chartOptions}
+        series={chartOptions.series}
+        type="radialBar"
+        height={height}
+      />
+
       {!combined &&
         labels?.map((label, index) => (
           <div
@@ -80,7 +99,6 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
               display: "inline-flex",
               alignItems: "center",
               margin: "0 10px",
-             
             }}
           >
             <span
@@ -93,7 +111,12 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
                 marginRight: "5px",
               }}
             ></span>
-             <span className="text-black dark:text-white" style={{ fontSize: "16px" }}>{label}</span>
+            <span
+              className="text-black dark:text-white"
+              style={{ fontSize: "16px" }}
+            >
+              {label}
+            </span>
           </div>
         ))}
     </div>

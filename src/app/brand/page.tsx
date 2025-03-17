@@ -1,9 +1,6 @@
 "use client";
 import "@/css/brand.css";
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useTheme } from "next-themes";
 import Footer from "../components/ui/footer";
 import {
   Table,
@@ -14,11 +11,10 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 import DateRangePicker from "../components/ui/datePicker";
-import BasicRadialBar from "../components/ui/RadialbarChart"; // Updated RadialBar
+import BasicRadialBar from "../components/ui/RadialbarChart";
 import BasicPieChart from "../components/ui/bargraph";
 import Layout from "../components/ui/Layout";
-
-const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type BrandTargetData = {
   Brand: string;
@@ -42,7 +38,7 @@ async function fetchFilteredBrandTargetData(
   endDate: string
 ) {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       `${backendURL}/get_filtered_brands?start_date=${startDate}&end_date=${endDate}`,
       { cache: "no-store" }
     );
@@ -57,23 +53,10 @@ async function fetchFilteredBrandTargetData(
 
 async function fetchUniqueBrandTargetData() {
   try {
-    const res = await fetch(
+    const res = await fetchWithAuth(
       "http://localhost:8001/get_report/brand_level_table",
       { cache: "no-store" }
     );
-    if (!res.ok) throw new Error("Failed to fetch unique brand target data");
-    return await res.json();
-  } catch (error) {
-    console.error("Error fetching unique brand target data:", error);
-    return [];
-  }
-}
-
-async function fetchOurBrandData() {
-  try {
-    const res = await fetch(`${backendURL}/ourbrand`, {
-      cache: "no-store",
-    });
     if (!res.ok) throw new Error("Failed to fetch unique brand target data");
     return await res.json();
   } catch (error) {
@@ -92,17 +75,14 @@ export default function BrandTargetTables() {
   const [isLoading, setIsLoading] = useState(true);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [isDataAvailable, setIsDataAvailable] = useState<boolean>(true);
   const [brands, setBrands] = useState<OurBrandData[]>([]);
-  // State to manage date range picker visibility
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`${backendURL}/ourbrand`)
+    fetchWithAuth(`${backendURL}/ourbrand`)
       .then((response) => response.json())
       .then((data) => {
-        // The API response is already an array, so don't look for data.brands
-        setBrands(data); // Just use data directly
+        setBrands(data);
       })
       .catch((error) => {
         console.error("Error fetching brand data:", error);
@@ -128,20 +108,16 @@ export default function BrandTargetTables() {
           );
           if (filteredData === null) {
             setBrandTargetData([]);
-            setIsDataAvailable(false);
           } else {
             setBrandTargetData(filteredData);
-            setIsDataAvailable(true);
           }
         } catch (err) {
           console.error("Error fetching filtered brand target data:", err);
-          setIsDataAvailable(false);
         } finally {
           setIsLoading(false);
         }
       } else {
         setBrandTargetData(null);
-        setIsDataAvailable(true);
         setIsLoading(false);
       }
     }
@@ -216,6 +192,11 @@ export default function BrandTargetTables() {
   // const brandSpendsDataTop5 = topBrandsBySpends.map((brand) => brand.Spends);
   // const brandNamesTop5Spends = topBrandsBySpends.map((brand) => brand.Brand);
 
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
   return (
     <Layout>
       <div className="p-5 ">
@@ -287,11 +268,7 @@ export default function BrandTargetTables() {
           </button>
 
           {isDatePickerOpen && (
-            <DateRangePicker
-              onDateRangeChange={(startDate, endDate) => {
-                console.log("Selected range:", startDate, endDate);
-              }}
-            />
+            <DateRangePicker onDateRangeChange={handleDateRangeChange} />
           )}
 
           <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
@@ -308,7 +285,7 @@ export default function BrandTargetTables() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {uniqueBrandTargetData.map((brand, index) => (
+                  {displayData.map((brand, index) => (
                     <TableRow key={`${brand.Brand}-${brand.DateTime}-${index}`}>
                       <TableCell>{brand.Brand}</TableCell>
                       <TableCell>

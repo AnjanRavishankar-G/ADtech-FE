@@ -14,6 +14,7 @@ import SplineArea from "./SplineArea";
 import BasicPieChart from "./bargraph";
 import Footer from "./footer";
 import Layout from "./Layout";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 type CampaignData = {
   SN: number;
@@ -44,7 +45,7 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchCampaignData() {
   try {
-    const res = await fetch(`${backendURL}/get_report/campaign_level_table`, {
+    const res = await fetchWithAuth(`${backendURL}/unique-brand`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch campaign data");
@@ -59,7 +60,7 @@ async function fetchCampaignData() {
 
 async function fetchCampaignDataChart() {
   try {
-    const res = await fetch(`${backendURL}/get_report/campaign_data`, {
+    const res = await fetchWithAuth(`${backendURL}/our-brand`, {
       cache: "no-store",
     });
     if (!res.ok) throw new Error("Failed to fetch chart data");
