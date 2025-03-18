@@ -3,7 +3,11 @@ import { fetchWithAuth } from "@/utils/fetchWithAuth";
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchKeywords() {
+<<<<<<< HEAD
+  const res = await fetch(`${backendURL}/report/keyword_report`, {
+=======
   const res = await fetchWithAuth(`${backendURL}/get_report/keyword_report`, {
+>>>>>>> cd09df6d4b71376fb451636cdca3082e562415ba
     cache: "no-store",
   });
 
