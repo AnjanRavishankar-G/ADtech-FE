@@ -22,42 +22,11 @@ export default function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
     
-    try {
-      // Convert our form data to FormData as FastAPI expects username, not email
-      const formData = new FormData();
-      formData.append('username', email); // FastAPI OAuth expects 'username', but we use email
-      formData.append('password', password);
-      
-      const response = await fetch('http://localhost:8000/token', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include', // Added from page.tsx for consistent behavior
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
-      }
-      
-      const data = await response.json();
-      
-      // Store token in localStorage or a more secure storage like a HTTP-only cookie
-      localStorage.setItem('token', data.access_token);
-      
-      // Show success toast and redirect to home page
-      toast.success('Login successful!');
+    // Simulate loading for better UX
+    setTimeout(() => {
+      // Simply navigate to brand page without authentication
       router.push('/brand');
-    } catch (err) {
-        console.error('Login error:', err);
-        
-        if (err instanceof Error) {
-          toast.error(err.message);
-        } else {
-          toast.error('Failed to login. Please check your credentials.');
-        }
-      } finally {
-      setIsLoading(false);
-    }
+    }, 1000);
   }
   
   return (
