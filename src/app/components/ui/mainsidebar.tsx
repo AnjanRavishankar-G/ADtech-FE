@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, toggleSidebar }) => {
                 onClick={() => setShowShastra(!showShastra)}
               >
                 <GiOctopus  size={20} className="text-gray-700 dark:text-white" />
-                {!collapsed && <span>Shastra</span>}
+                {!collapsed && <span>Lighthouse</span>}
                 {!collapsed && <ChevronDown size={16} className={`transition-transform ${showShastra ? 'rotate-180' : ''} dark:text-white`} />}
               </button>
               {!collapsed && showShastra && (
