@@ -48,7 +48,7 @@ async function fetchCampaignData(startDate: string | null, endDate: string | nul
     if (startDate) queryParams.append('start_date', startDate);
     if (endDate) queryParams.append('end_date', endDate);
 
-    const url = `${backendURL}/report/ad_group_table${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `${backendURL}/report/new_ad_group_table${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
     const res = await fetch(url, {
       cache: "no-store",

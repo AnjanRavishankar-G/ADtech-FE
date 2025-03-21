@@ -61,7 +61,7 @@ async function fetchFilteredBrandTargetData(startDate: string, endDate: string) 
 async function fetchUniqueBrandTargetData() {
   try {
     const res = await fetch(
-      `${backendURL}/report/brand_level_table`,
+      `${backendURL}/report/real_brand_table`,
       { cache: "no-store",
         headers: {
           'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
@@ -315,8 +315,11 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
           {displayData.map((brand, index) => (
             <TableRow key={`${brand.Brand}-${brand.DateTime}-${index}`}>
               <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
-                <Link href={`/campaign`} className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900">
-            {brand.Brand}
+                <Link 
+                  href={`/campaign?brand=${encodeURIComponent(brand.Brand)}`} 
+                  className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
+                >
+                  {brand.Brand}
                 </Link>
               </TableCell>
               <TableCell>{brand.Goal?.toLocaleString() || '-'}</TableCell>

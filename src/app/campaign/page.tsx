@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -14,24 +14,15 @@ import DateRangePicker from "../components/ui/datePicker";
 import Footer from "../components/ui/footer";
 import BasicPieChart from "../components/ui/bargraph";
 import Layout from "../components/ui/Layout";
-
+import { useSearchParams } from 'next/navigation';
 
 type CampaignData = {
   SN: number;
-  campaignId: number;
-  campaignName: string;
-  adGroupId: number;
-  adGroupName: string;
-  cost: number;
-  costPerClick: number;
-  clickThroughRate: string;
-  Spend: number;
+  Campaign: string;        // Changed from campaignName
+  'Campaign Type': string; // Changed from campaignType
   Sales: number;
-  ACoS: string;
-  ROAS: string;
-  campaignType: string;
-  impression: number;
-  Goal:number;
+  Spend: number;
+  Goal: number;
   Progress: number;
 };
 
@@ -42,33 +33,6 @@ type ChartData = {
 };
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-
-async function fetchCampaignData(startDate?: string, endDate?: string) {
-  try {
-    const queryParams = new URLSearchParams();
-    if (startDate) queryParams.append('start_date', startDate);
-    if (endDate) queryParams.append('end_date', endDate);
-
-    const url = `${backendURL}/report/campaign_level_table${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!res.ok) throw new Error("Failed to fetch campaign data");
-    const data = await res.json();
-    console.log("Fetched Campaign Data:", data);
-    return data;
-  } 
-  catch (error) {
-    console.error("Error fetching campaign data:", error);
-    throw error;
-  }
-}
 
 async function fetchCampaignDataChart() {
   try {
@@ -86,19 +50,51 @@ async function fetchCampaignDataChart() {
   }
 }
 
-export default function PerformanceTable() {
+// Create a wrapper component that uses searchParams
+function CampaignContent() {
+  const searchParams = useSearchParams();
+  const selectedBrand = searchParams.get('brand');
+
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
-
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  
+  // Move fetchCampaignData inside component to access selectedBrand
+  const fetchCampaignData = async (startDate?: string, endDate?: string) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (startDate) queryParams.append('start_date', startDate);
+      if (endDate) queryParams.append('end_date', endDate);
+      if (selectedBrand) queryParams.append('brand', selectedBrand);
 
+      const url = `${backendURL}/report/new_campaign_table${
+        queryParams.toString() ? `?${queryParams.toString()}` : ''
+      }`;
+      
+      const res = await fetch(url, {
+        cache: "no-store",
+        headers: {
+          'Authorization': process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch campaign data");
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching campaign data:", error);
+      throw error;
+    }
+  };
+
+  // Update useEffect to include selectedBrand in dependencies
   useEffect(() => {
     async function loadData() {
       try {
@@ -113,7 +109,7 @@ export default function PerformanceTable() {
       }
     }
     loadData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, selectedBrand]); // Add selectedBrand to dependencies
 
   useEffect(() => {
     async function loadChartData() {
@@ -137,7 +133,7 @@ export default function PerformanceTable() {
     .sort((a, b) => b.Sales - a.Sales)
     .slice(0, 5);
 
-  const top5BrandNames = top5Campaigns.map(campaign => campaign.campaignName);
+  const top5BrandNames = top5Campaigns.map(campaign => campaign.Campaign);
   const top5BrandSalesData = top5Campaigns.map(campaign => campaign.Sales);
 
   // Extract the top 5 campaigns based on spend
@@ -145,7 +141,7 @@ const top5CampaignsBySpend = [...campaignData]
 .sort((a, b) => b.Spend - a.Spend)
 .slice(0, 5);
 
-const top5SpendBrandNames = top5CampaignsBySpend.map(campaign => campaign.campaignName);
+const top5SpendBrandNames = top5CampaignsBySpend.map(campaign => campaign.Campaign);
 const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
 
   
@@ -194,7 +190,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
             )}
 
           <div className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-2xl text-sm px-4 py-2 mt-4 mb-3 dark:hover:bg-gray-700 dark:text-white dark:bg-black">
-            <h2>Brand: brand 1</h2>
+            <h2>Brand: {selectedBrand || 'All Brands'}</h2>
           </div>
         </div>
 
@@ -226,10 +222,10 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableCell className="rounded-l-lg">{campaign.SN}</TableCell>
                   <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
                     <Link href={`/ad_details`} className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900">
-                      {campaign.campaignName}
+                      {campaign.Campaign}
                     </Link>
                   </TableCell>
-                  <TableCell>{campaign.campaignType}</TableCell>
+                  <TableCell>{campaign['Campaign Type']}</TableCell>
                   <TableCell>{campaign.Sales?.toLocaleString() || '-'}</TableCell>
                   <TableCell>{campaign.Spend?.toLocaleString() || '-'}</TableCell>
                   <TableCell>{campaign.Goal?.toLocaleString() || '-'}</TableCell>
@@ -255,7 +251,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableBody>
                     {top5Campaigns.map((campaign) => (
                       <TableRow key={campaign.SN}>
-                        <TableCell className="w-1/2">{campaign.campaignName}</TableCell>
+                        <TableCell className="w-1/2">{campaign.Campaign}</TableCell>
                         <TableCell className="w-1/2">{campaign.Sales?.toLocaleString() || '-'}</TableCell>
                       </TableRow>
                     ))}
@@ -284,7 +280,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableBody>
                     {top5Campaigns.map((campaign) => (
                       <TableRow key={campaign.SN}>
-                        <TableCell className="w-1/2">{campaign.campaignName}</TableCell>
+                        <TableCell className="w-1/2">{campaign.Campaign}</TableCell>
                         <TableCell className="w-1/2">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
                       </TableRow>
                     ))}
@@ -305,5 +301,14 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
         </div>
       </div>
     </Layout>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function PerformanceTable() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CampaignContent />
+    </Suspense>
   );
 }
