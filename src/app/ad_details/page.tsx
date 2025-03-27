@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -13,6 +13,7 @@ import DateRangePicker from "@/app/components/ui/datePicker";
 import BasicPieChart from "@/app/components/ui/bargraph";
 import Footer from "@/app/components/ui/footer";
 import Layout from "@/app/components/ui/Layout";
+import { useSearchParams } from 'next/navigation';
 
 type CampaignData = {
   SN: number;
@@ -42,14 +43,17 @@ type CampaignData = {
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-async function fetchCampaignData(startDate: string | null, endDate: string | null) {
+async function fetchCampaignData(startDate: string | null, endDate: string | null, campaign?: string) {
   try {
     const queryParams = new URLSearchParams();
     if (startDate) queryParams.append('start_date', startDate);
     if (endDate) queryParams.append('end_date', endDate);
+    if (campaign) queryParams.append('campaign', campaign); // Pass campaign
 
-    const url = `${backendURL}/report/new_ad_group_table${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
+    const url = `${backendURL}/report/new_ad_group_table${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+
     const res = await fetch(url, {
       cache: "no-store",
       headers: {
@@ -57,8 +61,11 @@ async function fetchCampaignData(startDate: string | null, endDate: string | nul
         'Content-Type': 'application/json'
       }
     });
-    if (!res.ok) throw new Error("Failed to fetch campaign data");
+
     const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error); // Handle error from API
+    }
     return data;
   } catch (error) {
     console.error("Error fetching campaign data:", error);
@@ -66,10 +73,13 @@ async function fetchCampaignData(startDate: string | null, endDate: string | nul
   }
 }
 
-export default function PerformanceTable() {
+// Separate the main content into a new component
+function AdDetailsContent() {
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const campaign = searchParams.get('campaign'); // Extract campaign from URL
 
   // Date Range Picker State
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -83,8 +93,13 @@ export default function PerformanceTable() {
       try {
         const startStr = startDate ? startDate.toISOString().split('T')[0] : null;
         const endStr = endDate ? endDate.toISOString().split('T')[0] : null;
-
-        const results = await fetchCampaignData(startStr, endStr);
+  
+        if (!campaign) {
+          setError("No campaign selected.");
+          return;
+        }
+  
+        const results = await fetchCampaignData(startStr, endStr, campaign);
         setCampaignData(results);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -92,13 +107,14 @@ export default function PerformanceTable() {
         setIsLoading(false);
       }
     }
-
+  
     loadData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, campaign]); // Add campaign to dependencies
+  
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
-  if (!campaignData.length) return <div className="text-red-500">No campaign data available</div>;
+  if (!campaignData.length) return <div className="text-red-500">This campaign does not have an ad group.</div>;
 
   // Sort by sales and pick top 5
   const topSales = [...campaignData]
@@ -262,5 +278,14 @@ export default function PerformanceTable() {
        </div>
     </div>
     </Layout>
+  );
+}
+
+// Main page component wrapped with Suspense
+export default function PerformanceTable() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdDetailsContent />
+    </Suspense>
   );
 }

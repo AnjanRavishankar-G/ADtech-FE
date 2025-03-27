@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react"; // Add useCallback
 import Link from "next/link";
 import {
   Table,
@@ -14,7 +14,9 @@ import DateRangePicker from "../components/ui/datePicker";
 import Footer from "../components/ui/footer";
 import BasicPieChart from "../components/ui/bargraph";
 import Layout from "../components/ui/Layout";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { createAuthenticatedFetch } from '../../utils/api';
+import Cookies from 'js-cookie';
 
 type CampaignData = {
   SN: number;
@@ -35,25 +37,42 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
 async function fetchCampaignDataChart() {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const res = await fetch(`${backendURL}/report/campaign_data`, { cache: "no-store",
+    const response = await fetchWithAuth(`${backendURL}/report/campaign_data`, {
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
       }
-     });
-    if (!res.ok) throw new Error("Failed to fetch chart data");
-    return await res.json();
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error("Failed to fetch chart data");
+    }
+    return await response.json();
   } catch (error) {
     console.error("Error fetching chart data:", error);
     return [];
   }
 }
 
-// Create a wrapper component that uses searchParams
+// Make CampaignContent a regular function component without export
 function CampaignContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const selectedBrand = searchParams.get('brand');
+
+  const fetchWithAuth = createAuthenticatedFetch();
 
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
@@ -65,8 +84,8 @@ function CampaignContent() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
-  // Move fetchCampaignData inside component to access selectedBrand
-  const fetchCampaignData = async (startDate?: string, endDate?: string) => {
+  // Wrap fetchCampaignData with useCallback
+  const fetchCampaignData = useCallback(async (startDate?: string, endDate?: string) => {
     try {
       const queryParams = new URLSearchParams();
       if (startDate) queryParams.append('start_date', startDate);
@@ -77,24 +96,39 @@ function CampaignContent() {
         queryParams.toString() ? `?${queryParams.toString()}` : ''
       }`;
       
-      const res = await fetch(url, {
-        cache: "no-store",
+      const response = await fetchWithAuth(url, {
+        mode: 'cors',
+        credentials: 'omit',
         headers: {
-          'Authorization': process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+          'Content-Type': 'application/json',
+          'X-ID-Token': Cookies.get('id_token') || ''
         }
       });
 
-      if (!res.ok) throw new Error("Failed to fetch campaign data");
-      const data = await res.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          headers: Object.fromEntries(response.headers)
+        });
+        throw new Error(`Failed to fetch campaign data: ${response.status}`);
+      }
+      
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error("Error fetching campaign data:", error);
+      if (error instanceof Error && error.message === 'No authentication token found') {
+        router.push('/login');
+      }
       throw error;
     }
-  };
+  }, [selectedBrand, fetchWithAuth, router]); // Add dependencies here
 
-  // Update useEffect to include selectedBrand in dependencies
+  // Update useEffect to include fetchCampaignData in dependencies
   useEffect(() => {
     async function loadData() {
       try {
@@ -109,7 +143,7 @@ function CampaignContent() {
       }
     }
     loadData();
-  }, [startDate, endDate, selectedBrand]); // Add selectedBrand to dependencies
+  }, [startDate, endDate, selectedBrand, fetchCampaignData]); // Add fetchCampaignData here
 
   useEffect(() => {
     async function loadChartData() {
@@ -203,7 +237,8 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                 <TableHead className="text-center">
                   Campaign Type
                   <select 
-                    className="ml-3 bg-black text-white  rounded">
+                    aria-label="Filter by campaign type"
+                    className="ml-3 bg-black text-white rounded">
                       <option className="py-3" value="SP">SP</option>
                       <option value="SB">SB</option>
                       <option value="SD">SD</option>
@@ -221,7 +256,10 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                 <TableRow key={campaign.SN} className="text-center">
                   <TableCell className="rounded-l-lg">{campaign.SN}</TableCell>
                   <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
-                    <Link href={`/ad_details`} className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900">
+                    <Link 
+                      href={`/ad_details?campaign=${encodeURIComponent(campaign.Campaign)}`}
+                      className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
+                    >
                       {campaign.Campaign}
                     </Link>
                   </TableCell>
@@ -304,7 +342,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
   );
 }
 
-// Main component with Suspense wrapper
+// Export only the default component
 export default function PerformanceTable() {
   return (
     <Suspense fallback={<div>Loading...</div>}>

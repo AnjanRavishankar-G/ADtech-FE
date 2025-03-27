@@ -2,29 +2,42 @@
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+
+// Define token payload interface
+interface TokenPayload {
+  sub: string;
+  email: string;
+  name?: string;
+  'custom:role'?: string;
+}
 
 interface UserData {
   id: string;
   email: string;
   name?: string;
   role?: string;
-  // Add other user properties as needed
 }
 
-interface AuthContextType {
-  token: string | null;
-  setToken: (token: string) => void;
-  logout: () => void;
+export interface AuthContextType {
+  isAuthenticated: boolean;
   loading: boolean;
+  token: string | null;
+  idToken: string | null;
   user: UserData | null;
+  login: (authToken: string, idToken: string) => void;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  token: null,
-  setToken: () => {},
-  logout: () => {},
+export const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
   loading: true,
+  token: null,
+  idToken: null,
   user: null,
+  login: () => {},
+  logout: () => {},
 });
 
 interface AuthProviderProps {
@@ -32,60 +45,77 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setTokenState] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
-  
+
   useEffect(() => {
-    // Check for token in localStorage
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setTokenState(storedToken);
-      fetchUserProfile(storedToken);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-  
-  const fetchUserProfile = async (token: string) => {
-    try {
-      const response = await fetch('http://localhost:8000/users/me', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-      });
+    // Check for tokens in cookies
+    const savedAuthToken = Cookies.get('auth_token');
+    const savedIdToken = Cookies.get('id_token');
+
+    if (savedAuthToken && savedIdToken) {
+      setAuthToken(savedAuthToken);
+      setIdToken(savedIdToken);
       
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        // If token is invalid, log out
-        localStorage.removeItem('token');
-        setTokenState(null);
+      try {
+        const decoded = jwtDecode<TokenPayload>(savedIdToken);
+        setUser({
+          id: decoded.sub,
+          email: decoded.email,
+          name: decoded.name,
+          role: decoded['custom:role']
+        });
+      } catch (error) {
+        console.error('Error decoding token:', error);
       }
+    }
+    
+    setLoading(false);
+  }, []);
+
+  const setTokens = (newAuthToken: string, newIdToken: string) => {
+    // Store tokens in cookies with 1 day expiry
+    Cookies.set('auth_token', newAuthToken, { expires: 1 });
+    Cookies.set('id_token', newIdToken, { expires: 1 });
+    
+    setAuthToken(newAuthToken);
+    setIdToken(newIdToken);
+
+    try {
+      const decoded = jwtDecode<TokenPayload>(newIdToken);
+      setUser({
+        id: decoded.sub,
+        email: decoded.email,
+        name: decoded.name,
+        role: decoded['custom:role']
+      });
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error decoding token:', error);
     }
   };
-  
-  const setToken = (newToken: string) => {
-    setTokenState(newToken);
-    fetchUserProfile(newToken);
-  };
-  
+
   const logout = () => {
-    localStorage.removeItem('token');
-    setTokenState(null);
+    Cookies.remove('auth_token');
+    Cookies.remove('id_token');
+    setAuthToken(null);
+    setIdToken(null);
     setUser(null);
     router.push('/login');
   };
-  
+
   return (
-    <AuthContext.Provider value={{ token, setToken, logout, loading, user }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated: !!authToken, 
+      loading, 
+      token: authToken,
+      idToken,
+      user, 
+      login: setTokens, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

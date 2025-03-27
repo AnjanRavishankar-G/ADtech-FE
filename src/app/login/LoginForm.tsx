@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-// import { toast } from 'react-toastify';
 import Link from "next/link";
-// import Image from "next/image";
 import { Loader2 } from "lucide-react";
+import { useAuth } from '../context/AuthContext';
+import Cookies from 'js-cookie';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -13,6 +13,7 @@ export default function LoginForm() {
   const [passwordType, setPasswordType] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth(); // Changed from setTokens to login
 
   const togglePasswordType = () => {
     setPasswordType((prev) => (prev === "password" ? "text" : "password"));
@@ -21,12 +22,43 @@ export default function LoginForm() {
   async function handleSubmit(e: { preventDefault: () => void; }) {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate loading for better UX
-    setTimeout(() => {
-      // Simply navigate to brand page without authentication
-      router.push('/brand');
-    }, 1000);
+  
+    try {
+      const response = await fetch("https://a5ehaj23t5.execute-api.us-east-1.amazonaws.com/dev/api/Auth_login", {
+        method: "POST",
+        mode: 'cors',
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        console.log('Received tokens:', { 
+          auth_token: data.auth_token ? 'present' : 'missing',
+          id_token: data.id_token ? 'present' : 'missing'
+        });
+        
+        // Store tokens in cookies
+        Cookies.set('auth_token', data.auth_token, { expires: 1 });
+        Cookies.set('id_token', data.id_token, { expires: 1 });
+        
+        // Use login instead of setTokens
+        login(data.auth_token, data.id_token);
+        
+        router.push("/brand");
+      } else {
+        alert(data.error || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
   
   return (

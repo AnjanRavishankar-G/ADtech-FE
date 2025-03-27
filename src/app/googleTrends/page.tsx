@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import Layout from "../components/ui/Layout";
 
+import { createAuthenticatedFetch } from '@/utils/api';
+import Cookies from 'js-cookie';
+// import { useRouter } from 'next/navigation';
+
 // Types for Interest Over Time
 type TimeData = {
   date: string;
@@ -70,20 +74,31 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // API Functions
 async function fetchInterestOverTime(keywords: string[]) {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
-      `${backendURL}/interestOverTime?q=${keywordsParam}`,
-      { cache: "no-store",
-        headers: {
-          'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-          'Content-Type': 'application/json'
-        }
-       }
-    );
+    const response = await fetchWithAuth(`${backendURL}/interestOverTime?q=${keywordsParam}`, {
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
+      }
+    });
 
-    if (!res.ok) throw new Error(`Failed to fetch interest data: ${res.status}`);
-    const data = await res.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error(`Failed to fetch interest data: ${response.status}`);
+    }
+    
+    const data = await response.json();
     console.log("Fetched Interest Over Time Data:", data);
     return data;
   } catch (error) {
@@ -93,20 +108,31 @@ async function fetchInterestOverTime(keywords: string[]) {
 }
 
 async function fetchGeographicData(keywords: string[]) {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
-      `${backendURL}/comparedBy?q=${keywordsParam}&geo=IN`,
-      { cache: "no-store",
-        headers: {
-          'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-          'Content-Type': 'application/json'
-        }
-       }
-    );
+    const response = await fetchWithAuth(`${backendURL}/comparedBy?q=${keywordsParam}&geo=IN`, {
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
+      }
+    });
 
-    if (!res.ok) throw new Error(`Failed to fetch geographic data: ${res.status}`);
-    const data = await res.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error(`Failed to fetch geographic data: ${response.status}`);
+    }
+    
+    const data = await response.json();
     console.log("Fetched Geographic Data:", data);
     return data;
   } catch (error) {
@@ -116,20 +142,31 @@ async function fetchGeographicData(keywords: string[]) {
 }
 
 async function fetchRelatedQueries(keywords: string[]) {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
     const keywordsParam = keywords.join(",");
-    const res = await fetch(
-      `${backendURL}/multiQueryRelatedQueries?keywords=${keywordsParam}`,
-      { cache: "no-store",
-        headers: {
-          'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-          'Content-Type': 'application/json'
-        }
-       }
-    );
+    const response = await fetchWithAuth(`${backendURL}/multiQueryRelatedQueries?keywords=${keywordsParam}`, {
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
+      }
+    });
 
-    if (!res.ok) throw new Error(`Failed to fetch related queries: ${res.status}`);
-    const data = await res.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error(`Failed to fetch related queries: ${response.status}`);
+    }
+    
+    const data = await response.json();
     console.log("Fetched Related Queries Data:", data);
     return data;
   } catch (error) {

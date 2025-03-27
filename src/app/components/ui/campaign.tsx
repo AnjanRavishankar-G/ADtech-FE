@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+import { createAuthenticatedFetch } from '@/utils/api';
 import {
   Table,
   TableBody,
@@ -43,48 +46,86 @@ type ChartData = {
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
-async function fetchCampaignData(startDate?: string, endDate?: string) {
+async function fetchCampaignData(
+  startDate?: string, 
+  endDate?: string,
+  router?: ReturnType<typeof useRouter>
+) {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
     const queryParams = new URLSearchParams();
     if (startDate) queryParams.append('start_date', startDate);
     if (endDate) queryParams.append('end_date', endDate);
 
-    const url = `${backendURL}/report/new_campaign_table${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `${backendURL}/report/new_campaign_table${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
     
-    const res = await fetch(url, {
-      cache: "no-store",
+    const response = await fetchWithAuth(url, {
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
       }
     });
-    if (!res.ok) throw new Error("Failed to fetch campaign data");
-    const data = await res.json();
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error(`Failed to fetch campaign data: ${response.status}`);
+    }
+    
+    const data = await response.json();
     console.log("Fetched Campaign Data:", data);
     return data;
   } catch (error) {
     console.error("Error fetching campaign data:", error);
+    if (error instanceof Error && error.message === 'No authentication token found' && router) {
+      router.push('/login');
+    }
     throw error;
   }
 }
 
 async function fetchCampaignDataChart() {
+  const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const res = await fetch('${backendURL}/report/campaign_data', { cache: "no-store",
+    const response = await fetchWithAuth(`${backendURL}/report/campaign_data`, {
+      mode: 'cors',
+      credentials: 'omit',
       headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json',
+        'X-ID-Token': Cookies.get('id_token') || ''
       }
-     });
-    if (!res.ok) throw new Error("Failed to fetch chart data");
-    return await res.json();
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response not OK:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers)
+      });
+      throw new Error("Failed to fetch chart data");
+    }
+    return await response.json();
   } catch (error) {
     console.error("Error fetching chart data:", error);
     return [];
   }
 }
 
-export default function PerformanceTable() {
+export default function BrandTargetTables() {
+  const router = useRouter();
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +143,7 @@ export default function PerformanceTable() {
       try {
         const startStr = startDate ? startDate.toISOString().split('T')[0] : undefined;
         const endStr = endDate ? endDate.toISOString().split('T')[0] : undefined;
-        const results = await fetchCampaignData(startStr, endStr);
+        const results = await fetchCampaignData(startStr, endStr, router);
         setCampaignData(results);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -111,7 +152,7 @@ export default function PerformanceTable() {
       }
     }
     loadData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, router]);
 
   useEffect(() => {
     async function loadChartData() {
@@ -120,12 +161,16 @@ export default function PerformanceTable() {
         setChartData(results);
       } catch (err) {
         setChartError(err instanceof Error ? err.message : "An error occurred");
+        console.error('Error loading chart data:', err);
+        if (err instanceof Error && err.message.includes('No authentication token found')) {
+          router.push('/login');
+        }
       } finally {
         setChartLoading(false);
       }
     }
     loadChartData();
-  }, []);
+  }, [router]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -305,3 +350,4 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
     </Layout>
   );
 }
+
