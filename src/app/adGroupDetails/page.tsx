@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Cookies from 'js-cookie';
 import {
   Table,
   TableBody,
@@ -30,20 +31,16 @@ type AsinData = {
   clicks: number;
   clickThroughRate: string;
   cost: number;
- 
   adGroupId: string;
   campaignId: string;
 };
 
 type KeywordData = {
-  SN: number;
   keyword: string;
-  keyword_rank: number;
-  keyword_for: string;
-  bids: number;
+  theme: string;
   match_type: string;
   rank: number;
-  theme: string;
+  bid: number;
 };
 
 type KeywordPerformanceData = {
@@ -60,43 +57,81 @@ type KeywordPerformanceData = {
 };
 
 type NegativeKeyword = {
-  keywordID: string;
-  keyword: string;
+  keywordID: string;    // matches keywordId from API
+  keyword: string;      // matches keywordText from API
   matchType: string;
   adGroupId: string;
+  campaignId: string;
+};
+
+type NegativeKeywordResponse = {
+  keywordId: string;
+  keywordText: string;
+  matchType: string;
+  adGroupId: string;
+  campaignId: string;
 };
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-// Fixed function - removed unused parameter
-async function fetchNegativeKeywords() {
+function getRequiredHeaders() {
+  const idToken = Cookies.get('id_token');
+  const authToken = Cookies.get('auth_token');
+  
+  if (!idToken) {
+    console.error('Missing id_token');
+    window.location.href = '/';
+    throw new Error('Authentication token not found. Please login again.');
+  }
+
+  console.log('Tokens found:', { authToken: !!authToken, idToken: !!idToken });
+
+  return {
+    'Authorization': `Bearer ${authToken}`,
+    'Content-Type': 'application/json',
+    'X-ID-Token': idToken
+  };
+}
+
+// Update each fetch function to use getRequiredHeaders
+async function fetchNegativeKeywords(campaignId: string) {
   try {
-    const res = await fetch(`${backendURL}/report/negative_keyword`, { 
+    const res = await fetch(`${backendURL}/negative-keywords/${campaignId}`, { 
       cache: "no-store",
-      headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
-      }      
-     });
-    if (!res.ok) throw new Error("Failed to fetch negative keywords");
-    const data = await res.json();
-    return data;
+      headers: getRequiredHeaders()
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('API Error:', errorText);
+      throw new Error("Failed to fetch negative keywords");
+    }
+
+    const response = await res.json();
+    console.log('Negative keywords response:', response); // Debug log
+
+    // Type the response properly
+    const negativeKeywords = (response.negative_keywords || []) as NegativeKeywordResponse[];
+    
+    return negativeKeywords.map((kw) => ({
+      keywordID: kw.keywordId,
+      keyword: kw.keywordText,
+      matchType: kw.matchType,
+      adGroupId: kw.adGroupId,
+      campaignId: kw.campaignId
+    }));
   } catch (error) {
     console.error("Error fetching negative keywords:", error);
     throw error;
   }
 }
 
-// Fixed function - removed unused parameter
 async function fetchAsinData() {
   try {
     const res = await fetch(`${backendURL}/report/asin_level_table`, { 
       cache: "no-store",
-      headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
-      }
-     });
+      headers: getRequiredHeaders()
+    });
     if (!res.ok) throw new Error("Failed to fetch ASIN data");
     const data = await res.json();
     return data;
@@ -106,19 +141,22 @@ async function fetchAsinData() {
   }
 }
 
-// Fixed function - removed unused parameters
-async function fetchKeywordData() {
+async function fetchKeywordData(campaignId: string, adGroupId: string) {
   try {
-    const res = await fetch(`${backendURL}/report/keyword_recommendation`, { 
+    const res = await fetch(`${backendURL}/keyword-recommendation/${campaignId}/${adGroupId}`, {
       cache: "no-store",
-      headers: {
-        'Authorization' : process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
-      }
-     });
-    if (!res.ok) throw new Error("Failed to fetch keyword recommendations");
+      headers: getRequiredHeaders()
+    });
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch keyword recommendations: ${res.status}`);
+    }
+    
     const data = await res.json();
-    return data;
+    console.log('API Response:', data);
+    return data.keywords || [];
   } catch (error) {
     console.error("Error fetching keyword data:", error);
     throw error;
@@ -126,21 +164,123 @@ async function fetchKeywordData() {
 }
 
 async function fetchKeywordPerformance() {
-  const res = await fetch(`${backendURL}/report/targeting_level_table`, { 
-    cache: "no-store",
-    headers: {
-      'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-      'Content-Type': 'application/json'
-    }
-   });
-  if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${backendURL}/report/targeting_report`, { 
+      cache: "no-store",
+      headers: getRequiredHeaders()
+    });
+    
+    if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
+    
+    const data = await res.json();
+    
+    // Type the response data
+    type TargetingReportItem = {
+      SN: number;
+      keyword: string;
+      matchType: string;
+      sales: number;
+      cost: number;
+      ACOS: number;
+      ROAS: number;
+      clicks: number;
+      impressions: number;
+      keywordBid: number;
+    };
+    
+    return (data as TargetingReportItem[]).map((item) => ({
+      SN: item.SN,
+      keyword: item.keyword || '-',
+      matchType: item.matchType || '-',
+      revenue: item.sales ? Number(item.sales) : null,
+      spend: item.cost ? Number(item.cost) : null,
+      ACOS: Number(item.ACOS).toFixed(2),
+      ROAS: Number(item.ROAS).toFixed(2),
+      clicks: Number(item.clicks) || 0,
+      impresssion: item.impressions ? Number(item.impressions) : null,
+      bid: Number(item.keywordBid) || 0
+    }));
+  } catch (error) {
+    console.error("Error fetching keyword performance:", error);
+    throw error;
+  }
 }
 
+const handleAuthError = (status: number) => {
+  if (status === 401 || status === 403) {
+    console.error('Auth error:', status);
+    Cookies.remove('id_token');
+    Cookies.remove('auth_token');
+    window.location.href = '/';
+    return true;
+  }
+  return false;
+};
+
+// Update fetchAdGroupDetailsByName
+async function fetchAdGroupDetailsByName(adGroupName: string) {
+  try {
+    console.log('Fetching ad group details for:', adGroupName);
+    
+    if (!adGroupName) {
+      throw new Error("Ad group name is required");
+    }
+
+    const res = await fetch(`${backendURL}/report/new_ad_group_table?adGroupName=${encodeURIComponent(adGroupName)}`, {
+      cache: "no-store",
+      headers: getRequiredHeaders()
+    });
+
+    if (handleAuthError(res.status)) {
+      throw new Error("Authentication failed");
+    }
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('API Error:', errorText);
+      throw new Error(`Failed to fetch ad group details: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!data || !data[0]) {
+      throw new Error("No ad group data found");
+    }
+
+    console.log('Ad group details received:', data[0]); // Debug log
+    return data[0];
+  } catch (error) {
+    console.error("Error fetching ad group details:", error);
+    throw error;
+  }
+}
+
+const checkAuthentication = () => {
+  const idToken = Cookies.get('id_token');
+  const authToken = Cookies.get('auth_token');
+  
+  if (!idToken || !authToken) {
+    console.error('Missing tokens:', { 
+      hasIdToken: !!idToken, 
+      hasAuthToken: !!authToken 
+    });
+    
+    // Only redirect if we're not already on the login page
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+    return false;
+  }
+  return true;
+};
+
 export default function AdGroupPage() {
-  // Default values for adGroupId and campaignId
-  // const DEFAULT_AD_GROUP_ID = "123456789"; 
-  // const DEFAULT_CAMPAIGN_ID = "987654321"; 
+  // Remove router if not used
+  // const router = useRouter();
+  
+  // Either use adGroupName or remove it
+  // const [adGroupName, setAdGroupName] = useState<string>('');
+  const [campaignId, setCampaignId] = useState<string>('');
+  const [adGroupId, setAdGroupId] = useState<string>('');
   
   const [asinData, setAsinData] = useState<AsinData[]>([]);
   const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
@@ -150,29 +290,79 @@ export default function AdGroupPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<string>('asin');
   
+  // Add effect to fetch ad group details when component mounts
+  useEffect(() => {
+    const loadAdGroupDetails = async () => {
+      try {
+        setIsLoading(true);
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name');
+
+        console.log('URL params:', urlParams.toString()); // Debug log
+        console.log('Ad group name from URL:', name); // Debug log
+
+        if (!checkAuthentication()) {
+          console.error('Authentication check failed');
+          return;
+        }
+
+        if (!name) {
+          setError("No ad group name provided");
+          return;
+        }
+
+        const details = await fetchAdGroupDetailsByName(name);
+        
+        if (!details) {
+          setError("No ad group details found");
+          return;
+        }
+
+        console.log('Ad group details loaded:', details);
+        setCampaignId(details.campaignId);
+        setAdGroupId(details.adGroupId);
+
+      } catch (err) {
+        console.error("Error loading ad group details:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAdGroupDetails();
+  }, []);
+
+  // Modify the existing useEffect to use campaignId and adGroupId
   useEffect(() => {
     const loadData = async () => {
+      if (!checkAuthentication()) return;
+      
       try {
-        // Note: We're not using adGroupId in the fetch calls anymore,
-        // but we'll keep it for potential future use
-        // const adGroupId = DEFAULT_AD_GROUP_ID;
+        // Only fetch negative keywords if we have a campaignId and tab is selected
+        const promises = [fetchAsinData(), fetchKeywordPerformance()];
         
-        const [asinResults, keywordPerformance, negativeKeywordResults] = await Promise.all([
-          fetchAsinData(),
-          fetchKeywordPerformance(),
-          fetchNegativeKeywords(),
-        ]);
+        if (selectedTab === 'NegativeKeyword' && campaignId) {
+          promises.push(fetchNegativeKeywords(campaignId));
+        }
+        
+        const [asinResults, keywordPerformance, negativeKeywordResults] = 
+          await Promise.all(promises);
         
         setAsinData(asinResults);
         setKeywordPerformanceData(keywordPerformance);
-        setNegativeKeywords(negativeKeywordResults);
         
-        // Use the campaign ID from asin data if available, otherwise use default
-        // We're not using these IDs in the fetch call anymore, but keeping them for potential future use
-        // const campaignId = asinResults.length > 0 ? asinResults[0].campaignId : DEFAULT_CAMPAIGN_ID;
-        const keywordResults = await fetchKeywordData();
-        setKeywordData(keywordResults);
+        if (negativeKeywordResults) {
+          setNegativeKeywords(negativeKeywordResults);
+        }
+
+        // Existing keyword recommendation code...
+        if (selectedTab === 'keywordRecommendation' && campaignId && adGroupId) {
+          const keywordResults = await fetchKeywordData(campaignId, adGroupId);
+          setKeywordData(keywordResults);
+        }
       } catch (err) {
+        console.error('Error loading data:', err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setIsLoading(false);
@@ -180,10 +370,20 @@ export default function AdGroupPage() {
     };
     
     loadData();
-  }, []);
+  }, [selectedTab, campaignId, adGroupId]);
   
   if (isLoading) return <div className="p-5">Loading...</div>;
-  if (error) return <div className="p-5 text-red-500">Error: {error}</div>;
+  if (error) return (
+    <div className="p-5">
+      <div className="text-red-500">Error: {error}</div>
+      <button 
+        onClick={() => window.location.href = '/'} 
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        Return to Login
+      </button>
+    </div>
+  );
   if (!asinData.length) return <div className="p-5 text-red-500">No ASIN data available for this ad group</div>;
 
   // Sort and Extract Top 5
@@ -347,66 +547,76 @@ export default function AdGroupPage() {
           
         )}
         {selectedTab === 'NegativeKeyword' && (
-          <div className="shadow-2xl p-4 bg-white rounded-lg dark:bg-black">
-            <h2 className="text-lg font-bold">Negative Keywords</h2>
-            <Table className="border border-default-300">
-              <TableHeader className="bg-black text-white sticky top-0 z-10">
-                <TableRow>
-                  <TableHead className="border border-default-300">Keyword ID</TableHead>
-                  <TableHead className="border border-default-300">Keyword</TableHead>
-                  <TableHead className="border border-default-300">Match Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {negativeKeywords.map((keyword) => (
-                  <TableRow key={keyword.keywordID} className="text-center">
-                    <TableCell className="border border-default-300">{keyword.keywordID}</TableCell>
-                    <TableCell className="border border-default-300">{keyword.keyword}</TableCell>
-                    <TableCell className="border border-default-300">{keyword.matchType}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+  <div className="shadow-2xl p-4 bg-white rounded-lg dark:bg-black">
+    <h2 className="text-lg font-bold">Negative Keywords</h2>
+    {!campaignId ? (
+      <div className="text-red-500 p-4">Campaign ID is required to load negative keywords</div>
+    ) : negativeKeywords.length === 0 ? (
+      <div className="text-gray-500 p-4">No negative keywords found for this campaign</div>
+    ) : (
+      <Table className="border border-default-300">
+        <TableHeader className="bg-black text-white sticky top-0 z-10">
+          <TableRow>
+            <TableHead className="border border-default-300">Keyword ID</TableHead>
+            <TableHead className="border border-default-300">Keyword</TableHead>
+            <TableHead className="border border-default-300">Match Type</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {negativeKeywords.map((keyword) => (
+            <TableRow key={keyword.keywordID} className="text-center">
+              <TableCell className="border border-default-300">{keyword.keywordID}</TableCell>
+              <TableCell className="border border-default-300">{keyword.keyword}</TableCell>
+              <TableCell className="border border-default-300">
+                {keyword.matchType.replace('NEGATIVE_', '')}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    )}
+  </div>
+)}
         {selectedTab === 'keywordRecommendation' && (
   <div>
     <h2 className="text-lg font-bold mt-6">Keyword Recommendations</h2>
-    {['BROAD', 'EXACT', 'PHRASE'].map((matchType) => {
-      const filteredKeywords = keywordData.filter((keyword) => keyword.match_type === matchType);
-          return (
-            filteredKeywords.length > 0 && (
-              <div key={matchType} className="shadow-2xl p-4 bg-white rounded-2xl mt-4 dark:bg-black">
-                <h3 className="text-md font-semibold">{matchType} Match</h3>
-                <Table className="border border-default-300">
-                  <TableHeader className="bg-black text-white sticky top-0 z-10">
-                    <TableRow>
-                      <TableHead className="border border-default-300">Keyword</TableHead>
-                      <TableHead className="border border-default-300">Rank</TableHead>
-                      <TableHead className="border border-default-300">For</TableHead>
-                      <TableHead className="border border-default-300">Bids</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredKeywords.map((keyword, index) => (
-                      <TableRow key={index} className="text-center">
-                        <TableCell className="border border-default-300">{keyword.keyword}</TableCell>
-                        <TableCell className="border border-default-300">{keyword.keyword_rank}</TableCell>
-                        <TableCell className="border border-default-300">{keyword.keyword_for}</TableCell>
-                        <TableCell className="border border-default-300">{keyword.bids}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )
-          );
-        })}
-           
-      </div> 
-    )} 
+    {!campaignId || !adGroupId ? (
+      <div className="text-red-500 p-4">Missing campaign ID or ad group ID</div>
+    ) : keywordData.length === 0 ? (
+      <div className="text-gray-500 p-4">No keyword recommendations available</div>
+    ) : (
+      ['BROAD', 'EXACT', 'PHRASE'].map((matchType) => (
+        <div key={matchType}>
+          <h3 className="font-semibold mt-4">{matchType} Match Keywords</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Keyword</TableHead>
+                <TableHead>Theme</TableHead>
+                <TableHead>Rank</TableHead>
+                <TableHead>Bid</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {keywordData
+                .filter(kw => kw.match_type === matchType)
+                .map((keyword, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{keyword.keyword}</TableCell>
+                    <TableCell>{keyword.theme}</TableCell>
+                    <TableCell>{keyword.rank}</TableCell>
+                    <TableCell>${keyword.bid.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      ))
+    )}
+  </div>
+)}
       <div className="mt-32">
-       <Footer />  
+      <Footer />  
       </div>
       </div>   
     </div>

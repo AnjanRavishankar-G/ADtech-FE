@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import Layout from "../components/ui/Layout";
 
-import { createAuthenticatedFetch } from '@/utils/api';
 import Cookies from 'js-cookie';
 // import { useRouter } from 'next/navigation';
 
@@ -70,37 +69,33 @@ type RelatedQueriesData = {
 };
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+// Update the keyword formatting function
+function formatKeywords(keywords: string[]): string {
+  return keywords
+  .map(k => k.trim())  // Just trim, don't remove spaces within keywords
+  .filter(k => k)  // Remove empty strings
+  .join(",");
+}
 
-
-// API Functions
+// Update the fetch functions
 async function fetchInterestOverTime(keywords: string[]) {
-  const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const keywordsParam = keywords.join(",");
-    const response = await fetchWithAuth(`${backendURL}/interestOverTime?q=${keywordsParam}`, {
-      mode: 'cors',
-      credentials: 'omit',
+    const keywordsParam = formatKeywords(keywords);
+    const response = await fetch(`${backendURL}/interest-over-time/${keywordsParam}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
-        'Content-Type': 'application/json',
-        'X-ID-Token': Cookies.get('id_token') || ''
-      }
+        'Content-Type': 'application/json'
+      },
+      credentials: 'omit'
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Response not OK:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-        headers: Object.fromEntries(response.headers)
-      });
-      throw new Error(`Failed to fetch interest data: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to fetch interest data: ${response.status}`);
     }
-    
     const data = await response.json();
-    console.log("Fetched Interest Over Time Data:", data);
-    return data;
+    return data.data || []; // Extract data field from response
   } catch (error) {
     console.error("Error fetching interest data:", error);
     throw error;
@@ -108,33 +103,26 @@ async function fetchInterestOverTime(keywords: string[]) {
 }
 
 async function fetchGeographicData(keywords: string[]) {
-  const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const keywordsParam = keywords.join(",");
-    const response = await fetchWithAuth(`${backendURL}/comparedBy?q=${keywordsParam}&geo=IN`, {
-      mode: 'cors',
-      credentials: 'omit',
+    const keywordsParam = formatKeywords(keywords);
+    console.log('Sending keywords:', keywordsParam); // Debug log
+    const response = await fetch(`${backendURL}/compared-by/${keywordsParam}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
-        'Content-Type': 'application/json',
-        'X-ID-Token': Cookies.get('id_token') || ''
-      }
+        'Content-Type': 'application/json'
+      },
+      credentials: 'omit'
     });
 
+    console.log('Request URL:', response.url);
+    console.log('Keywords:', keywordsParam);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Response not OK:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-        headers: Object.fromEntries(response.headers)
-      });
-      throw new Error(`Failed to fetch geographic data: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to fetch geographic data: ${response.status}`);
     }
-    
-    const data = await response.json();
-    console.log("Fetched Geographic Data:", data);
-    return data;
+    return response.json();
   } catch (error) {
     console.error("Error fetching geographic data:", error);
     throw error;
@@ -142,33 +130,32 @@ async function fetchGeographicData(keywords: string[]) {
 }
 
 async function fetchRelatedQueries(keywords: string[]) {
-  const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const keywordsParam = keywords.join(",");
-    const response = await fetchWithAuth(`${backendURL}/multiQueryRelatedQueries?keywords=${keywordsParam}`, {
-      mode: 'cors',
-      credentials: 'omit',
+    const keywordsParam = keywords.join(','); // Don't use formatKeywords here
+    console.log('Sending keywords for related queries:', keywordsParam);
+
+    const response = await fetch(`${backendURL}/multi-query-related/${encodeURIComponent(keywordsParam)}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
-        'Content-Type': 'application/json',
-        'X-ID-Token': Cookies.get('id_token') || ''
-      }
+        'Content-Type': 'application/json'
+      },
+      credentials: 'omit'
     });
 
+    console.log('Related queries request URL:', response.url);
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Response not OK:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-        headers: Object.fromEntries(response.headers)
-      });
-      throw new Error(`Failed to fetch related queries: ${response.status}`);
+      const errorData = await response.json();
+      // Extract error message from the nested structure
+      const errorMessage = errorData.body ? JSON.parse(errorData.body).error : errorData.error;
+      throw new Error(errorMessage || `Failed to fetch related queries: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    console.log("Fetched Related Queries Data:", data);
-    return data;
+    // If the response is wrapped in a body property, parse it
+    return data.body ? JSON.parse(data.body) : data;
   } catch (error) {
     console.error("Error fetching related queries:", error);
     throw error;
@@ -234,43 +221,37 @@ export default function GoogleTrendsDashboard() {
     setIsLoading(true);
     setError(null);
     
-    // Load Interest Over Time data
-    setIsLoadingInterest(true);
-    setInterestError(null);
     try {
+      // Load Interest Over Time data
+      setIsLoadingInterest(true);
       const timeData = await fetchInterestOverTime(keys);
       setInterestData(timeData);
-    } catch (err) {
-      setInterestError(err instanceof Error ? err.message : "An error occurred fetching interest data");
-    } finally {
+      setInterestError(null); // Add this line to use setInterestError
       setIsLoadingInterest(false);
-    }
-    
-    // Load Geographic Comparison data
-    setIsLoadingGeo(true);
-    setGeoError(null);
-    try {
+      
+      // Load Geographic Comparison data
+      setIsLoadingGeo(true);
       const geoData = await fetchGeographicData(keys);
       setGeoData(geoData);
-    } catch (err) {
-      setGeoError(err instanceof Error ? err.message : "An error occurred fetching geographic data");
-    } finally {
+      setGeoError(null); // Add this line to use setGeoError
       setIsLoadingGeo(false);
-    }
-    
-    // Load Related Queries data
-    setIsLoadingQuery(true);
-    setQueryError(null);
-    try {
+      
+      // Load Related Queries data
+      setIsLoadingQuery(true);
       const queryData = await fetchRelatedQueries(keys);
       setQueryData(queryData);
-    } catch (err) {
-      setQueryError(err instanceof Error ? err.message : "An error occurred fetching query data");
-    } finally {
+      setQueryError(null); // Add this line to use setQueryError
       setIsLoadingQuery(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      // Set specific errors
+      setInterestError(errorMessage);
+      setGeoError(errorMessage);
+      setQueryError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   // ---- Interest Over Time Functions ----
@@ -361,8 +342,13 @@ export default function GoogleTrendsDashboard() {
   };
 
   const paginatedQueryData = (keyword: string) => {
+    // Add null checks and debug logging
+    console.log('Query data for keyword:', keyword, queryData[keyword]);
     const keywordData = queryData[keyword]?.[queryType.toLowerCase() as "rising" | "top"];
-    if (!keywordData) return [];
+    if (!keywordData) {
+      console.log('No data found for:', keyword, queryType.toLowerCase());
+      return [];
+    }
     const startIndex = (queryCurrentPage - 1) * itemsPerPage;
     return keywordData.slice(startIndex, startIndex + itemsPerPage);
   };

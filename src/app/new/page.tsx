@@ -537,6 +537,7 @@ export default function GoogleTrendsDashboard() {
               <div className="border-b p-4 flex justify-between items-center">
                 <h2 className="text-xl font-medium">Interest Over Time: {keywords.join(", ")}</h2>
                 <button 
+                  type="button"
                   className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black" 
                   onClick={() => downloadTimeCSV()}
                   disabled={interestData.length === 0}
@@ -585,6 +586,7 @@ export default function GoogleTrendsDashboard() {
                 </h2>
                 <div className="flex items-center space-x-2">
                   <button 
+                    type="button"
                     className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-900" 
                     onClick={() => downloadGeoCSV()}
                     disabled={!geoData}
@@ -592,7 +594,11 @@ export default function GoogleTrendsDashboard() {
                     <Download size={16} />
                     <span>Export</span>
                   </button>
-                  <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900">
+                  <button 
+                    type="button"
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900"
+                    title="Filter"
+                  >
                     <Filter size={18} />
                   </button>
                 </div>
@@ -705,12 +711,14 @@ export default function GoogleTrendsDashboard() {
                       <div className="flex items-center space-x-2">
                         <div className="border rounded-md overflow-hidden flex">
                           <button
+                            type="button"
                             className={`px-3 py-1 ${queryType === "Rising" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-black dark:text-blue-400`}
                             onClick={() => handleQueryTypeChange("Rising")}
                           >
                             Rising
                           </button>
                           <button
+                            type="button"
                             className={`px-3 py-1 ${queryType === "Top" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-gray-500 dark:hover:bg-gray-900`}
                             onClick={() => handleQueryTypeChange("Top")}
                           >
@@ -718,9 +726,11 @@ export default function GoogleTrendsDashboard() {
                           </button>
                         </div>
                         <button 
+                          type="button"
                           className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900" 
                           onClick={() => downloadQueryCSV(keyword)}
                           disabled={!queryData[keyword] || !queryData[keyword][queryType.toLowerCase() as "rising" | "top"]?.length}
+                          title="Download CSV"
                         >
                           <Download size={18} />
                         </button>

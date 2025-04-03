@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Suspense, useCallback } from "react"; // Add useCallback
+import React, { useState, useEffect, Suspense, useCallback, useMemo } from "react"; // Add useCallback
 import Link from "next/link";
 import {
   Table,
@@ -72,7 +72,8 @@ function CampaignContent() {
   const router = useRouter();
   const selectedBrand = searchParams.get('brand');
 
-  const fetchWithAuth = createAuthenticatedFetch();
+  // Create a memoized fetchWithAuth
+  const fetchWithAuth = useMemo(() => createAuthenticatedFetch(), []);
 
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
@@ -128,36 +129,70 @@ function CampaignContent() {
     }
   }, [selectedBrand, fetchWithAuth, router]); // Add dependencies here
 
-  // Update useEffect to include fetchCampaignData in dependencies
+  // Modify the first useEffect
   useEffect(() => {
+    let isSubscribed = true; // Add cleanup flag
+
     async function loadData() {
+      if (!isSubscribed) return;
+      
       try {
+        setIsLoading(true);
         const startStr = startDate ? startDate.toISOString().split('T')[0] : undefined;
         const endStr = endDate ? endDate.toISOString().split('T')[0] : undefined;
         const results = await fetchCampaignData(startStr, endStr);
-        setCampaignData(results);
+        if (isSubscribed) {
+          setCampaignData(results);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        if (isSubscribed) {
+          setError(err instanceof Error ? err.message : "An error occurred");
+        }
       } finally {
-        setIsLoading(false);
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
       }
     }
-    loadData();
-  }, [startDate, endDate, selectedBrand, fetchCampaignData]); // Add fetchCampaignData here
 
+    loadData();
+    
+    // Cleanup function
+    return () => {
+      isSubscribed = false;
+    };
+  }, [startDate, endDate, selectedBrand, fetchCampaignData]); // Remove fetchWithAuth from dependencies
+
+  // Modify the chart data useEffect
   useEffect(() => {
+    let isSubscribed = true;
+
     async function loadChartData() {
+      if (!isSubscribed) return;
+      
       try {
+        setChartLoading(true);
         const results = await fetchCampaignDataChart();
-        setChartData(results);
+        if (isSubscribed) {
+          setChartData(results);
+        }
       } catch (err) {
-        setChartError(err instanceof Error ? err.message : "An error occurred");
+        if (isSubscribed) {
+          setChartError(err instanceof Error ? err.message : "An error occurred");
+        }
       } finally {
-        setChartLoading(false);
+        if (isSubscribed) {
+          setChartLoading(false);
+        }
       }
     }
+
     loadChartData();
-  }, []);
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, []); // Empty dependency array since chart data doesn't depend on other state
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;

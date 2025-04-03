@@ -3,21 +3,10 @@
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
 
-// Define token payload interface
-interface TokenPayload {
-  sub: string;
-  email: string;
-  name?: string;
-  'custom:role'?: string;
-}
-
+// Simplified user data interface
 interface UserData {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
+  role: string;
 }
 
 export interface AuthContextType {
@@ -52,49 +41,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for tokens in cookies
     const savedAuthToken = Cookies.get('auth_token');
-    const savedIdToken = Cookies.get('id_token');
+    const savedIdToken = Cookies.get('id_token'); // This is now the role string
 
     if (savedAuthToken && savedIdToken) {
       setAuthToken(savedAuthToken);
       setIdToken(savedIdToken);
-      
-      try {
-        const decoded = jwtDecode<TokenPayload>(savedIdToken);
-        setUser({
-          id: decoded.sub,
-          email: decoded.email,
-          name: decoded.name,
-          role: decoded['custom:role']
-        });
-      } catch (error) {
-        console.error('Error decoding token:', error);
-      }
+      setUser({ role: savedIdToken }); // Just store the role
     }
     
     setLoading(false);
   }, []);
 
-  const setTokens = (newAuthToken: string, newIdToken: string) => {
-    // Store tokens in cookies with 1 day expiry
+  const login = (newAuthToken: string, newIdToken: string) => {
     Cookies.set('auth_token', newAuthToken, { expires: 1 });
-    Cookies.set('id_token', newIdToken, { expires: 1 });
+    Cookies.set('id_token', newIdToken, { expires: 1 }); // Storing role string
     
     setAuthToken(newAuthToken);
     setIdToken(newIdToken);
-
-    try {
-      const decoded = jwtDecode<TokenPayload>(newIdToken);
-      setUser({
-        id: decoded.sub,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded['custom:role']
-      });
-    } catch (error) {
-      console.error('Error decoding token:', error);
-    }
+    setUser({ role: newIdToken }); // Just store the role
   };
 
   const logout = () => {
@@ -103,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthToken(null);
     setIdToken(null);
     setUser(null);
-    router.push('/login');
+    router.push('/login'); // Keep this as /login
   };
 
   return (
@@ -113,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       token: authToken,
       idToken,
       user, 
-      login: setTokens, 
+      login, 
       logout 
     }}>
       {children}

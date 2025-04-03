@@ -191,8 +191,11 @@ function AdDetailsContent() {
             {campaignData.map((campaign) => (
               <TableRow key={campaign.SN} className="text-center">
               <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
-                <Link href={`/adGroupDetails`} className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900">
-                {campaign.adGroup}
+                <Link 
+                  href={`/adGroupDetails?name=${encodeURIComponent(campaign.adGroup)}`} 
+                  className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
+                >
+                  {campaign.adGroup}
                 </Link>
               </TableCell>
 

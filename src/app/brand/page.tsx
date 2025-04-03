@@ -41,7 +41,7 @@ const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 async function fetchFilteredBrandTargetData(startDate: string, endDate: string) {
   const fetchWithAuth = createAuthenticatedFetch();
   try {
-    const url = `${backendURL}/get_filtered_brands?start_date=${startDate}&end_date=${endDate}`;
+    const url = `${backendURL}/filtered_brands?start_date=${startDate}&end_date=${endDate}`;
     const response = await fetchWithAuth(url);
     const data = await response.json();
     return data.length > 0 ? data : null;
@@ -51,17 +51,20 @@ async function fetchFilteredBrandTargetData(startDate: string, endDate: string) 
   }
 }
 
+// Modify the fetchUniqueBrandTargetData function
 async function fetchUniqueBrandTargetData() {
   const fetchWithAuth = createAuthenticatedFetch();
   try {
     console.log('Fetching brand target data...');
+    const userRole = Cookies.get('id_token'); // Get the role from id_token
+    
     const response = await fetchWithAuth(`${backendURL}/report/real_brand_table`, {
       mode: 'cors',
-      credentials: 'omit', // Ensures credentials are not sent
+      credentials: 'omit',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
         'Content-Type': 'application/json',
-        'X-ID-Token': Cookies.get('id_token') || ''
+        'X-ID-Token': userRole || '' // Pass role in X-ID-Token header
       }
     });
     
@@ -102,20 +105,35 @@ export default function BrandTargetTables() {
   useEffect(() => {
     const fetchWithAuth = createAuthenticatedFetch();
     
-    fetchWithAuth(`${backendURL}/our-brand`)
-      .then(response => response.json())
+    const userRole = Cookies.get('id_token');
+    fetchWithAuth(`${backendURL}/our-brand`, {
+      headers: {
+      'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+      'Content-Type': 'application/json',
+      'X-ID-Token': userRole || '' // Adding user role in header
+      }
+    })
+      .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+      })
       .then(data => {
-        if (data.brands) {
-          setBrands(data.brands);
-        } else {
-          console.error("Invalid data format:", data);
-        }
+      if (data.brands) {
+        setBrands(data.brands);
+      } else {
+        console.error("Invalid data format:", data);
+      }
       })
       .catch(error => {
-        console.error("Error fetching brand data:", error);
-        setError(error.message);
+      console.error("Error fetching brand data:", error);
+      setError(error.message);
+      if (error.message.includes('401')) {
+        router.push('/login');
+      }
       });
-  }, []);
+    }, [router]);
 
 
   useEffect(() => {
