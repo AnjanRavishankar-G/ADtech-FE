@@ -30,11 +30,6 @@ type BrandTargetData = {
   Goal: number;
 };
 
-type OurBrandData ={
-  profileId: number;
-  currencyCode: string;
-  name: string;
-};
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 
@@ -96,45 +91,10 @@ export default function BrandTargetTables() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isDataAvailable, setIsDataAvailable] = useState<boolean>(true);
-  const [brands, setBrands] = useState<OurBrandData[]>([]);
    // State to manage date range picker visibility
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     // Add error state
     const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchWithAuth = createAuthenticatedFetch();
-    
-    const userRole = Cookies.get('id_token');
-    fetchWithAuth(`${backendURL}/our-brand`, {
-      headers: {
-      'Authorization': `Bearer ${Cookies.get('auth_token')}`,
-      'Content-Type': 'application/json',
-      'X-ID-Token': userRole || '' // Adding user role in header
-      }
-    })
-      .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-      })
-      .then(data => {
-      if (data.brands) {
-        setBrands(data.brands);
-      } else {
-        console.error("Invalid data format:", data);
-      }
-      })
-      .catch(error => {
-      console.error("Error fetching brand data:", error);
-      setError(error.message);
-      if (error.message.includes('401')) {
-        router.push('/login');
-      }
-      });
-    }, [router]);
-
 
   useEffect(() => {
     async function loadData() {
@@ -184,32 +144,10 @@ export default function BrandTargetTables() {
     0
   );
 
-  const topBrands = [...uniqueBrandTargetData]
-    .sort((a, b) => b.DailySales - a.DailySales)
-    .slice(0, 5);
-
-  const displayData = startDate && endDate ? (brandTargetData || []) : topBrands;
-
-  // Generate the data for the radial charts
-  const brandProgressData = uniqueBrandTargetData.map((brand) => {
-    const progress = brand.Target > 0 ? (brand.Target / brand.Goal) * 100 : 0;
-    return Math.round(progress); // Round to the nearest integer for simplicity
-  });
+  const displayData = startDate && endDate ? (brandTargetData || []) : uniqueBrandTargetData;
 
   // For the combined chart: total progress across all brands
   const combinedProgress = Math.round((totalTargetAchieved / totalTarget) * 100);
-
-  const brandNames = uniqueBrandTargetData.map((brand) => brand.Brand);
-
-   // Get only top 5 brands for the radial chart
-   const top8BrandsProgress = brandProgressData.slice(0, 5);
-   const top8BrandNames = brandNames.slice(0, 5);
-
-
-  const brandSalesData = uniqueBrandTargetData.map((brand) => brand.TargetAchieved);
-  // Get only first 5 brands for the pie chart
-  const first8BrandSalesData = brandSalesData.slice(0, 5);
-
   
    // Sort brands by sales achieved in descending order and get top 5
   const topBrandsBySales = [...uniqueBrandTargetData]
@@ -223,16 +161,28 @@ export default function BrandTargetTables() {
 const brandProgressDataTop5 = topBrandsBySales.map((brand) => brand.TargetAchieved);
 const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
 
+  // Second visualization - Get top 5 brands by progress percentage
+  const topFiveByProgress = [...uniqueBrandTargetData]
+    .sort((a, b) => {
+      const progressA = a.Target > 0 ? (a.Target / a.Goal) * 100 : 0;
+      const progressB = b.Target > 0 ? (b.Target / b.Goal) * 100 : 0;
+      return progressB - progressA;
+    })
+    .slice(0, 5);
 
+  const top5BrandsProgress = topFiveByProgress.map(brand => {
+    const progress = brand.Target > 0 ? (brand.Target / brand.Goal) * 100 : 0;
+    return Math.round(progress);
+  });
+  const top5BrandNames = topFiveByProgress.map(brand => brand.Brand);
 
-//   // Sorting brands by Spends (assuming actual spend data is available)
-// const topBrandsBySpends = [...uniqueBrandTargetData]
-// .sort((a, b) => b.Spends - a.Spends) // Sort by Spends
-// .slice(0, 5); // Get top 5 brands
+  // Third visualization - Get top 5 brands by sales
+  const topFiveBySales = [...uniqueBrandTargetData]
+    .sort((a, b) => b.Target - a.Target)
+    .slice(0, 5);
 
-// // Extract spends data and names for Pie Chart
-// const brandSpendsDataTop5 = topBrandsBySpends.map((brand) => brand.Spends);
-// const brandNamesTop5Spends = topBrandsBySpends.map((brand) => brand.Brand);
+  const top5SalesData = topFiveBySales.map(brand => brand.Target);
+  const top5SalesBrandNames = topFiveBySales.map(brand => brand.Brand);
 
   return (
     <Layout>
@@ -284,18 +234,18 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
                 <div className="flex-1 md:w-1/3 lg:w-1/4 h-[350px] text-center bg-white shadow-lg rounded-2xl p-4 border dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
                   <BasicRadialBar 
                     height={550}
-                    series={top8BrandsProgress} // Multiple progress for individual brands
-                    labels={top8BrandNames} // Add brand names as labels
+                    series={top5BrandsProgress} // Multiple progress for individual brands
+                    labels={top5BrandNames} // Add brand names as labels
                     hollowSize="30%" 
                   /> 
                 </div>
                   {/* Individual Radial Chart with Multiple Brands */}
                     <div className="flex-1 h-[350px] text-center align-content: center; bg-white shadow-lg rounded-2xl p-4 border dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
                       <BasicPieChart 
-                      series={first8BrandSalesData} 
+                      series={top5SalesData} 
                       height={550}
-                      labels={top8BrandNames}
-                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0", "#2a40f1", "#2af1c7", "#79f728"]}/>  
+                      labels={top5SalesBrandNames}
+                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}/>  
                     </div> 
               </div>
               
@@ -338,7 +288,7 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
                   <TableRow key={`${brand.Brand}-${brand.DateTime}-${index}`}>
                     <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
                       <Link 
-                        href={`/campaign?brand=${encodeURIComponent(brand.Brand)}`} 
+                        href={`/campaign?brand=${encodeURIComponent(brand.Brand)}`}
                         className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
                       >
                         {brand.Brand}
@@ -418,30 +368,6 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
             </div>
             </div>
             </div>
-                <Table className="min-w-full border text-center">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Brand Name</TableHead>
-                      <TableHead>Profile ID</TableHead>
-                      <TableHead>Currency Code</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {brands && brands.length > 0 ? (
-                      brands.map((brand) => (
-                        <TableRow key={brand.profileId}>
-                          <TableCell>{brand.name}</TableCell>
-                          <TableCell>{brand.profileId}</TableCell>
-                          <TableCell>{brand.currencyCode}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3}>No brands data available</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
             <div >
               <Footer/>
             </div>

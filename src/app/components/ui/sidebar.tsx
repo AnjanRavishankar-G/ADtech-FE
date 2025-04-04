@@ -34,10 +34,10 @@ export default function Sidebar({ selectedTab, setSelectedTab }: SidebarProps) {
           </div>
 
           <ul className="space-y-6 p-4 mt-16">
-            <li>
+            <li className="py-2">
                 <button
                 onClick={() => setSelectedTab("asin")}
-                className={`flex items-center gap-3 w-full ${
+                className={`flex items-center gap-4 w-full ${
                   selectedTab === "asin" 
                   ? "text-blue-600 font-bold" 
                   : "text-gray-700 hover:text-black"
@@ -46,43 +46,37 @@ export default function Sidebar({ selectedTab, setSelectedTab }: SidebarProps) {
                 {isOpen && <span>Products</span>}
               </button>
             </li>
-            <li>
+            <li className="py-2">
               <button
                 onClick={() => setSelectedTab("keywordPerformance")}
-                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black ${
-                  isOpen ? "" : "justify-center"
-                }`}
+                className={`flex items-center ${isOpen ? 'gap-4 justify-start' : 'justify-center'} w-full text-gray-700 hover:text-black`}
               >
                 <GiTargeting size={20} />
                 {isOpen && <span>Targeting</span>}
               </button>
             </li>
-            <li>
+            <li className="py-2">
               <button
                 onClick={() => setSelectedTab("NegativeKeyword")}
-                className={`flex items-center  w-full text-gray-700 hover:text-black ${
-                  isOpen ? "" : "justify-center"
-                }`}
+                className={`flex items-center ${isOpen ? 'gap-2 pl-1' : 'justify-center'} w-full text-gray-700 hover:text-black`}
               >
                 <FaKey size={20} />
                 {isOpen && <span>Negative Keywords</span>}
               </button>
             </li>
-            <li>
+            <li className="py-2">
               <button
                 onClick={() => setSelectedTab("keywordRecommendation")}
-                className={`flex items-center  w-full text-gray-700 hover:text-black ${
-                  isOpen ? "" : "justify-center"
-                }`}
+                className={`flex items-center ${isOpen ? 'gap-4 justify-start' : 'justify-center'} w-full text-gray-700 hover:text-black`}
               >
                 <FaArrowRight size={20} />
                 {isOpen && <span>Keyword Recommendations</span>}
               </button>
             </li>
-            <li>
+            <li className="py-2">
               <button
                 onClick={toggleTheme}
-                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black dark:text-white ${
+                className={`flex items-center gap-4 w-full text-gray-700 hover:text-black dark:text-white ${
                   isOpen ? "" : "justify-center"
                 }`}
               >
@@ -90,9 +84,9 @@ export default function Sidebar({ selectedTab, setSelectedTab }: SidebarProps) {
                 {isOpen && <span>{theme === 'light' ? 'Dark' : 'Light'} Mode</span>}
               </button>
             </li>
-            <li>
+            <li className="py-2">
               <button
-                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black ${
+                className={`flex items-center gap-4 w-full text-gray-700 hover:text-black ${
                   isOpen ? "" : "justify-center"
                 }`}
               >
@@ -101,9 +95,9 @@ export default function Sidebar({ selectedTab, setSelectedTab }: SidebarProps) {
               </button>
             </li>
 
-            <li>
+            <li className="py-2">
               <button
-                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black ${
+                className={`flex items-center gap-4 w-full text-gray-700 hover:text-black ${
                   isOpen ? "" : "justify-center"
                 }`}
               >

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from "next/link";
+import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useAuth } from '../context/AuthContext';
 import Cookies from 'js-cookie';
@@ -13,7 +13,7 @@ export default function LoginForm() {
   const [passwordType, setPasswordType] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth(); // Changed from setTokens to login
+  const { login } = useAuth();
 
   const togglePasswordType = () => {
     setPasswordType((prev) => (prev === "password" ? "text" : "password"));
@@ -37,14 +37,11 @@ export default function LoginForm() {
       const data = await response.json();
   
       if (response.ok) {
-        // Store tokens in cookies
         Cookies.set('auth_token', data.auth_token, { expires: 1 });
         Cookies.set('id_token', data.id_token, { expires: 1 });
         
-        // Use login instead of setTokens
         login(data.auth_token, data.id_token);
         
-        // Redirect to /brand
         router.push("/brand");
       } else {
         alert(data.error || "Login failed");
@@ -59,70 +56,30 @@ export default function LoginForm() {
   
   return (
     <div className="flex min-h-screen">
-      {/* Left side with image */}
-      <div className="hidden md:block md:w-1/2 bg-blue-100 dark:bg-gray-800 relative">
-        <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div className="relative w-full h-full">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg">
-              {/* Grid overlay similar to original design */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="grid grid-cols-12 h-full">
-                  {Array(144)
-                    .fill(0)
-                    .map((_, i) => (
-                      <div key={i} className="border border-white/10"></div>
-                    ))}
-                </div>
-              </div>
-              
-              <div className="relative z-10 flex flex-col justify-center items-center p-12 text-white h-full">
-                <div className="bg-white rounded-full p-3 mb-8">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                  </svg>
-                </div>
-                <h1 className="text-5xl font-bold mb-6">Unlock Your Project Performance</h1>
-                <p className="text-xl opacity-90 text-center">
-                  You will never know everything.<br />
-                  But you will know more...
-                </p>
-                
-                <div className="absolute bottom-12 left-0 right-0 flex justify-center">
-                  <button className="flex items-center bg-white/10 hover:bg-white/20 rounded-full px-6 py-3 transition duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Watch Demo
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Left side with logo and tagline */}
+      <div className="hidden md:block md:w-1/2 bg-black relative">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+          <div className="relative w-64 h-64 mb-8">
+            <Image
+              src="/artha-manta-logo-white.png"
+              alt="Artha Manta Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
+          <h2 className="text-2xl text-white text-center font-light">
+            Simplifying digital commerce
+          </h2>
         </div>
       </div>
       
-      {/* Right side - login form with updated UI */}
+      {/* Right side - simplified login form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md dark:bg-black">
-          <Link href="/login" className="inline-block"> {/* Changed from "/" to "/login" */}
-            <div className="bg-purple-600 rounded-full p-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-              </svg>
-            </div>
-          </Link>
-          
-          <div className="2xl:mt-8 mt-6 2xl:text-3xl text-2xl font-bold text-gray-900 dark:text-white">
-            Hey, Hello 👋
-          </div>
-          <div className="2xl:text-lg text-base text-gray-600 2xl:mt-2 leading-6 dark:text-white">
-            Enter the information you entered while registering.
-          </div>
-          
-          <form onSubmit={handleSubmit} className="mt-5 2xl:mt-7">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="mb-2 font-medium text-gray-600 dark:text-white">
+              <label htmlFor="email" className="block mb-2 font-medium text-gray-600 dark:text-white">
                 Email
               </label>
               <input
@@ -137,7 +94,7 @@ export default function LoginForm() {
               />
             </div>
             
-            <div className="mt-3.5">
+            <div>
               <div className="flex items-center justify-between mb-2">
                 <label htmlFor="password" className="font-medium text-gray-600 dark:text-white">
                   Password
@@ -175,17 +132,15 @@ export default function LoginForm() {
               </div>
             </div>
             
-            <div className="mt-5 mb-8 flex flex-wrap gap-2">
-              <div className="flex-1 flex items-center gap-1.5">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                />
-                <label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer dark:text-white">
-                  Remember me
-                </label>
-              </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="remember-me" className="text-sm text-gray-600 cursor-pointer dark:text-white">
+                Remember me
+              </label>
             </div>
             
             <button
@@ -197,8 +152,6 @@ export default function LoginForm() {
               {isLoading ? "Signing In..." : "Sign In"}
             </button>
           </form>
-          
-          
         </div>
       </div>
     </div>

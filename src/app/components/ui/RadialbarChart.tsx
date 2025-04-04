@@ -4,14 +4,13 @@ const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 // Import types from 'react-apexcharts' for type safety
 import { ApexOptions } from 'apexcharts';
-// import { useState } from "react";
 
 type BasicRadialBarProps = {
-  series: number[]; // Array of progress values for each brand
+  series: number[];
   height: number;
-  labels?: string[]; // Brand names or identifiers (optional for combined chart)
-  combined?: boolean; // Flag to determine whether to show the combined chart or individual charts
-  hollowSize?: string; // Allow custom hollow size
+  labels?: string[];
+  combined?: boolean;
+  hollowSize?: string;
 };
 
 const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels, combined, hollowSize }) => {
@@ -26,7 +25,7 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
         startAngle: -90,
         endAngle: 90,
         hollow: {
-          size: hollowSize ,
+          size: hollowSize,
         },
         track: {
           background: "#e7e7e7",
@@ -36,16 +35,38 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
           name: {
             show: true,
             fontSize: "16px",
-            color: "#888",
+            color: "#FFFFFF",
             offsetY: -10,
           },
           value: {
             show: true,
             fontSize: "18px",
-            color: "#333",
+            color: "#FFFFFF",
+            formatter: function(val: number) {
+              return val.toFixed(1) + "%";
+            }
           },
         },
       },
+    },
+    tooltip: {
+      enabled: !combined, // Only enable tooltip for non-combined chart
+      theme: "dark",
+      y: {
+        formatter: function(val: number) {
+          return val.toFixed(1) + "%";
+        },
+      },
+      style: {
+        fontSize: '14px',
+      },
+      custom: function({ series, seriesIndex, w }) {
+        const label = w.globals.labels[seriesIndex];
+        const color = w.config.colors[seriesIndex];
+        return '<div class="custom-tooltip" style="background: ' + color + '; padding: 6px 12px; border-radius: 4px;">' +
+          '<span style="color: #FFFFFF; font-weight: 500;">' + label + ': ' + series[seriesIndex].toFixed(1) + '%</span>' +
+          '</div>';
+      }
     },
     colors: combined
       ? ["#2196F3"]
@@ -80,7 +101,6 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
               display: "inline-flex",
               alignItems: "center",
               margin: "0 10px",
-             
             }}
           >
             <span
@@ -93,7 +113,7 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
                 marginRight: "5px",
               }}
             ></span>
-             <span className="text-black dark:text-white" style={{ fontSize: "16px" }}>{label}</span>
+            <span className="text-black dark:text-white" style={{ fontSize: "16px" }}>{label}</span>
           </div>
         ))}
     </div>

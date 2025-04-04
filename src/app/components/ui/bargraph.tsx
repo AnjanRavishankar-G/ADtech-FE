@@ -42,8 +42,14 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
         colors: 'var(--label-color)', // Use CSS variable for dynamic color
       },
     },
-  
-    
+    tooltip: {
+      y: {
+        formatter: function(value: number) {
+          // Format number to Indian system (e.g., 20,60,205)
+          return value.toLocaleString('en-IN');
+        }
+      }
+    },
     responsive: [
       {
         breakpoint: responsiveBreakpoint,

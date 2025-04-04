@@ -18,10 +18,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { createAuthenticatedFetch } from '../../utils/api';
 import Cookies from 'js-cookie';
 
+// Update the CampaignData type to match the API response
 type CampaignData = {
   SN: number;
-  Campaign: string;        // Changed from campaignName
-  'Campaign Type': string; // Changed from campaignType
+  campaignName: string;        // Changed to match API
+  campaignType: string;        // Changed to match API
+  CampaignId: number;
+  adGroupId: number;
   Sales: number;
   Spend: number;
   Goal: number;
@@ -91,11 +94,13 @@ function CampaignContent() {
       const queryParams = new URLSearchParams();
       if (startDate) queryParams.append('start_date', startDate);
       if (endDate) queryParams.append('end_date', endDate);
-      if (selectedBrand) queryParams.append('brand', selectedBrand);
+      if (selectedBrand) queryParams.append('Brand', selectedBrand); // Changed 'brand' to 'Brand'
 
       const url = `${backendURL}/report/campaign_level_table${
         queryParams.toString() ? `?${queryParams.toString()}` : ''
       }`;
+      
+      console.log('Fetching URL:', url); // Debug log
       
       const response = await fetchWithAuth(url, {
         mode: 'cors',
@@ -127,7 +132,7 @@ function CampaignContent() {
       }
       throw error;
     }
-  }, [selectedBrand, fetchWithAuth, router]); // Add dependencies here
+  }, [selectedBrand, fetchWithAuth, router]);
 
   // Modify the first useEffect
   useEffect(() => {
@@ -202,7 +207,7 @@ function CampaignContent() {
     .sort((a, b) => b.Sales - a.Sales)
     .slice(0, 5);
 
-  const top5BrandNames = top5Campaigns.map(campaign => campaign.Campaign);
+  const top5BrandNames = top5Campaigns.map(campaign => campaign.campaignName);
   const top5BrandSalesData = top5Campaigns.map(campaign => campaign.Sales);
 
   // Extract the top 5 campaigns based on spend
@@ -210,7 +215,7 @@ const top5CampaignsBySpend = [...campaignData]
 .sort((a, b) => b.Spend - a.Spend)
 .slice(0, 5);
 
-const top5SpendBrandNames = top5CampaignsBySpend.map(campaign => campaign.Campaign);
+const top5SpendBrandNames = top5CampaignsBySpend.map(campaign => campaign.campaignName);
 const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
 
   
@@ -292,13 +297,13 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableCell className="rounded-l-lg">{campaign.SN}</TableCell>
                   <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
                     <Link 
-                      href={`/ad_details?campaign=${encodeURIComponent(campaign.Campaign)}`}
+                      href={`/ad_details?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(campaign.campaignName)}`}
                       className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
                     >
-                      {campaign.Campaign}
+                      {campaign.campaignName}
                     </Link>
                   </TableCell>
-                  <TableCell>{campaign['Campaign Type']}</TableCell>
+                  <TableCell>{campaign.campaignType}</TableCell>
                   <TableCell>{campaign.Sales?.toLocaleString() || '-'}</TableCell>
                   <TableCell>{campaign.Spend?.toLocaleString() || '-'}</TableCell>
                   <TableCell>{campaign.Goal?.toLocaleString() || '-'}</TableCell>
@@ -324,7 +329,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableBody>
                     {top5Campaigns.map((campaign) => (
                       <TableRow key={campaign.SN}>
-                        <TableCell className="w-1/2">{campaign.Campaign}</TableCell>
+                        <TableCell className="w-1/2">{campaign.campaignName}</TableCell>
                         <TableCell className="w-1/2">{campaign.Sales?.toLocaleString() || '-'}</TableCell>
                       </TableRow>
                     ))}
@@ -353,7 +358,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                   <TableBody>
                     {top5Campaigns.map((campaign) => (
                       <TableRow key={campaign.SN}>
-                        <TableCell className="w-1/2">{campaign.Campaign}</TableCell>
+                        <TableCell className="w-1/2">{campaign.campaignName}</TableCell>
                         <TableCell className="w-1/2">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
                       </TableRow>
                     ))}
