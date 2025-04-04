@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Search, Loader2, AlertCircle } from "lucide-react";
 import Layout from "../components/ui/Layout";
+import Cookies from 'js-cookie';
 
 type AmazonProductData = {
   asin: string;
@@ -14,16 +15,16 @@ type AmazonProductData = {
   rating: string;
   review_count: string;
   sellers: string[];
-  description: string;
+  description?: string; // Make description optional
 };
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 async function fetchProductData(asin: string) {
   try {
-    const res = await fetch(`${backendURL}/amazon_scraping/${asin}`, { cache: "no-store",
+    const res = await fetch(`${backendURL}/amazon-scraping/${asin}`, { cache: "no-store",
       headers: {
-        'Authorization':  process.env.NEXT_PUBLIC_AUTH_TOKEN || '',
-        'Content-Type': 'application/json'
+        'Authorization':  `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json'  
       }
      });
     if (!res.ok) throw new Error("Failed to fetch product data");
@@ -122,12 +123,18 @@ export default function AmazonProductSearch() {
           </div>
           <div className="mb-3 border p-2 rounded bg-gray-50 dark:bg-gray-900">
             <h3 className="font-medium mb-1 text-gray-800 dark:text-white">Description</h3>
-            <p
-              className="text-gray-700 dark:text-white text-sm overflow-hidden line-clamp-5 cursor-pointer"
-              onClick={() => setShowFullDescription(!showFullDescription)}
-            >
-              {showFullDescription ? productData.description : `${productData.description.slice(0, 100)}... Read more`}
-            </p>
+            {productData.description ? (
+              <p
+                className="text-gray-700 dark:text-white text-sm overflow-hidden line-clamp-5 cursor-pointer"
+                onClick={() => setShowFullDescription(!showFullDescription)}
+              >
+                {showFullDescription 
+                  ? productData.description 
+                  : `${productData.description.slice(0, 100)}... Read more`}
+              </p>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No description available</p>
+            )}
           </div>
           <Link
             href={productData.url}

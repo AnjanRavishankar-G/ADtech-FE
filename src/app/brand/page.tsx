@@ -58,7 +58,7 @@ async function fetchUniqueBrandTargetData() {
     console.log('Fetching brand target data...');
     const userRole = Cookies.get('id_token'); // Get the role from id_token
     
-    const response = await fetchWithAuth(`${backendURL}/report/real_brand_table`, {
+    const response = await fetchWithAuth(`${backendURL}/report/brand_level_table`, {
       mode: 'cors',
       credentials: 'omit',
       headers: {
