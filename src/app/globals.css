@@ -12,16 +12,41 @@ body.light {
   --background: #f1f4f5;
   --foreground: #171717;
   --text-color: #000000;
-  --border-color: #333; /* Darker border in light mode */
+  --border-color: #333;
+  /* Darker border in light mode */
   --border-thickness: 2px;
 }
 
 body.dark {
-  --background: #1e1e1e;
-  --foreground: #1c1c1c;
-  --text-color: #ffffff;
-  --border-color: #888; /* Lighter border in dark mode */
+  /* Base colors */
+  --background: #121212;
+  /* Material Design dark theme background */
+  --foreground: #1e1e1e;
+  /* Slightly lighter for contrast */
+  --surface-1: #242424;
+  /* First elevation level */
+  --surface-2: #2a2a2a;
+  /* Second elevation level */
+
+  /* Text colors */
+  --text-primary: #e0e0e0;
+  /* Main text - slightly off-white */
+  --text-secondary: #a0a0a0;
+  /* Secondary text */
+  --text-tertiary: #6c6c6c;
+  /* Disabled/helper text */
+
+  /* Border and separation */
+  --border-color: rgba(255, 255, 255, 0.12);
   --border-thickness: 1px;
+
+  /* Brand colors (desaturated) */
+  --primary: #bb86fc;
+  /* Desaturated primary */
+  --error: #cf6679;
+  /* Desaturated error */
+  --success: #03dac6;
+  /* Desaturated success */
 }
 
 body {
@@ -76,17 +101,25 @@ body.light table td {
 
 /* Dark mode styles */
 body.dark table {
-  background-color: #1e1e1e;
+  background-color: var(--surface-1);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
 }
 
 body.dark table th {
-  background-color: #010101f7;
+  background-color: #1a1a1a;
+  /* Darker background for header */
   color: #ffffff;
+  border-color: var(--border-color);
+  font-weight: 600;
 }
 
 body.dark table td {
-  background-color: #1e1e1e;
-  color: #ffffff;
+  color: #e0e0e0;
+  /* Changed from var(--text-secondary) to lighter gray */
+  border-color: var(--border-color);
+  background-color: var(--surface-1);
+  /* Added explicit background */
 }
 
 /* Hover effects */
@@ -95,7 +128,9 @@ body.light table tr:hover {
 }
 
 body.dark table tr:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.02);
+  /* Reduced opacity */
+  transition: background-color 0.2s ease;
 }
 
 /* Alternate row styles */
@@ -107,6 +142,140 @@ body.dark table tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-h1, h2, h3, h4, h5, h6, p, span, div {
+/* Ensure text remains visible in dark mode */
+.dark {
+  color-scheme: dark;
+}
+
+/* Add this to ensure proper text color inheritance */
+.dark *,
+.dark *::before,
+.dark *::after {
+  color: #e0e0e0;
+}
+
+/* Specific override for sidebar text */
+.dark .sidebar-text {
+  color: #ffffff !important;
+}
+
+/* Sidebar toggle button styles */
+.sidebar-toggle {
+  background-color: #ffffff;
+  /* White background in both modes */
+  border-radius: 50%;
+  padding: 0.5rem;
+}
+
+.sidebar-toggle:hover {
+  background-color: #f5f5f5;
+  /* Light gray on hover */
+}
+
+/* Icon styles - keeping black in both modes */
+.menu-icon,
+.close-icon {
+  color: #000000 !important;
+  /* Force black color */
+  stroke: #000000 !important;
+  fill: #000000 !important;
+}
+
+.sidebar-toggle svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: #000000 !important;
+}
+
+/* Override dark mode styles for toggle button */
+.dark .sidebar-toggle {
+  background-color: #ffffff;
+  /* Keep white background in dark mode */
+}
+
+.dark .sidebar-toggle:hover {
+  background-color: #f5f5f5;
+}
+
+/* Override dark mode icon colors */
+.dark .menu-icon,
+.dark .close-icon,
+.dark .sidebar-toggle svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: #000000 !important;
+}
+
+/* Sidebar toggle specific styles */
+.sidebar-toggle-icon {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: #000000 !important;
+}
+
+/* Override any dark mode inheritance */
+.dark .sidebar-toggle-icon {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: #000000 !important;
+}
+
+/* Update card shadows for better dark mode appearance */
+.dark .shadow-2xl {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Visualization container hover effects */
+.dark .chart-container:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+/* Table container styles */
+.table-container {
+  background: rgba(255, 255, 255, 0.01);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Update card styles for brand and campaign pages */
+.dark .rounded-2xl {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove any remaining blue glows */
+.dark [class*="shadow"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.1);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
+}
+
+/* Remove any blue tints from dark mode backgrounds */
+.dark .bg-black {
+  background-color: #121212;
+}
+
+/* Update any remaining glow effects */
+.dark .dark\:shadow-\[-20px_-10px_30px_6px_rgba\(0\,0\,0\,0\.1\)\,_15px_10px_30px_6px_rgba\(45\,78\,255\,0\.15\)\] {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .dark\:shadow-\[-10px_-10px_30px_4px_rgba\(0\,0\,0\,0\.1\)\,_10px_10px_30px_4px_rgba\(45\,78\,255\,0\.15\)\] {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div {
   color: var(--text-color);
 }
