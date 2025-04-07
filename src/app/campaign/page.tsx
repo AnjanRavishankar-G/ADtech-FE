@@ -93,7 +93,7 @@ function CampaignContent() {
       if (endDate) queryParams.append('end_date', endDate);
       if (selectedBrand) queryParams.append('brand', selectedBrand);
 
-      const url = `${backendURL}/report/campaign_level_table${
+      const url = `${backendURL}/report/new_campaign_table${
         queryParams.toString() ? `?${queryParams.toString()}` : ''
       }`;
       
