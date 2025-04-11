@@ -1,9 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
-
-// Import types from 'react-apexcharts' for type safety
 import { ApexOptions } from 'apexcharts';
+import { useTheme } from '@/app/context/ThemeContext';
 
 type BasicRadialBarProps = {
   series: number[];
@@ -14,47 +13,53 @@ type BasicRadialBarProps = {
 };
 
 const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels, combined, hollowSize }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+
   const chartOptions: ApexOptions = {
     chart: {
       type: "radialBar",
       height: height,
+      foreColor: isDarkMode ? '#FFFFFF' : '#333333', // Set default text color
+      background: 'transparent',
     },
     plotOptions: {
       radialBar: {
-        offsetY: 0,
+        offsetY: combined ? 20 : 0, // Changed from -10 to 20 for combined view
         startAngle: -90,
         endAngle: 90,
         hollow: {
           size: hollowSize,
         },
         track: {
-          background: "#e7e7e7",
+          background: isDarkMode ? '#404040' : '#e7e7e7',
           strokeWidth: "97%",
         },
         dataLabels: {
           name: {
             show: true,
-            fontSize: "16px",
-            color: "#FFFFFF",
-            offsetY: -10,
+            fontSize: '16px',
+            color: isDarkMode ? '#FFFFFF' : '#333333',
+            offsetY: combined ? 70 : 20, // Changed from 40 to 60 for combined view
           },
           value: {
-            show: true,
-            fontSize: "18px",
-            color: "#FFFFFF",
+            show: combined,
+            fontSize: '24px',
+            color: isDarkMode ? '#FFFFFF' : '#333333',
+            offsetY: combined ? 20 : 20, // Changed from 0 to 20
             formatter: function(val: number) {
-              return val.toFixed(1) + "%";
+              return Math.round(val) + '%';
             }
           },
         },
       },
     },
     tooltip: {
-      enabled: !combined, // Only enable tooltip for non-combined chart
-      theme: "dark",
+      enabled: !combined,
+      theme: isDarkMode ? 'dark' : 'light',
       y: {
         formatter: function(val: number) {
-          return val.toFixed(1) + "%";
+          return Math.round(val) + "%";
         },
       },
       style: {
@@ -63,8 +68,9 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
       custom: function({ series, seriesIndex, w }) {
         const label = w.globals.labels[seriesIndex];
         const color = w.config.colors[seriesIndex];
-        return '<div class="custom-tooltip" style="background: ' + color + '; padding: 6px 12px; border-radius: 4px;">' +
-          '<span style="color: #FFFFFF; font-weight: 500;">' + label + ': ' + series[seriesIndex].toFixed(1) + '%</span>' +
+        const value = Math.round(series[seriesIndex]);
+        return '<div class="custom-tooltip" style="background: ' + color + '; padding: 6px 12px; border-radius: 4px; opacity: 0.9;">' +
+          '<span style="color: #FFFFFF; font-weight: 500;">' + label + ': ' + value + '%</span>' +
           '</div>';
       }
     },
@@ -73,7 +79,7 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
       : ["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0", "#2a40f1", "#2af1c7", "#79f728"],
     series: combined
       ? [Math.round(series.reduce((acc, val) => acc + val, 0) / series.length)]
-      : series,
+      : series.map(val => Math.round(val)),
     labels: combined ? ["Overall Progress"] : labels,
     responsive: [
       {
@@ -87,35 +93,22 @@ const BasicRadialBar: React.FC<BasicRadialBarProps> = ({ series, height, labels,
     ],
   };
 
-  const colors = chartOptions.colors || [];
-
   return (
-    <div>
+    <div className="text-inherit">
       <ApexCharts options={chartOptions} series={chartOptions.series} type="radialBar" height={height} />
-      
-      {!combined &&
-        labels?.map((label, index) => (
-          <div
-            key={index}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              margin: "0 10px",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: colors[index],
-                marginRight: "5px",
-              }}
-            ></span>
-            <span className="text-black dark:text-white" style={{ fontSize: "16px" }}>{label}</span>
-          </div>
-        ))}
+      {!combined && (
+        <div className="flex flex-wrap justify-center mt-4 gap-4">
+          {labels?.map((label, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: chartOptions.colors?.[index] }}
+              ></div>
+              <span className="text-inherit">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

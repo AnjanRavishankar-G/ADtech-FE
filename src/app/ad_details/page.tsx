@@ -14,6 +14,9 @@ import BasicPieChart from "@/app/components/ui/bargraph";
 import Footer from "@/app/components/ui/footer";
 import Layout from "@/app/components/ui/Layout";
 import { useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const SalesPopup = dynamic(() => import('@/app/components/SalesPopup'), { ssr: false });
 
 type CampaignData = {
   SN: number;
@@ -85,6 +88,16 @@ function AdDetailsContent() {
   // State to manage date range picker visibility
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
+  const [selectedSales, setSelectedSales] = useState<{
+    isOpen: boolean;
+    value: number;
+    adGroup: string;
+  }>({
+    isOpen: false,
+    value: 0,
+    adGroup: ''
+  });
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -141,29 +154,42 @@ function AdDetailsContent() {
         <h1 className="text-2xl font-bold mb-4 text-center">Ad Groups</h1>
 
         <div className="flex items-center gap-4 mb-6">
-          {/* Button to open the Date Range Picker */}
+          {/* Date Range Picker Button */}
           <button 
             onClick={handleButtonClick}
-            className="text-Black bg-white shadow-2xl hover:bg-gray-900 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:bg-black dark:text-white"
+            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:bg-black dark:text-white"
           >
             {isDatePickerOpen ? "Close Date Picker" : "Select Date Range"}
           </button>
 
-          <div className="text-Black bg-white shadow-2xl font-medium rounded-lg text-sm px-4 py-2 dark:text-white dark:bg-black flex gap-4">
-            <span>Brand: {selectedBrand || 'N/A'}</span>
-            <span>Campaign: {selectedCampaign || 'N/A'}</span>
-          </div>
-        </div>
+          {/* Brand Button */}
+          <Link
+            href="/brand"
+            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:text-white dark:bg-black transition-colors"
+          >
+            <button className="flex items-center">
+              Brand: {selectedBrand || 'N/A'}
+            </button>
+          </Link>
 
-        {isDatePickerOpen && (
-          <div className="mb-6">
+          {/* Campaign Button */}
+          <Link
+            href={`/campaign?brand=${encodeURIComponent(selectedBrand || '')}`}
+            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:text-white dark:bg-black transition-colors"
+          >
+            <button className="flex items-center">
+              Campaign: {selectedCampaign || 'N/A'}
+            </button>
+          </Link>
+
+          {isDatePickerOpen && (
             <DateRangePicker onDateRangeChange={(start, end) => {
               setStartDate(start);
               setEndDate(end);
               setIsDatePickerOpen(false);
             }} />
-          </div>
-        )}
+          )}
+        </div>
         
         <div className="shadow-2xl p-4 bg-white rounded-2xl overflow-x-auto max-h-96 dark:bg-black mt-4">
           <Table className="border border-default-100 rounded-lg">
@@ -187,7 +213,7 @@ function AdDetailsContent() {
                 <TableRow key={campaign.SN} className="text-center">
                   <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
                     <Link 
-                      href={`/adGroupDetails`} 
+                      href={`/adGroupDetails?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(selectedCampaign || '')}&adGroup=${encodeURIComponent(campaign.adGroup)}`}
                       className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
                     >
                       {campaign.adGroup}
@@ -196,7 +222,16 @@ function AdDetailsContent() {
                   <TableCell className="border border-default-300">{campaign.adFormat}</TableCell>
                   <TableCell className="border border-default-300">{campaign.SKU}</TableCell>
                   <TableCell className="border border-default-300">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
-                  <TableCell className="border border-default-300">{campaign.Sales?.toLocaleString() || '-'}</TableCell>
+                  <TableCell 
+                    className="border border-default-300 cursor-pointer hover:bg-slate-600/20 transition-colors"
+                    onClick={() => setSelectedSales({
+                      isOpen: true,
+                      value: campaign.Sales || 0,
+                      adGroup: campaign.adGroup
+                    })}
+                  >
+                    {campaign.Sales?.toLocaleString() || '-'}
+                  </TableCell>
                   <TableCell className="border border-default-300">{campaign.ACOS}</TableCell>
                   <TableCell className="border border-default-300">{campaign.ROAS}</TableCell>
                   <TableCell className="border border-default-300">{campaign.Impressions?.toLocaleString() || '-'}</TableCell>
@@ -208,61 +243,70 @@ function AdDetailsContent() {
             </TableBody>
           </Table>
         </div>
-        <div className=" p-1 mt-5 flex gap-4">
-          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-2xl  dark:bg-black">
-            <h1 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Ad Groups by Spend</h1>
-            <div className="overflow-x-auto max-h-96 p-1">
-              <Table className="border border-default-100 rounded-lg">
-                <TableHeader className="bg-black text-white top-0 z-10">
-                  <TableRow>
-                    <TableHead>Ad Group</TableHead>
-                    <TableHead>Spends</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="text-white">
-                  {topSpend.slice(0, 5).map((campaign) => (
-                    <TableRow key={campaign.SN} className="text-center">
-                      <TableCell className="w-1/2">{campaign.adGroup}</TableCell>
-                      <TableCell className="w-1/2">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
+        <div className="mt-12 flex gap-4 rounded-2xl">
+          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
+            <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Ad Groups by Sales</h2>
+            <div className="flex flex-col">
+              <div className="overflow-x-auto mb-4">
+                <Table className="min-w-full border text-center">
+                  <TableHeader className="bg-black text-white top-0 z-10">
+                    <TableRow>
+                      <TableHead>Ad Group</TableHead>
+                      <TableHead>Sales</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div>
-              <BasicPieChart 
-                series={spendSeries} 
-                height={350}
-                labels={spendLabels}
-              />
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {topSales.map((campaign) => (
+                      <TableRow key={campaign.SN}>
+                        <TableCell className="w-1/2">{campaign.adGroup}</TableCell>
+                        <TableCell className="w-1/2">{campaign.Sales?.toLocaleString() || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="h-[250px]">
+                <BasicPieChart 
+                  series={salesSeries} 
+                  height={800}
+                  labels={salesLabels}
+                  colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}
+                  width={250}
+                />
+              </div>
+            </div>     
           </div>
-          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-2xl  dark:bg-black">
-            <h1 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Ad Groups by Sales</h1>
-            <div className="overflow-x-auto max-h-96 p-1">
-              <Table className="border border-default-100 rounded-lg">
-                <TableHeader className="bg-black text-white top-0 z-10">
-                  <TableRow>
-                    <TableHead>Ad Group</TableHead>
-                    <TableHead>Sales</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="text-white">
-                  {topSales.slice(0, 5).map((campaign) => (
-                    <TableRow key={campaign.SN} className="text-center">
-                      <TableCell className="w-1/2">{campaign.adGroup}</TableCell>
-                      <TableCell className="w-1/2">{campaign.Sales?.toLocaleString() || '-'}</TableCell>
+
+          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+            <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Ad Groups by Spends</h2>
+            <div className="flex flex-col">
+              <div className="overflow-x-auto mb-4">
+                <Table className="min-w-full border text-center">
+                  <TableHeader className="bg-black text-white top-0 z-10">
+                    <TableRow>
+                      <TableHead>Ad Group</TableHead>
+                      <TableHead>Spends</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div>
-              <BasicPieChart 
-                series={salesSeries} 
-                height={350}
-                labels={salesLabels}
-              />
+                  </TableHeader>
+                  <TableBody>
+                    {topSpend.map((campaign) => (
+                      <TableRow key={campaign.SN}>
+                        <TableCell className="w-1/2">{campaign.adGroup}</TableCell>
+                        <TableCell className="w-1/2">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+                <div className="h-[300px]">
+                <BasicPieChart 
+                  series={spendSeries} 
+                  height={800}
+                  labels={spendLabels}
+                  colors={["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]}
+                  width={300}
+                />
+                </div>
             </div>
           </div>
         </div>
@@ -270,6 +314,12 @@ function AdDetailsContent() {
           <Footer />
         </div>
       </div>
+      <SalesPopup
+        isOpen={selectedSales.isOpen}
+        onClose={() => setSelectedSales(prev => ({ ...prev, isOpen: false }))}
+        adGroup={selectedSales.adGroup}
+        currentSales={selectedSales.value}
+      />
     </Layout>
   );
 }

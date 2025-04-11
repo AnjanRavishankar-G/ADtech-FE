@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,12 +10,30 @@
 }
 
 body.light {
-  --background: #f1f4f5;
-  --foreground: #171717;
-  --text-color: #000000;
-  --border-color: #333;
-  /* Darker border in light mode */
-  --border-thickness: 2px;
+  /* Base colors - softer whites */
+  --background: #f5f7fa;
+  /* Even softer background */
+  --foreground: #edf2f7;
+  /* Softer foreground */
+  --text-color: #2d3748;
+  /* Softer black for text */
+  --border-color: #e2e8f0;
+  /* Softer border */
+  --border-thickness: 1px;
+
+  /* Text colors for better readability */
+  --text-primary: #2d3748;
+  /* Less harsh than pure black */
+  --text-secondary: #4a5568;
+  /* Medium gray for secondary text */
+  --text-tertiary: #718096;
+  /* Light gray for tertiary text */
+
+  /* Surface colors */
+  --surface-1: #f8fafc;
+  /* Softer surface */
+  --surface-2: #f1f5f9;
+  /* Even softer surface */
 }
 
 body.dark {
@@ -82,21 +101,25 @@ table td {
 
 /* Light mode styles */
 body.light table {
-  background-color: #ffffff;
+  background-color: #f8f9fa;
+  /* Softer white */
   border-radius: 5px;
-
 }
 
 body.light table th {
-  background-color: #f1f4f5;
-  color: #010101;
-  border: 2px solid var(--border-color);
+  background-color: #edf2f7;
+  /* Softer header background */
+  color: #2d3748;
+  /* Softer text color */
+  border: 1px solid var(--border-color);
 }
 
 body.light table td {
-  background-color: #ffffff;
-  color: #010101;
-  border: 2px solid var(--border-color);
+  background-color: #f8f9fa;
+  /* Softer cell background */
+  color: #4a5568;
+  /* Softer text color */
+  border: 1px solid var(--border-color);
 }
 
 /* Dark mode styles */
@@ -278,4 +301,164 @@ p,
 span,
 div {
   color: var(--text-color);
+}
+
+/* Login page styles - always dark regardless of theme */
+.login-container {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+.login-card {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.login-input {
+  background-color: #2a2a2a !important;
+  color: #e0e0e0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.login-input::placeholder {
+  color: #6c6c6c !important;
+}
+
+/* Force dark mode styles for login page elements */
+.login-container label,
+.login-container h2,
+.login-container p,
+.login-container span {
+  color: #e0e0e0 !important;
+}
+
+/* Override Tailwind classes for login page */
+.login-container .text-gray-600 {
+  color: #e0e0e0 !important;
+}
+
+.login-container .bg-black {
+  background-color: #121212 !important;
+}
+
+/* Style the eye icon in password input */
+.login-container .text-gray-500 {
+  color: #a0a0a0 !important;
+}
+
+/* Style the remember me checkbox */
+.login-container .border-gray-300 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Style the sign in button */
+.login-container .bg-purple-600 {
+  background-color: #bb86fc !important;
+}
+
+.login-container .hover\:bg-purple-700:hover {
+  background-color: #9d4edd !important;
+}
+
+.login-container .disabled\:bg-purple-400:disabled {
+  background-color: rgba(187, 134, 252, 0.6) !important;
+}
+
+/* Style the forgot password link */
+.login-container .text-purple-600 {
+  color: #bb86fc !important;
+}
+
+.login-container .hover\:text-purple-500:hover {
+  color: #9d4edd !important;
+}
+
+/* Add subtle transitions */
+.login-container * {
+  transition: all 0.2s ease !important;
+}
+
+/* Remove any theme-based overrides */
+.light .login-container,
+.dark .login-container,
+.login-container {
+  color-scheme: dark !important;
+}
+
+/* Update card shadows for light mode */
+.shadow-md {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Visualization container hover effects for light mode */
+.chart-container:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transform: none;
+}
+
+/* Update any remaining glow effects for light mode */
+[class*="shadow"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.05);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
+}
+
+/* Add transitions for smoother theme switching */
+.chart-container,
+.radial-chart,
+.pie-chart {
+  transition: all 0.3s ease;
+}
+
+/* Override ApexCharts tooltip styles */
+.apexcharts-tooltip {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #ffffff !important;
+}
+
+.apexcharts-tooltip-title {
+  background: rgba(0, 0, 0, 0.85) !important;
+  color: #ffffff !important;
+}
+
+/* Sidebar specific styles */
+.sidebar-dropdown-item {
+  @apply flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white rounded-lg transition-colors;
+}
+
+.sidebar-item {
+  @apply flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 transition-colors;
+}
+
+.sidebar-dropdown {
+  @apply mt-2 ml-6 space-y-2;
+}
+
+/* Fix sidebar icon colors in dark mode */
+.dark .sidebar-icon {
+  @apply text-gray-300;
+}
+
+/* Smooth transitions */
+.sidebar-transition {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Improved dropdown animations */
+.dropdown-enter {
+  @apply transition-all duration-200 opacity-0 transform -translate-y-2;
+}
+
+.dropdown-enter-active {
+  @apply opacity-100 transform translate-y-0;
+}
+
+.dropdown-exit {
+  @apply transition-all duration-200 opacity-100 transform translate-y-0;
+}
+
+.dropdown-exit-active {
+  @apply opacity-0 transform -translate-y-2;
 }

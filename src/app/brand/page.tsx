@@ -219,19 +219,19 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
 
             <div className="p-5">
               <h1 className="text-xl font-bold mb-7 text-center">Brands</h1>
-              <div className="flex flex-col md:flex-row flex-wrap justify-start gap-5 bg-[#f1f4f5] dark:bg-[#1e1e1e] rounded-2xl">
+              <div className="flex flex-col md:flex-row flex-wrap justify-start gap-5 bg-[#f8f9fa] dark:bg-[#1e1e1e] rounded-2xl">
                 {/* Combined Radial Chart */}
-                <div className="flex-1 md:w-1/3 lg:w-1/4 h-[350px] text-center bg-white shadow-lg rounded-2xl p-4 border dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+                <div className="flex-1 md:w-1/3 lg:w-1/4 h-[350px] text-center bg-[#ffffff] shadow-md rounded-2xl p-4 border border-gray-100 dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
                   <BasicRadialBar
                     height={350}
                     series={[combinedProgress]} // Combined progress for all brands
                     combined={true}
-                    hollowSize="51%"
+                    hollowSize="55%"
                   />
                 </div>
 
                 {/* Individual Radial Chart with Multiple Brands */}
-                <div className="flex-1 md:w-1/3 lg:w-1/4 h-[350px] text-center bg-white shadow-lg rounded-2xl p-4 border dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+                <div className="flex-1 md:w-1/3 lg:w-1/4 h-[350px] text-center bg-[#ffffff] shadow-md rounded-2xl p-4 border border-gray-100 dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
                   <BasicRadialBar 
                     height={550}
                     series={top5BrandsProgress} // Multiple progress for individual brands
@@ -240,12 +240,14 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
                   /> 
                 </div>
                   {/* Individual Radial Chart with Multiple Brands */}
-                    <div className="flex-1 h-[350px] text-center align-content: center; bg-white shadow-lg rounded-2xl p-4 border dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+                    <div className="flex-1 h-[350px] text-center align-content: center; bg-[#ffffff] shadow-md rounded-2xl p-4 border border-gray-100 dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
                       <BasicPieChart 
                       series={top5SalesData} 
                       height={550}
                       labels={top5SalesBrandNames}
-                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}/>  
+                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}
+                      width={50} // Added width constraint
+                      />  
                     </div> 
               </div>
               
@@ -298,7 +300,9 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
                     <TableCell>{brand.DailySales?.toLocaleString() || '-'}</TableCell>
                     <TableCell>{brand.Target?.toLocaleString() || '-'}</TableCell>
                     <TableCell>
-                      {brand.Target > 0 ? ((brand.Target / brand.Goal) * 100).toFixed(2) : "0.00"}%
+                      {brand.Target > 0 
+                        ? Math.round((brand.Target / brand.Goal) * 100) 
+                        : "0"}%
                     </TableCell>
                   </TableRow>
                 ))}
@@ -309,63 +313,70 @@ const brandNamesTop5 = topBrandsBySales.map((brand) => brand.Brand);
               
             <div className="mt-12 flex gap-4 rounded-2xl">
               <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
-              {/* tablee for top 5 brands according to sales achived */}
-              <h2 className="text-2xl font-bold mb-4 mt-8 text-center ">Top 5 Brands Based on Sales Achieved</h2>
-              <div className="flex space-x-10 ">
-                <div className="flex-1 overflow-x-auto">
-                  <Table className="min-w-full border text-center">
-                    <TableHeader className="bg-black text-white top-0 z-10 ">
-                      <TableRow>
-                        <TableHead>Brand</TableHead>
-                        <TableHead>Sales Achieved (₹)</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topBrandsBySales.map((brand) => (
-                        <TableRow key={brand.Brand}>
-                          <TableCell className="w-1/3">{brand.Brand}</TableCell>
-                          <TableCell className="w-1/3">{brand.Target?.toLocaleString() || '-'}</TableCell>
+                <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Brands Based on Sales Achieved</h2>
+                <div className="flex flex-col">
+                  <div className="overflow-x-auto mb-4">
+                    <Table className="min-w-full border text-center">
+                      <TableHeader className="bg-black text-white top-0 z-10">
+                        <TableRow>
+                          <TableHead>Brand</TableHead>
+                          <TableHead>Sales Achieved (₹)</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <BasicPieChart 
-                        series={brandProgressDataTop5} 
-                        height={350}
-                        labels={brandNamesTop5}/>
-                </div>
-              </div>     
+                      </TableHeader>
+                      <TableBody>
+                        {topBrandsBySales.map((brand) => (
+                          <TableRow key={brand.Brand}>
+                            <TableCell className="w-1/3">{brand.Brand}</TableCell>
+                            <TableCell className="w-1/3">{brand.Target?.toLocaleString() || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="h-[280px]">
+                    <BasicPieChart 
+                      series={brandProgressDataTop5} 
+                      height={850}
+                      labels={brandNamesTop5}
+                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}
+                      width={280}
+                    />
+                  </div>
+                </div>     
               </div>
-            <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
-              <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Brands Based on Spends</h2>
-              <div className="flex space-x-10 ">
-                <div className="flex-1 overflow-x-auto">
-                  <Table className="min-w-full border border-blue-600 text-center">
-                    <TableHeader className="bg-black text-white top-0 z-10">
-                      <TableRow>
-                        <TableHead>Brand</TableHead>
-                        <TableHead>Spends (₹)</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topBrandsBySales.map((brand) => (
-                        <TableRow key={brand.Brand}>
-                          <TableCell className="w-1/3">{brand.Brand}</TableCell>
-                          <TableCell className="w-1/3">{brand.DailySales?.toLocaleString() || '-'}</TableCell>
+
+              <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+                <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Brands Based on Spends</h2>
+                <div className="flex flex-col">
+                  <div className="overflow-x-auto mb-4">
+                    <Table className="min-w-full border text-center">
+                      <TableHeader className="bg-black text-white top-0 z-10">
+                        <TableRow>
+                          <TableHead>Brand</TableHead>
+                          <TableHead>Spends (₹)</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {/* for pie chart */}
-                
-                        <BasicPieChart 
-                        series={brandProgressDataTop5} 
-                        height={350}
-                        labels={brandNamesTop5}/>
-                    
+                      </TableHeader>
+                      <TableBody>
+                        {topBrandsBySales.map((brand) => (
+                          <TableRow key={brand.Brand}>
+                            <TableCell className="w-1/3">{brand.Brand}</TableCell>
+                            <TableCell className="w-1/3">{brand.DailySales?.toLocaleString() || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="h-[280px]">
+                    <BasicPieChart 
+                      series={brandProgressDataTop5} 
+                      height={800}
+                      labels={brandNamesTop5}
+                      colors={["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]}
+                      width={280}
+                    />
+                  </div>
                 </div>
-              </div>  
-            </div>
+              </div>
             </div>
             </div>
             <div >

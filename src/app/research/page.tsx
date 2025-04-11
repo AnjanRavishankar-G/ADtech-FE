@@ -69,7 +69,7 @@ export default function AmazonProductSearch() {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="bg-white  p-4 rounded shadow-sm mb-4  dark:bg-black">
         <form onSubmit={handleSearch}>
-          <label htmlFor="asin" className="block font-medium mb-2 text-gray-800 dark:text-gray-200">Enter Product ASIN:</label>
+          <label htmlFor="asin" className="block font-medium mb-2 text-gray-800 dark:text-gray-200">Enter Competitor ASIN:</label>
           <div className="flex">
             <input
               type="text"

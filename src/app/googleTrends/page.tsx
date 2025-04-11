@@ -67,6 +67,17 @@ type QueryType = {
 type RelatedQueriesData = {
   [keyword: string]: QueryType;
 };
+
+// Add new types
+type CombinedData = {
+  interestData: TimeData[];
+  geoData: GeographicData;
+  queryData: RelatedQueriesData;
+};
+
+// First, add a type for the lowercase query types
+type QueryTypeLowerCase = 'rising' | 'top';
+
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // Update the keyword formatting function
@@ -129,9 +140,10 @@ async function fetchGeographicData(keywords: string[]) {
   }
 }
 
+// Update the fetchRelatedQueries function to properly handle the response
 async function fetchRelatedQueries(keywords: string[]) {
   try {
-    const keywordsParam = keywords.join(','); // Don't use formatKeywords here
+    const keywordsParam = keywords.join(',');
     console.log('Sending keywords for related queries:', keywordsParam);
 
     const response = await fetch(`${backendURL}/multi-query-related/${encodeURIComponent(keywordsParam)}`, {
@@ -143,21 +155,43 @@ async function fetchRelatedQueries(keywords: string[]) {
       credentials: 'omit'
     });
 
-    console.log('Related queries request URL:', response.url);
-    console.log('Response status:', response.status);
-
     if (!response.ok) {
-      const errorData = await response.json();
-      // Extract error message from the nested structure
-      const errorMessage = errorData.body ? JSON.parse(errorData.body).error : errorData.error;
-      throw new Error(errorMessage || `Failed to fetch related queries: ${response.status}`);
+      throw new Error(`Failed to fetch related queries: ${response.status}`);
     }
 
     const data = await response.json();
-    // If the response is wrapped in a body property, parse it
-    return data.body ? JSON.parse(data.body) : data;
+    // Return the data property which contains the actual query data
+    return data.data || {};
   } catch (error) {
     console.error("Error fetching related queries:", error);
+    throw error;
+  }
+}
+
+// Update the fetchAIAnalysis function
+async function fetchAIAnalysis(combinedData: CombinedData) {
+  try {
+    const response = await fetch(`${backendURL}/trend-analysis`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        interest_data: combinedData.interestData,
+        geographic_data: combinedData.geoData,
+        query_data: combinedData.queryData
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to fetch AI analysis: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.analysis;
+  } catch (error) {
+    console.error("Error fetching AI analysis:", error);
     throw error;
   }
 }
@@ -191,6 +225,11 @@ export default function GoogleTrendsDashboard() {
   const [isLoadingQuery, setIsLoadingQuery] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
 
+  // Add to existing state declarations
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   // Common settings
   const itemsPerPage = 5;
 
@@ -220,37 +259,57 @@ export default function GoogleTrendsDashboard() {
     
     setIsLoading(true);
     setError(null);
+    setAiAnalysis(null);
+    setAiError(null);
+    
+    // Set all loading states
+    setIsLoadingInterest(true);
+    setIsLoadingGeo(true);
+    setIsLoadingQuery(true);
     
     try {
-      // Load Interest Over Time data
-      setIsLoadingInterest(true);
-      const timeData = await fetchInterestOverTime(keys);
+      // Load all data in parallel
+      const [timeData, geoData, queryData] = await Promise.all([
+        fetchInterestOverTime(keys),
+        fetchGeographicData(keys),
+        fetchRelatedQueries(keys)
+      ]);
+
+      // Set individual data states
       setInterestData(timeData);
-      setInterestError(null); // Add this line to use setInterestError
-      setIsLoadingInterest(false);
-      
-      // Load Geographic Comparison data
-      setIsLoadingGeo(true);
-      const geoData = await fetchGeographicData(keys);
       setGeoData(geoData);
-      setGeoError(null); // Add this line to use setGeoError
-      setIsLoadingGeo(false);
-      
-      // Load Related Queries data
-      setIsLoadingQuery(true);
-      const queryData = await fetchRelatedQueries(keys);
       setQueryData(queryData);
-      setQueryError(null); // Add this line to use setQueryError
-      setIsLoadingQuery(false);
+
+      // Clear any previous errors
+      setInterestError(null);
+      setGeoError(null);
+      setQueryError(null);
+
+      // If all data is loaded successfully, fetch AI analysis
+      setIsLoadingAI(true);
+      const combinedData: CombinedData = {
+        interestData: timeData,
+        geoData: geoData,
+        queryData: queryData
+      };
+
+      const analysis = await fetchAIAnalysis(combinedData);
+      setAiAnalysis(analysis);
+      setAiError(null);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
-      // Set specific errors
+      setAiError(errorMessage);
       setInterestError(errorMessage);
       setGeoError(errorMessage);
       setQueryError(errorMessage);
     } finally {
       setIsLoading(false);
+      setIsLoadingAI(false);
+      setIsLoadingInterest(false);
+      setIsLoadingGeo(false);
+      setIsLoadingQuery(false);
     }
   };
 
@@ -341,22 +400,32 @@ export default function GoogleTrendsDashboard() {
     setQueryType(type);
   };
 
+  // Update the paginatedQueryData function
   const paginatedQueryData = (keyword: string) => {
-    // Add null checks and debug logging
-    console.log('Query data for keyword:', keyword, queryData[keyword]);
-    const keywordData = queryData[keyword]?.[queryType.toLowerCase() as "rising" | "top"];
-    if (!keywordData) {
-      console.log('No data found for:', keyword, queryType.toLowerCase());
+    const keywordData = queryData[keyword];
+    if (!keywordData) return [];
+    
+    const type = queryType.toLowerCase() as QueryTypeLowerCase;
+    const queryTypeData = keywordData[type];
+    if (!queryTypeData || !Array.isArray(queryTypeData)) {
+      console.log('No data found for:', keyword, type);
       return [];
     }
+    
     const startIndex = (queryCurrentPage - 1) * itemsPerPage;
-    return keywordData.slice(startIndex, startIndex + itemsPerPage);
+    return queryTypeData.slice(startIndex, startIndex + itemsPerPage);
   };
 
+  // Also update the queryTotalPages function
   const queryTotalPages = (keyword: string) => {
-    const keywordData = queryData[keyword]?.[queryType.toLowerCase() as "rising" | "top"];
+    const keywordData = queryData[keyword];
     if (!keywordData) return 1;
-    return Math.ceil(keywordData.length / itemsPerPage);
+    
+    const type = queryType.toLowerCase() as QueryTypeLowerCase;
+    const queryTypeData = keywordData[type];
+    if (!queryTypeData || !Array.isArray(queryTypeData)) return 1;
+    
+    return Math.ceil(queryTypeData.length / itemsPerPage);
   };
 
   const handleQueryPageChange = (newPage: number) => {
@@ -390,7 +459,7 @@ export default function GoogleTrendsDashboard() {
   };
 
   const downloadQueryCSV = (keyword: string) => {
-    const keywordData = queryData[keyword]?.[queryType.toLowerCase() as "rising" | "top"];
+    const keywordData = queryData[keyword]?.[queryType.toLowerCase() as QueryTypeLowerCase];
     if (!keywordData) return;
 
     // Prepare CSV string
@@ -440,21 +509,107 @@ export default function GoogleTrendsDashboard() {
     link.click();
   };
 
+  // Add AI Analysis Component
+  const AIAnalysisSection = () => {
+    if (isLoadingAI) {
+      return (
+        <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+            <div className="space-y-3">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (aiError) {
+      return (
+        <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+          <div className="text-red-500">Error loading AI analysis: {aiError}</div>
+        </div>
+      );
+    }
+
+    if (!aiAnalysis) {
+      return null;
+    }
+
+    // Function to clean and format the text
+    const formatAnalysisText = (text: string) => {
+      return text
+        .replace(/##/g, '') // Remove markdown headers
+        .replace(/\*\*/g, '') // Remove bold markers
+        .replace(/\*/g, '•') // Replace bullet points with proper bullet
+        .trim();
+    };
+
+    // Split the analysis into sections
+    const sections = aiAnalysis.split('\n\n').map(section => {
+      // Check if it's a heading
+      if (section.includes(':')) {
+        const [title, ...content] = section.split(':');
+        return {
+          title: formatAnalysisText(title),
+          content: formatAnalysisText(content.join(':'))
+        };
+      }
+      return {
+        content: formatAnalysisText(section)
+      };
+    });
+
+    return (
+      <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+          AI Trend Analysis
+        </h2>
+        
+        <div className="space-y-6">
+          {sections.map((section, index) => (
+            <div key={index} className="space-y-3">
+              {section.title && (
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
+                  {section.title}
+                </h3>
+              )}
+              {section.content && (
+                <div className="prose dark:prose-invert max-w-none">
+                  {section.content.split('\n').map((paragraph, pIndex) => (
+                    <p 
+                      key={pIndex} 
+                      className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                    >
+                      {paragraph.trim()}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) return <div className="p-5">Loading all data...</div>;
   if (error) return <div className="p-5 text-red-500">Error: {error}</div>;
 
   return (
     <Layout>
-    <div className="p-6 max-w-6xl mx-auto bg-white">
-      <h1 className="text-2xl font-bold mb-6">Google Trends Dashboard</h1>
+      {/* Change background to lighter black in dark mode */}
+      <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-zinc-900 transition-colors">
+        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+          Google Trends Dashboard
+        </h1>
 
-     
-      <div className="mb-6 flex flex-col space-y-4">
-        
+        <div className="mb-6 flex flex-col space-y-4">
           <div className="flex space-x-4">
             <input
               type="text"
-              className="p-2 text-md border border-gray-300 rounded w-full max-w-xs dark:bg-black"
+              className="p-2 text-md border border-gray-300 rounded w-full max-w-xs bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
               placeholder="Enter keywords (comma-separated)"
               value={inputKeyword}
               onChange={(e) => setInputKeyword(e.target.value)}
@@ -463,214 +618,218 @@ export default function GoogleTrendsDashboard() {
           </div>
 
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded text-md dark:bg-black"
+            className="px-4 py-2 bg-blue-500 text-white rounded text-md hover:bg-blue-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 w-fit"
             onClick={handleSearch}
           >
             Search
           </button>
-        </div>  
+        </div>
 
-      {keywords.length > 0 ? (
-        <div className="space-y-8 ">
-          {/* Interest Over Time Section */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
-            <div className="border-b p-4 flex justify-between items-center">
-              <h2 className="text-xl font-medium">Interest Over Time: {keywords.join(", ")}</h2>
-              <button 
-                className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black" 
-                onClick={() => downloadTimeCSV()}
-                disabled={interestData.length === 0}
-              >
-                <Download size={16}  />
-                <span>Export</span>
-              </button>
-            </div>
-            <div className="p-6">
-              {isLoadingInterest ? (
-                <div className="text-center py-10">Loading interest data...</div>
-              ) : interestError ? (
-                <div className="text-red-500 p-5">{interestError}</div>
-              ) : interestData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={interestData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" className="dark:text-white"/>
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    
-                    {/* Dynamically generate lines for each keyword */}
-                    {keywords.map((keyword, index) => (
-                      <Line
-                        key={keyword}
-                        type="monotone"
-                        dataKey={keyword}
-                        stroke={colors[index % colors.length]} 
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-10 text-gray-500 dark:text-white">No interest data available for the selected keywords.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Geographic Comparison Section */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
-            <div className="border-b p-4 flex justify-between items-center ">
-              <h2 className="text-xl font-medium ">
-                Interest by location: {keywords.join(", ")}
-              </h2>
-              <div className="flex items-center space-x-2 ">
+        {keywords.length > 0 ? (
+          <div className="space-y-8">
+            <AIAnalysisSection />
+            {/* Interest Over Time Section */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
+              <div className="border-b p-4 flex justify-between items-center">
+                <h2 className="text-xl font-medium">Interest Over Time: {keywords.join(", ")}</h2>
                 <button 
-                  className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-900" 
-                  onClick={() => downloadGeoCSV()}
-                  disabled={!geoData}
+                  className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black" 
+                  onClick={() => downloadTimeCSV()}
+                  disabled={interestData.length === 0}
                 >
-                  <Download size={16} />
+                  <Download size={16}  />
                   <span>Export</span>
                 </button>
-                <button className="p-1 rounded hover:bg-gray-100  dark:hover:bg-gray-900 ">
-                  <Filter size={18} />
-                </button>
+              </div>
+              <div className="p-6">
+                {isLoadingInterest ? (
+                  <div className="text-center py-10">Loading interest data...</div>
+                ) : interestError ? (
+                  <div className="text-red-500 p-5">{interestError}</div>
+                ) : interestData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={interestData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" className="dark:text-white"/>
+                      <YAxis />
+                      <Tooltip/>
+                      <Legend />
+                      
+                      {/* Dynamically generate lines for each keyword */}
+                      {keywords.map((keyword, index) => (
+                        <Line
+                          key={keyword}
+                          type="monotone"
+                          dataKey={keyword}
+                          stroke={colors[index % colors.length]} 
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-10 text-gray-500 dark:text-white">No interest data available for the selected keywords.</div>
+                )}
               </div>
             </div>
 
-            <div className="p-4">
-              {isLoadingGeo ? (
-                <div className="text-center py-10 dark:text-white">Loading geographic data...</div>
-              ) : geoError ? (
-                <div className="text-red-500 p-5">{geoError}</div>
-              ) : geoData ? (
-                <>
-                  <div className="mb-3 text-sm text-gray-500 dark:text-white">
-                    Sort by:
-                    <div className="flex space-x-2 mt-1">
-                      {geoData.keywords.map(keyword => (
-                        <button 
-                          key={keyword}
-                          className={`px-3 py-1 border rounded-md ${sortConfig.key === keyword ? 'bg-blue-100 text-blue-800' : 'bg-white'} dark:bg-black`}
-                          onClick={() => handleSort(keyword)}
-                        >
-                          Interest for {keyword}
-                          {sortConfig.key === keyword && (
-                            <span className="ml-1">
-                              {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+            {/* Geographic Comparison Section */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
+              <div className="border-b p-4 flex justify-between items-center ">
+                <h2 className="text-xl font-medium ">
+                  Interest by location: {keywords.join(", ")}
+                </h2>
+                <div className="flex items-center space-x-2 ">
+                  <button 
+                    className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-900" 
+                    onClick={() => downloadGeoCSV()}
+                    disabled={!geoData}
+                  >
+                    <Download size={16} />
+                    <span>Export</span>
+                  </button>
+                  <button className="p-1 rounded hover:bg-gray-100  dark:hover:bg-gray-900 ">
+                    <Filter size={18} />
+                  </button>
+                </div>
+              </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-12 text-center">#</TableHead>
-                        <TableHead>Location</TableHead>
+              <div className="p-4">
+                {isLoadingGeo ? (
+                  <div className="text-center py-10 dark:text-white">Loading geographic data...</div>
+                ) : geoError ? (
+                  <div className="text-red-500 p-5">{geoError}</div>
+                ) : geoData ? (
+                  <>
+                    <div className="mb-3 text-sm text-gray-500 dark:text-white">
+                      Sort by:
+                      <div className="flex space-x-2 mt-1">
                         {geoData.keywords.map(keyword => (
-                          <TableHead key={keyword} className="w-24 text-right">
-                            {keyword}
-                          </TableHead>
+                          <button 
+                            key={keyword}
+                            className={`px-3 py-1 border rounded-md ${sortConfig.key === keyword ? 'bg-blue-100 text-blue-800' : 'bg-white'} dark:bg-black`}
+                            onClick={() => handleSort(keyword)}
+                          >
+                            Interest for {keyword}
+                            {sortConfig.key === keyword && (
+                              <span className="ml-1">
+                                {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </button>
                         ))}
-                        <TableHead className="w-1/3">Comparison</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedGeoData().map((location, index) => (
-                        <TableRow key={location.code} className="border-t">
-                          <TableCell className="text-center text-gray-500">
-                            {(geoCurrentPage - 1) * itemsPerPage + index + 1}
-                          </TableCell>
-                          <TableCell className="font-medium">{location.name}</TableCell>
-                          {geoData.keywords.map(keyword => (
-                            <TableCell key={keyword} className="text-right">
-                              {location.values[keyword] || 0}
-                            </TableCell>
-                          ))}
-                          <TableCell>
-                            {renderBarChart(location.values, geoData.keywords)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  {/* Pagination Controls */}
-                  <div className="flex justify-between items-center p-3 text-sm text-gray-500">
-                    <button
-                      onClick={() => handleGeoPageChange(geoCurrentPage - 1)}
-                      disabled={geoCurrentPage === 1}
-                      className="flex items-center space-x-2 disabled:opacity-50"
-                    >
-                      <ChevronLeft size={18} />
-                      <span>Previous</span>
-                    </button>
-
-                    <span>
-                      Showing {(geoCurrentPage - 1) * itemsPerPage + 1}-{Math.min(geoCurrentPage * itemsPerPage, sortedLocations.length)} of {sortedLocations.length} locations
-                    </span>
-
-                    <button
-                      onClick={() => handleGeoPageChange(geoCurrentPage + 1)}
-                      disabled={geoCurrentPage === geoTotalPages()}
-                      className="flex items-center space-x-2 disabled:opacity-50"
-                    >
-                      <span>Next</span>
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10 text-gray-500">No geographic data available for the selected keywords.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Related Queries Section */}
-          <div>
-            <h2 className="text-xl font-medium mb-4">Related Queries</h2>
-            
-            {isLoadingQuery ? (
-              <div className="text-center py-10 bg-white rounded-lg shadow-md dark:text-white">Loading related queries data...</div>
-            ) : queryError ? (
-              <div className="text-red-500 p-5 bg-white rounded-lg shadow-md">{queryError}</div>
-            ) : Object.keys(queryData).length > 0 ? (
-              keywords.map((keyword) => (
-                <div key={keyword} className="mb-6 bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
-                  <div className="border-b p-4 flex justify-between items-center">
-                    <h3 className="text-lg font-medium ">Related queries: {keyword}</h3>
-                    <div className="flex items-center space-x-2">
-                      <div className="border rounded-md overflow-hidden flex">
-                        <button
-                          className={`px-3 py-1 ${queryType === "Rising" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-black dark:text-blue-400`}
-                          onClick={() => handleQueryTypeChange("Rising")}
-                        >
-                          Rising
-                        </button>
-                        <button
-                          className={`px-3 py-1 ${queryType === "Top" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-gray-500 dark:hover:bg-gray-900`}
-                          onClick={() => handleQueryTypeChange("Top")}
-                        >
-                          Top
-                        </button>
                       </div>
-                      <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900" onClick={() => downloadQueryCSV(keyword)}>
-                        <Download size={18} />
+
+                    </div>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="w-12 text-center">#</TableHead>
+                          <TableHead>Location</TableHead>
+                          {geoData.keywords.map(keyword => (
+                            <TableHead key={keyword} className="w-24 text-right">
+                              {keyword}
+                            </TableHead>
+                          ))}
+                          <TableHead className="w-1/3">Comparison</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedGeoData().map((location, index) => (
+                          <TableRow key={location.code} className="border-t">
+                            <TableCell className="text-center text-gray-500">
+                              {(geoCurrentPage - 1) * itemsPerPage + index + 1}
+                            </TableCell>
+                            <TableCell className="font-medium">{location.name}</TableCell>
+                            {geoData.keywords.map(keyword => (
+                              <TableCell key={keyword} className="text-right">
+                                {location.values[keyword] || 0}
+                              </TableCell>
+                            ))}
+                            <TableCell>
+                              {renderBarChart(location.values, geoData.keywords)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {/* Pagination Controls */}
+                    <div className="flex justify-between items-center p-3 text-sm text-gray-500">
+                      <button
+                        onClick={() => handleGeoPageChange(geoCurrentPage - 1)}
+                        disabled={geoCurrentPage === 1}
+                        className="flex items-center space-x-2 disabled:opacity-50"
+                      >
+                        <ChevronLeft size={18} />
+                        <span>Previous</span>
+                      </button>
+
+                      <span>
+                        Showing {(geoCurrentPage - 1) * itemsPerPage + 1}-{Math.min(geoCurrentPage * itemsPerPage, sortedLocations.length)} of {sortedLocations.length} locations
+                      </span>
+
+                      <button
+                        onClick={() => handleGeoPageChange(geoCurrentPage + 1)}
+                        disabled={geoCurrentPage === geoTotalPages()}
+                        className="flex items-center space-x-2 disabled:opacity-50"
+                      >
+                        <span>Next</span>
+                        <ChevronRight size={18} />
                       </button>
                     </div>
-                  </div>
+                  </>
+                ) : (
+                  <div className="text-center py-10 text-gray-500">No geographic data available for the selected keywords.</div>
+                )}
+              </div>
+            </div>
 
-                  <div className="p-4">
-                    {!queryData[keyword] ? (
-                      <div className="text-gray-500">No data available for this keyword</div>
-                    ) : (
-                      <div>
-                        {paginatedQueryData(keyword).length === 0 ? (
-                          <div className="text-gray-500">No {queryType.toLowerCase()} queries available</div>
-                        ) : (
+            {/* Related Queries Section */}
+            <div>
+              <h2 className="text-xl font-medium mb-4">Related Queries</h2>
+              
+              {isLoadingQuery ? (
+                <div className="text-center py-10 bg-white rounded-lg shadow-md dark:text-white">
+                  Loading related queries data...
+                </div>
+              ) : queryError ? (
+                <div className="text-red-500 p-5 bg-white rounded-lg shadow-md">{queryError}</div>
+              ) : Object.keys(queryData).length > 0 ? (
+                keywords.map((keyword) => (
+                  <div key={keyword} className="mb-6 bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
+                    <div className="border-b p-4 flex justify-between items-center">
+                      <h3 className="text-lg font-medium">Related queries: {keyword}</h3>
+                      <div className="flex items-center space-x-2">
+                        <div className="border rounded-md overflow-hidden flex">
+                          <button
+                            className={`px-3 py-1 ${queryType === "Rising" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-black dark:text-blue-400`}
+                            onClick={() => handleQueryTypeChange("Rising")}
+                          >
+                            Rising
+                          </button>
+                          <button
+                            className={`px-3 py-1 ${queryType === "Top" ? "bg-blue-100 text-blue-800" : "bg-white"} dark:bg-gray-500 dark:hover:bg-gray-900`}
+                            onClick={() => handleQueryTypeChange("Top")}
+                          >
+                            Top
+                          </button>
+                        </div>
+                        <button 
+                          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-900" 
+                          onClick={() => downloadQueryCSV(keyword)}
+                        >
+                          <Download size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      {!queryData[keyword] || !queryData[keyword][queryType.toLowerCase() as QueryTypeLowerCase] ? (
+                        <div className="text-gray-500">No data available for this query type</div>
+                      ) : (
+                        <div>
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-gray-50">
@@ -683,8 +842,10 @@ export default function GoogleTrendsDashboard() {
                             </TableHeader>
                             <TableBody>
                               {paginatedQueryData(keyword).map((item, index) => (
-                                <TableRow key={item.query} className="border-t">
-                                  <TableCell className="text-center text-gray-500">{(queryCurrentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                                <TableRow key={`${item.query}-${index}`} className="border-t">
+                                  <TableCell className="text-center text-gray-500">
+                                    {(queryCurrentPage - 1) * itemsPerPage + index + 1}
+                                  </TableCell>
                                   <TableCell className="font-medium">{item.query}</TableCell>
                                   <TableCell className="text-right">
                                     {queryType === "Rising" ? (
@@ -700,49 +861,49 @@ export default function GoogleTrendsDashboard() {
                               ))}
                             </TableBody>
                           </Table>
-                        )}
 
-                        {/* Pagination Controls */}
-                        <div className="flex justify-between items-center p-3 text-sm text-gray-500">
-                          <button
-                            onClick={() => handleQueryPageChange(queryCurrentPage - 1)}
-                            disabled={queryCurrentPage === 1}
-                            className="flex items-center space-x-2 disabled:opacity-50"
-                          >
-                            <ChevronLeft size={18} />
-                            <span>Previous</span>
-                          </button>
+                          {/* Pagination Controls */}
+                          <div className="flex justify-between items-center p-3 text-sm text-gray-500">
+                            <button
+                              onClick={() => handleQueryPageChange(queryCurrentPage - 1)}
+                              disabled={queryCurrentPage === 1}
+                              className="flex items-center space-x-2 disabled:opacity-50"
+                            >
+                              <ChevronLeft size={18} />
+                              <span>Previous</span>
+                            </button>
 
-                          <span>
-                            Showing {(queryCurrentPage - 1) * itemsPerPage + 1}-{Math.min(queryCurrentPage * itemsPerPage, queryData[keyword][queryType.toLowerCase() as "rising" | "top"]?.length || 0)} of {queryData[keyword][queryType.toLowerCase() as "rising" | "top"]?.length || 0} queries
-                          </span>
+                            <span>
+                              Showing {(queryCurrentPage - 1) * itemsPerPage + 1}-
+                              {Math.min(
+                                queryCurrentPage * itemsPerPage, 
+                                queryData[keyword][(queryType.toLowerCase() as QueryTypeLowerCase)]?.length || 0
+                              )} of {queryData[keyword][(queryType.toLowerCase() as QueryTypeLowerCase)]?.length || 0} queries
+                            </span>
 
-                          <button
-                            onClick={() => handleQueryPageChange(queryCurrentPage + 1)}
-                            disabled={queryCurrentPage === queryTotalPages(keyword)}
-                            className="flex items-center space-x-2 disabled:opacity-50"
-                          >
-                            <span>Next</span>
-                            <ChevronRight size={18} />
-                          </button>
+                            <button
+                              onClick={() => handleQueryPageChange(queryCurrentPage + 1)}
+                              disabled={queryCurrentPage === queryTotalPages(keyword)}
+                              className="flex items-center space-x-2 disabled:opacity-50"
+                            >
+                              <span>Next</span>
+                              <ChevronRight size={18} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-gray-500 bg-white rounded-lg shadow-md">
+                  No related queries data available for the selected keywords.
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-gray-500 bg-white rounded-lg shadow-md">No related queries data available for the selected keywords.</div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        // Initial state - no search performed yet
-        <div className="bg-white p-6 rounded-lg shadow-md text-center dark:bg-black ">
-          <p className="text-gray-500 dark:text-white">Enter keywords and click Search to view Google Trends data.</p>
-        </div>
-      )}
-    </div>
+        ) : null} {/* Remove the initial state message */}
+      </div>
     </Layout>
   );
 }

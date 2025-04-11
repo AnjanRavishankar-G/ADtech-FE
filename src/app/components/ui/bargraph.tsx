@@ -1,52 +1,89 @@
 "use client";
 import dynamic from "next/dynamic";
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false });
-
-// Import types from 'react-apexcharts' for type safety
 import { ApexOptions } from "apexcharts";
-// import { useState } from "react";
+import { useTheme } from '@/app/context/ThemeContext';
 
 type BasicPieChartProps = {
-  series: number[]; // Array of data values for each slice
-  height: number; // Height of the chart
-  labels?: string[]; // Labels for each slice (optional)
-  width?: number; // Width of the chart (optional)
-  responsiveBreakpoint?: number; // Breakpoint for responsive design (optional)
-  colors?: string[]; // Custom colors for each slice (optional)
+  series: number[];
+  height: number;
+  labels?: string[];
+  width?: number;
+  responsiveBreakpoint?: number;
+  colors?: string[];
 };
 
 const BasicPieChart: React.FC<BasicPieChartProps> = ({
   series,
   height,
-  labels = [], // Default labels
-  width = 380, // Default width
-  responsiveBreakpoint = 480, // Default breakpoint
-  colors = [], // Default empty array for colors
+  labels = [],
+  width = 350,
+  responsiveBreakpoint = 480,
+  colors = [],
 }) => {
+  const { theme } = useTheme();
+
   const chartOptions: ApexOptions = {
     dataLabels: {
-      enabled: false, // This will remove the percentage labels
+      enabled: false,
       style: {
-        colors: ['#FFFFFF'], // Set data label colors to white
+        colors: [theme === 'dark' ? '#FFFFFF' : '#000000'],
       },
     },
     series: series,
     chart: {
       width: width,
+      height: height * 0.55, // Reduced from 0.65 to make pie smaller
       type: "pie",
+      background: 'transparent',
+      offsetY: -10, // Move chart up
+      foreColor: theme === 'dark' ? '#FFFFFF' : '#373D3F', // Add theme-based text color
     },
     labels: labels,
-    colors: colors.length > 0 ? colors : undefined , // Use custom colors if provided
+    colors: colors.length > 0 ? colors : undefined,
     legend: {
-      labels: {
-        colors: 'var(--label-color)', // Use CSS variable for dynamic color
-      },
+      show: false,
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+        },
+        customScale: 0.65, // Reduced from 0.75 to make pie smaller
+        offsetY: -10, // Move pie chart up
+      }
     },
     tooltip: {
+      theme: theme === 'dark' ? 'dark' : 'light', // Add theme-based tooltip
+      custom: function({ series, seriesIndex, w }) {
+        const label = w.globals.labels[seriesIndex];
+        const color = w.config.colors[seriesIndex];
+        const value = series[seriesIndex];
+        return `
+          <div class="custom-tooltip" style="
+            background: ${color};
+            padding: 8px 12px;
+            border-radius: 4px;
+            opacity: 0.9;
+          ">
+            <span style="
+              color: #FFFFFF;
+              font-weight: 500;
+              font-size: 14px;
+            ">${label}: ${value.toLocaleString('en-IN')}</span>
+          </div>
+        `;
+      },
       y: {
         formatter: function(value: number) {
-          // Format number to Indian system (e.g., 20,60,205)
           return value.toLocaleString('en-IN');
+        }
+      }
+    },
+    states: {
+      hover: {
+        filter: {
+          type: 'none',
         }
       }
     },
@@ -55,27 +92,40 @@ const BasicPieChart: React.FC<BasicPieChartProps> = ({
         breakpoint: responsiveBreakpoint,
         options: {
           chart: {
-            width: 200, // Adjust width for smaller screens
+            width: 200,
           },
-          legend: {
-            position: "bottom", // Move legend to the bottom for smaller screens
-            labels: {
-              colors: '#FFFFFF', // Set legend label color to white in dark mode
-            },
-          }, 
         },
       },
     ],
   };
 
   return (
-    <div className="text-black dark:text-white">
-      <ApexCharts 
-        options={chartOptions}
-        series={chartOptions.series}
-        type="pie"
-        height={height}
-      />
+    <div className="flex flex-col h-full">
+      {/* Adjusted chart container */}
+      <div className="flex-1 flex items-center justify-center mt-[-35px]"> {/* Changed from -20px */}
+        <ApexCharts 
+          options={chartOptions}
+          series={chartOptions.series}
+          type="pie"
+          height={height * 0.55} // Match chart height
+        />
+      </div>
+      {/* Adjusted legend container */}
+      <div className={`px-4 py-2 flex flex-wrap justify-center gap-2 mt-[-30px] ${
+        theme === 'dark' ? 'text-white' : 'text-black'
+      }`}> {/* Changed from -30px and gap-3 */}
+        {labels?.map((label, index) => (
+          <div key={index} className="flex items-center gap-1">
+            <div
+              className="w-2.5 h-2.5 rounded-full" // Increased from w-2.5 h-2.5
+              style={{ backgroundColor: chartOptions.colors?.[index] }}
+            ></div>
+            <span className="text-inherit text-base font-medium tracking-normal"> {/* Changed from text-sm and added tracking-normal */}
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

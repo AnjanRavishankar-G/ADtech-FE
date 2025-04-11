@@ -55,7 +55,7 @@ export default function LoginForm() {
   }
   
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen login-container">
       {/* Left side with logo and tagline */}
       <div className="hidden md:block md:w-1/2 bg-black relative">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
@@ -74,12 +74,13 @@ export default function LoginForm() {
         </div>
       </div>
       
-      {/* Right side - simplified login form */}
+      {/* Right side */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md dark:bg-black">
+        <div className="w-full max-w-md login-card p-8 rounded-2xl shadow-md">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email input */}
             <div>
-              <label htmlFor="email" className="block mb-2 font-medium text-gray-600 dark:text-white">
+              <label htmlFor="email" className="block mb-2 font-medium">
                 Email
               </label>
               <input
@@ -89,14 +90,15 @@ export default function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
                 placeholder="youremail@example.com"
-                className="w-full p-2 border rounded border-gray-300 dark:text-white dark:bg-[#1e1e1e] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                className="login-input w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                 required
               />
             </div>
             
+            {/* Password input */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="font-medium text-gray-600 dark:text-white">
+                <label htmlFor="password" className="font-medium">
                   Password
                 </label>
                 <a href="#" className="text-sm font-medium text-purple-600 hover:text-purple-500">
@@ -110,7 +112,7 @@ export default function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="w-full p-2 border border-gray-300 rounded dark:bg-[#1e1e1e] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  className="login-input w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                   required
                 />
                 <div
@@ -132,6 +134,7 @@ export default function LoginForm() {
               </div>
             </div>
             
+            {/* Remember me */}
             <div className="flex items-center gap-2">
               <input
                 id="remember-me"
@@ -143,6 +146,7 @@ export default function LoginForm() {
               </label>
             </div>
             
+            {/* Submit button */}
             <button
               type="submit"
               disabled={isLoading}

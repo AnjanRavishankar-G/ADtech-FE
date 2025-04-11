@@ -263,9 +263,14 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
             }} />
             )}
 
-          <div className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-2xl text-sm px-4 py-2 mt-4 mb-3 dark:hover:bg-gray-700 dark:text-white dark:bg-black">
-            <h2>Brand: {selectedBrand || 'All Brands'}</h2>
-          </div>
+          <Link
+            href="/brand"
+            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-2xl text-sm px-4 py-2 mt-4 mb-3 dark:hover:bg-gray-700 dark:text-white dark:bg-black"
+          >
+            <button className="flex items-center">
+              Brand: {selectedBrand || 'All Brands'}
+            </button>
+          </Link>
         </div>
 
         <div className="shadow-2xl p-4 ml-1 bg-white rounded-2xl dark:bg-black  overflow-auto max-h-[500px] ">
@@ -314,12 +319,12 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
           </Table>
         </div>
 
-        <div className="flex gap-4 p-1 mt-3">
-          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
+        <div className="mt-12 flex gap-4 rounded-2xl">
+          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
             <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Campaign Based on Sales</h2>
-            <div className="flex space-x-10 ">
-              <div className="flex-1 overflow-x-auto">
-                <Table className="min-w-full border border-blue-600 text-center">
+            <div className="flex flex-col">
+              <div className="overflow-x-auto mb-4">
+                <Table className="min-w-full border text-center">
                   <TableHeader className="bg-black text-white top-0 z-10">
                     <TableRow>
                       <TableHead>Campaign</TableHead>
@@ -335,20 +340,24 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="h-[400px]">
                 <BasicPieChart 
-                  series={top5BrandSalesData}
-                  height={350}
+                  series={top5BrandSalesData} 
+                  height={800}
                   labels={top5BrandNames}
+                  colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}
+                  width={400}
                 />
               </div>
-            </div>
+            </div>     
           </div>
 
-          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
+          <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
             <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 Campaign Based on Spends</h2>
-            <div className="flex space-x-10 ">
-              <div className="flex-1 overflow-x-auto">
-                <Table className="min-w-full border border-blue-600 text-center">
+            <div className="flex flex-col">
+              <div className="overflow-x-auto mb-4">
+                <Table className="min-w-full border text-center">
                   <TableHeader className="bg-black text-white top-0 z-10">
                     <TableRow>
                       <TableHead>Campaign</TableHead>
@@ -356,7 +365,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {top5Campaigns.map((campaign) => (
+                    {top5CampaignsBySpend.map((campaign) => (
                       <TableRow key={campaign.SN}>
                         <TableCell className="w-1/2">{campaign.campaignName}</TableCell>
                         <TableCell className="w-1/2">{campaign.Spend?.toLocaleString() || '-'}</TableCell>
@@ -364,10 +373,14 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="h-[400px]">
                 <BasicPieChart 
-                  series={top5SpendBrandData}
-                  height={350}
+                  series={top5SpendBrandData} 
+                  height={800}
                   labels={top5SpendBrandNames}
+                  colors={["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]}
+                  width={400}
                 />
               </div>
             </div>
