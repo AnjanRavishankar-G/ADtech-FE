@@ -3,9 +3,9 @@ import React, { useState } from "react";
 import { useTheme } from '@/app/context/ThemeContext';
 import { FaMoon, FaSun, FaKey } from 'react-icons/fa';
 import { GiOctopus, GiTargeting } from "react-icons/gi";
-import { Handshake, CircleHelp, Home, LogOut, ChevronLeft, ChevronRight, ChevronDown, Package2, Sparkles, Settings } from "lucide-react";
+import { Handshake, Home, LogOut, ChevronLeft, ChevronRight, ChevronDown, Package2, Settings } from "lucide-react";
 import { usePathname } from 'next/navigation';
-
+// import Image from 'next/image';
 interface SidebarProps {
   collapsed: boolean;
   toggleSidebar: () => void;
@@ -104,21 +104,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <span>Negative Keywords</span>
                       </button>
                     </li>
-                    <li>
-                        <button 
-                        onClick={() => setSelectedTab('keywordRecommendation')}
-                        className={`flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full ${
-                          selectedTab === 'keywordRecommendation' 
-                          ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
-                          : "text-gray-600 hover:text-black dark:text-gray-300"
-                        }`}
-                        >
-                        <div className="w-5 flex items-center">
-                          <Sparkles size={20} />
-                        </div>
-                        <span className="text-left">Keyword Recommendations</span>
-                        </button>
-                    </li>
                   </ul>
                 )}
               </li>
@@ -154,11 +139,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       Retail Insights
                     </a>
                   </li>
-                  <li>
+                  {/* <li>
                     <a href="#" className="text-gray-900 hover:text-black dark:text-white">
                       You-tube Trends
                     </a>
-                  </li>
+                  </li> */}
                 </ul>
               )}
             </li>
@@ -180,8 +165,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               {!collapsed && showTeams && (
                 <ul className="ml-6 mt-2 space-y-2">
                   <li><a href="/teams/team1" className="text-gray-600 hover:text-black dark:text-white">Team 1</a></li>
-                  <li><a href="/teams/team2" className="text-gray-600 hover:text-black dark:text-white">Team 2</a></li>
-                  <li><a href="/teams/team3" className="text-gray-600 hover:text-black dark:text-white">Team 3</a></li>
                 </ul>
               )}
             </li>
@@ -225,16 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </li>
                   <li>
                     <a 
-                      href="/help"
-                      className="flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white"
-                    >
-                      <CircleHelp size={16} />
-                      <span>Help</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="/logout"
+                      href="/login"
                       className="flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white"
                     >
                       <LogOut size={16} />

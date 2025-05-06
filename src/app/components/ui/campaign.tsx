@@ -204,7 +204,7 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
         <div className="w-full p-4 rounded-lg">
           <div className="flex justify-between items-center">
             <div className="text-white text-4xl">
-              <h2 className="text-4xl font-light">IPG</h2>
+              <h2 className="text-4xl font-light">Dentsu</h2>
             </div>
           </div>
         </div>

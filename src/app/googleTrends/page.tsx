@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-
 import {
   Table,
   TableBody,
@@ -10,23 +9,26 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
   Legend,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
 import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Filter,
   ArrowUpRight,
+  ChevronDown
 } from "lucide-react";
 import Layout from "../components/ui/Layout";
+import { LoadingMessages } from '../components/ui/LoadingMessages';
+import { AnimatePresence, motion } from "framer-motion";
 
 import Cookies from 'js-cookie';
 // import { useRouter } from 'next/navigation';
@@ -35,6 +37,12 @@ import Cookies from 'js-cookie';
 type TimeData = {
   date: string;
   [keyword: string]: string | number;
+};
+
+// Add this type definition near your other types
+type TimeSeriesItem = {
+  date: string;
+  [key: string]: string | number;
 };
 
 // Types for Geographic Comparison
@@ -69,11 +77,19 @@ type RelatedQueriesData = {
 };
 
 // Add new types
+// type DateRangeOption = '30D' | '90D' | '180D' | '1Y' | 'ALL';
+
 type CombinedData = {
   interestData: TimeData[];
   geoData: GeographicData;
   queryData: RelatedQueriesData;
 };
+
+// type GeoVisualizationData = {
+//   name: string;
+//   value: number;
+//   percentage: number;
+// };
 
 // First, add a type for the lowercase query types
 type QueryTypeLowerCase = 'rising' | 'top';
@@ -88,82 +104,224 @@ function formatKeywords(keywords: string[]): string {
   .join(",");
 }
 
-// Update the fetch functions
-async function fetchInterestOverTime(keywords: string[]) {
+// Fix the validateKeywords function
+async function validateKeywords(inputString: string): Promise<string[]> {
   try {
-    const keywordsParam = formatKeywords(keywords);
-    const response = await fetch(`${backendURL}/interest-over-time/${keywordsParam}`, {
-      method: 'GET',
+    // First split the input string into an array of keywords
+    const keywords = inputString
+      .split(',')
+      .map(k => k.trim())
+      .filter(k => k);
+    
+    const response = await fetch(`${backendURL}/validate-keywords`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
         'Content-Type': 'application/json'
       },
-      credentials: 'omit'
+      body: JSON.stringify({ keywords })
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to fetch interest data: ${response.status}`);
+      throw new Error('Failed to validate keywords');
     }
+
     const data = await response.json();
-    return data.data || []; // Extract data field from response
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Validation failed');
+    }
+
+    return data.corrected;
+  } catch (error) {
+    console.error('Error validating keywords:', error);
+    throw error;
+  }
+}
+
+// Update the fetch functions
+async function fetchInterestOverTime(keywords: string[]) {
+  try {
+    // 1. Initiate request
+    const initResponse = await fetch(`${backendURL}/interest-over-time/initiate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ keywords: formatKeywords(keywords) })
+    });
+
+    if (!initResponse.ok) {
+      throw new Error(`Failed to initiate request: ${initResponse.status}`);
+    }
+
+    const { requestId } = await initResponse.json();
+    const startTime = Date.now();
+    const MAX_TIME = 240000; // 4 minutes
+
+    // 2. Poll for results
+    while (Date.now() - startTime < MAX_TIME) {
+      const statusResponse = await fetch(`${backendURL}/interest-over-time/status/${requestId}`, {
+        headers: {
+          'Authorization': `Bearer ${Cookies.get('auth_token')}`
+        }
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check status: ${statusResponse.status}`);
+      }
+
+      const result = await statusResponse.json();
+      
+      switch (result.status) {
+        case 'completed':
+          return result.data;
+        case 'error':
+          throw new Error(result.error);
+        default:
+          await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
+
+    throw new Error('Request timed out');
   } catch (error) {
     console.error("Error fetching interest data:", error);
     throw error;
   }
 }
 
-async function fetchGeographicData(keywords: string[]) {
+// Similarly update fetchRelatedQueries
+async function fetchRelatedQueries(keywords: string[]) {
   try {
-    const keywordsParam = formatKeywords(keywords);
-    console.log('Sending keywords:', keywordsParam); // Debug log
-    const response = await fetch(`${backendURL}/compared-by/${keywordsParam}`, {
-      method: 'GET',
+    // 1. Initiate request
+    const initResponse = await fetch(`${backendURL}/multi-query-related/initiate`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
         'Content-Type': 'application/json'
       },
-      credentials: 'omit'
+      body: JSON.stringify({ keywords: formatKeywords(keywords) })
     });
 
-    console.log('Request URL:', response.url);
-    console.log('Keywords:', keywordsParam);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to fetch geographic data: ${response.status}`);
+    if (!initResponse.ok) {
+      throw new Error(`Failed to initiate request: ${initResponse.status}`);
     }
-    return response.json();
+
+    const { requestId } = await initResponse.json();
+    const startTime = Date.now();
+    const MAX_TIME = 240000;
+
+    // 2. Poll for results
+    while (Date.now() - startTime < MAX_TIME) {
+      const statusResponse = await fetch(`${backendURL}/multi-query-related/status/${requestId}`, {
+        headers: {
+          'Authorization': `Bearer ${Cookies.get('auth_token')}`
+        }
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check status: ${statusResponse.status}`);
+      }
+
+      const result = await statusResponse.json();
+      
+      switch (result.status) {
+        case 'completed':
+          return result.data;
+        case 'error':
+          throw new Error(result.error);
+        default:
+          await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
+
+    throw new Error('Request timed out');
   } catch (error) {
-    console.error("Error fetching geographic data:", error);
+    console.error("Error fetching related queries:", error);
     throw error;
   }
 }
 
-// Update the fetchRelatedQueries function to properly handle the response
-async function fetchRelatedQueries(keywords: string[]) {
-  try {
-    const keywordsParam = keywords.join(',');
-    console.log('Sending keywords for related queries:', keywordsParam);
+// Update fetchGeographicData in page.tsx
+async function fetchGeographicData(keywords: string[]): Promise<GeographicData> {
+  const MAX_POLLING_TIME = 240000; // 4 minutes
+  const MIN_POLL_INTERVAL = 3000; // 3 seconds
+  const MAX_POLL_INTERVAL = 15000; // 15 seconds
+  const MAX_RETRIES = 3;
+  let retryCount = 0;
+  let pollInterval = MIN_POLL_INTERVAL;
 
-    const response = await fetch(`${backendURL}/multi-query-related/${encodeURIComponent(keywordsParam)}`, {
-      method: 'GET',
+  try {
+    // 1. Initiate request
+    const initResponse = await fetch(`${backendURL}/compared-by/initiate`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${Cookies.get('auth_token')}`,
         'Content-Type': 'application/json'
       },
-      credentials: 'omit'
+      body: JSON.stringify({ keywords: formatKeywords(keywords) })
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch related queries: ${response.status}`);
+    if (!initResponse.ok) {
+      throw new Error(`Failed to initiate request: ${initResponse.status}`);
     }
 
-    const data = await response.json();
-    // Return the data property which contains the actual query data
-    return data.data || {};
+    const { requestId } = await initResponse.json();
+    const startTime = Date.now();
+
+    // 2. Poll for results with exponential backoff
+    while (Date.now() - startTime < MAX_POLLING_TIME) {
+      try {
+        const statusResponse = await fetch(`${backendURL}/compared-by/status/${requestId}`, {
+          headers: {
+            'Authorization': `Bearer ${Cookies.get('auth_token')}`,
+          }
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error(`Failed to check status: ${statusResponse.status}`);
+        }
+
+        const result = await statusResponse.json();
+
+        switch (result.status) {
+          case 'completed':
+            return result.data;
+          case 'error':
+            if ((result.error?.includes('503') || 
+                 result.error?.includes('try again later') || 
+                 result.error?.includes('timeout')) && 
+                retryCount < MAX_RETRIES) {
+              retryCount++;
+              pollInterval = Math.min(pollInterval * 1.5, MAX_POLL_INTERVAL);
+              await new Promise(resolve => setTimeout(resolve, pollInterval));
+              continue;
+            }
+            throw new Error(result.error || 'Processing failed');
+          case 'pending':
+          case 'processing':
+            if (Date.now() - startTime > 180000) { // 3 minutes
+              pollInterval = MAX_POLL_INTERVAL;
+            } else {
+              pollInterval = Math.min(pollInterval * 1.2, MAX_POLL_INTERVAL);
+            }
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+            break;
+        }
+      } catch (error) {
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw new Error('Request timed out');
   } catch (error) {
-    console.error("Error fetching related queries:", error);
+    console.error("Error fetching geographic data:", error);
     throw error;
   }
 }
@@ -196,6 +354,34 @@ async function fetchAIAnalysis(combinedData: CombinedData) {
   }
 }
 
+// Add this constant at the top of your file
+const LOADING_MESSAGES = [
+  {
+    text: "Surfing the Swell of Search...",
+    emoji: "🌊"
+  },
+  {
+    text: "We're currently deep-diving through a sea of keywords,",
+    emoji: "🐠"
+  },
+  {
+    text: "decoding mysterious spikes, and fending off rogue trending terms.",
+    emoji: "🐠"
+  },
+  {
+    text: "Our manta scouts are mapping the tides of intent, so you can ride the next big wave before your competition even waxes their board.",
+    emoji: "🏄‍♂️"
+  },
+  {
+    text: "Give us a few seconds while we fish out the real gold from the abyss—because nobody has time for irrelevant queries in Q2",
+    emoji: "😅"
+  },
+  {
+    text: "Reeling in real-time search trends… hang tight.",
+    emoji: "🎣"
+  }
+];
+
 export default function GoogleTrendsDashboard() {
   // Common state
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -220,7 +406,7 @@ export default function GoogleTrendsDashboard() {
 
   // Related Queries state
   const [queryData, setQueryData] = useState<RelatedQueriesData>({});
-  const [queryType, setQueryType] = useState<"Rising" | "Top">("Rising");
+  const [queryType, setQueryType] = useState<"Rising" | "Top">("Top"); // Change default to "Top"
   const [queryCurrentPage, setQueryCurrentPage] = useState(1);
   const [isLoadingQuery, setIsLoadingQuery] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
@@ -230,44 +416,92 @@ export default function GoogleTrendsDashboard() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // const [showCities, setShowCities] = useState(false);
+  // const [geoChartData, setGeoChartData] = useState<GeoVisualizationData[]>([]);
+
+  // New state for date range
+  // const [selectedRange, setSelectedRange] = useState<DateRangeOption>('30D');
+  // const [customDateRange, setCustomDateRange] = useState<[Date | null, Date | null]>([null, null]);
+
+  // Add this type for the slider state
+  type DateRangeSlider = {
+    start: number;
+    end: number;
+  };
+
+  // Add to your component's state declarations
+  const [sliderRange, setSliderRange] = useState<DateRangeSlider>({
+    start: 45,
+    end: 100
+  });
+
   // Common settings
   const itemsPerPage = 5;
 
-  // Handle search
-  const handleSearch = () => {
+  // Modify the handleSearch function
+  const handleSearch = async () => {
     if (inputKeyword.trim()) {
-      const newKeywords = inputKeyword.split(",").map((keyword) => keyword.trim());
-      setKeywords(newKeywords);
-      
-      // Reset pagination
-      setGeoCurrentPage(1);
-      setQueryCurrentPage(1);
-      
-      // Set default sorting to first keyword for geographic data
-      if (newKeywords.length > 0) {
-        setSortConfig({ key: newKeywords[0], direction: 'descending' });
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Pass the string directly to validateKeywords
+        const validatedKeywords = await validateKeywords(inputKeyword);
+        
+        // If keywords were corrected, show notification
+        const originalKeywords = inputKeyword.split(',').map(k => k.trim());
+        const hasCorrections = validatedKeywords.some((k, i) => k !== originalKeywords[i]);
+        
+        if (hasCorrections) {
+          const confirmed = window.confirm(
+            `Some keywords were corrected:\n${originalKeywords.map((ok, i) => 
+              ok !== validatedKeywords[i] ? `${ok} → ${validatedKeywords[i]}` : null
+            ).filter(Boolean).join('\n')}\n\nDo you want to use the corrected keywords?`
+          );
+          
+          if (!confirmed) {
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Update state with validated keywords
+        setKeywords(validatedKeywords);
+        setInputKeyword(validatedKeywords.join(', '));
+        
+        // Reset pagination
+        setGeoCurrentPage(1);
+        setQueryCurrentPage(1);
+        
+        if (validatedKeywords.length > 0) {
+          setSortConfig({ key: validatedKeywords[0], direction: 'descending' });
+        }
+        
+        // Load all data with validated keywords
+        await loadAllData(validatedKeywords);
+
+      } catch (error) {
+        setError(typeof error === 'string' ? error : 'Error processing keywords');
+        console.error('Search error:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Load all data
-      loadAllData(newKeywords);
     }
   };
 
   // Load all data at once
   const loadAllData = async (keys: string[]) => {
-    if (keys.length === 0) return;
-    
-    setIsLoading(true);
-    setError(null);
-    setAiAnalysis(null);
-    setAiError(null);
-    
-    // Set all loading states
-    setIsLoadingInterest(true);
-    setIsLoadingGeo(true);
-    setIsLoadingQuery(true);
-    
     try {
+      setIsLoading(true);
+      setError(null);
+      setAiAnalysis(null);
+      setAiError(null);
+      
+      // Set all loading states
+      setIsLoadingInterest(true);
+      setIsLoadingGeo(true);
+      setIsLoadingQuery(true);
+      
       // Load all data in parallel
       const [timeData, geoData, queryData] = await Promise.all([
         fetchInterestOverTime(keys),
@@ -275,8 +509,11 @@ export default function GoogleTrendsDashboard() {
         fetchRelatedQueries(keys)
       ]);
 
+      // Process time series data before setting state
+      const processed30DayData = processTimeSeriesData(timeData);
+      setInterestData(processed30DayData);
+
       // Set individual data states
-      setInterestData(timeData);
       setGeoData(geoData);
       setQueryData(queryData);
 
@@ -288,7 +525,7 @@ export default function GoogleTrendsDashboard() {
       // If all data is loaded successfully, fetch AI analysis
       setIsLoadingAI(true);
       const combinedData: CombinedData = {
-        interestData: timeData,
+        interestData: processed30DayData,
         geoData: geoData,
         queryData: queryData
       };
@@ -311,6 +548,12 @@ export default function GoogleTrendsDashboard() {
       setIsLoadingGeo(false);
       setIsLoadingQuery(false);
     }
+  };
+
+  // Add getFilteredInterestData here, after loadAllData and before Interest Over Time Functions
+  const getFilteredInterestData = () => {
+    if (!interestData.length) return [];
+    return interestData.slice(sliderRange.start, sliderRange.end);
   };
 
   // ---- Interest Over Time Functions ----
@@ -364,35 +607,6 @@ export default function GoogleTrendsDashboard() {
 
   const handleGeoPageChange = (newPage: number) => {
     setGeoCurrentPage(newPage);
-  };
-
-  // Helper function to render bar chart
-  const renderBarChart = (values: KeywordValue, keywords: string[]) => {
-    const totalValue = keywords.reduce((sum, keyword) => sum + (values[keyword] || 0), 0);
-    
-    return (
- 
-      <div className="flex h-6 w-full">
-        {keywords.map((keyword, idx) => {
-          const value = values[keyword] || 0;
-          const percentage = totalValue > 0 ? (value / totalValue) * 100 : 0;
-          
-          // Use different colors for different keywords
-          const colors = ["bg-blue-500", "bg-red-500", "bg-green-500", "bg-yellow-500", "bg-purple-500"];
-          const color = colors[idx % colors.length];
-          
-          return (
-            <div 
-              key={keyword} 
-              className={`${color} h-full`} 
-              style={{ width: `${percentage}%` }}
-              title={`${keyword}: ${value} (${percentage.toFixed(1)}%)`}
-            />
-          );
-        })}
-      </div>
-    
-    );
   };
 
   // ---- Related Queries Functions ----
@@ -509,100 +723,384 @@ export default function GoogleTrendsDashboard() {
     link.click();
   };
 
-  // Add AI Analysis Component
-  const AIAnalysisSection = () => {
-    if (isLoadingAI) {
+// First, ensure the TrendAnalysis type exactly matches the Python output
+type TrendAnalysis = {
+  topPerformingGeos: {
+    states: Array<{
+      name: string;
+      values: Record<string, number>;
+      totalScore: number;
+      growthRate: number;
+      significantQueries: string[];
+    }>;
+  };
+  temporalInsights: {
+    trendDirection: 'increasing' | 'decreasing' | 'stable';
+    seasonality: {
+      peaks: string[];
+      troughs: string[];
+    };
+    recentTrend: {
+      last30Days: 'up' | 'down' | 'stable';
+      percentageChange: number;
+    };
+    forecastNextQuarter: 'up' | 'down' | 'stable';
+  };
+  audiencePersonas: {
+    segments: Array<{
+      name: string;
+      percentage: number;
+      primaryInterests: string[];
+      searchBehavior: {
+        peakTimes: string[];
+        topQueries: string[];
+        relatedTerms: string[];
+      };
+      keyInsight: string;
+    }>;
+  };
+  competitiveAnalysis: {
+    keywordComparison: Array<{
+      keyword: string;
+      relativeStrength: number;
+      growthTrend: 'up' | 'down' | 'stable';
+      uniqueQueries: string[];
+    }>;
+  };
+  dataQuality: {
+    confidenceScore: number;
+    dataGaps: string[];
+    sampleSize: 'high' | 'medium' | 'low';
+  };
+};
+
+const AIAnalysisSection = () => {
+  if (isLoadingAI) {
+    return (
+      <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="space-y-3">
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (aiError) {
+    return (
+      <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+        <div className="text-red-500">Error loading AI analysis: {aiError}</div>
+      </div>
+    );
+  }
+
+  if (!aiAnalysis) return null;
+
+  let analysis: TrendAnalysis;
+  try {
+    analysis = typeof aiAnalysis === 'string' 
+      ? JSON.parse(aiAnalysis) 
+      : aiAnalysis as TrendAnalysis;
+
+    // Add check for states data
+    if (!analysis.topPerformingGeos?.states?.length) {
       return (
         <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-            <div className="space-y-3">
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-            </div>
+          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+            Artha Deep Dive Analysis
+          </h2>
+          <div className="text-center py-6 text-gray-500">
+            No geographic analysis data available for these keywords.
           </div>
         </div>
       );
     }
+  } catch (error) {
+    console.error('Error parsing analysis data:', error);
+    return null;
+  }
 
-    if (aiError) {
-      return (
-        <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
-          <div className="text-red-500">Error loading AI analysis: {aiError}</div>
-        </div>
-      );
-    }
+  return (
+    <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+        Artha Deep Dive Analysis
+      </h2>
 
-    if (!aiAnalysis) {
-      return null;
-    }
+      {/* Top Performing Geos Bar Chart */}
+      <div className="mb-8">
+        <h3 className="text-xl font-semibold mb-4">Top Performing Geos by State</h3>
+        <ResponsiveContainer width="100%" height={500}>
+          <BarChart
+            data={analysis.topPerformingGeos.states}
+            margin={{ top: 20, right: 30, left: 40, bottom: 30 }}
+            barSize={25}         // Slightly larger bar width
+            barGap={3}          // Minimal space between bars in same group
+            barCategoryGap={20} // Smaller space between different categories
+          >
+            <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+            <XAxis
+              dataKey="name"
+              angle={-45}
+              textAnchor="end"
+              interval={0}
+              height={100}
+              tick={{ 
+                fill: 'var(--text-primary, currentColor)', 
+                fontSize: 12 
+              }}
+            />
+            <YAxis
+              label={{ 
+                value: 'Index Search Volume', 
+                angle: -90, 
+                position: 'insideLeft',
+                style: { 
+                  textAnchor: 'middle',
+                  fill: 'var(--text-primary, currentColor)',
+                  fontSize: 18
+                }
+              }}
+              tick={{ 
+                fill: 'var(--text-primary, currentColor)', 
+                fontSize: 12 
+              }}
+            />
+            <Tooltip
+              cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
+              contentStyle={{
+                backgroundColor: 'var(--background, #fff)',
+                borderRadius: '8px',
+                padding: '12px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+            />
+            <Legend 
+              verticalAlign="bottom"
+              height={60}
+              wrapperStyle={{
+                paddingTop: '20px',
+                fontSize: '16px'
+              }}
+            />
+            {Object.keys(analysis.topPerformingGeos.states[0].values).map((keyword, index) => (
+              <Bar
+                key={keyword}
+                dataKey={`values.${keyword}`}
+                name={keyword}
+                fill={colors[index % colors.length]}
+                radius={[4, 4, 0, 0]}
+              >
+                {analysis.topPerformingGeos.states.map((entry, idx) => (
+                  <Cell
+                    key={`cell-${idx}`}
+                    fill={colors[index % colors.length]}
+                    style={{
+                      filter: 'brightness(1.1)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                ))}
+              </Bar>
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
 
-    // Function to clean and format the text
-    const formatAnalysisText = (text: string) => {
-      return text
-        .replace(/##/g, '') // Remove markdown headers
-        .replace(/\*\*/g, '') // Remove bold markers
-        .replace(/\*/g, '•') // Replace bullet points with proper bullet
-        .trim();
+  // Add this component before the Related Queries table section
+  const RelatedQueriesVisualization = () => {
+    const [selectedKeyword, setSelectedKeyword] = useState(keywords[0]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+    // Process data for visualization
+    const getVisualizationData = (keyword: string) => {
+      const keywordData = queryData[keyword]?.[queryType.toLowerCase() as QueryTypeLowerCase] || [];
+      return keywordData
+        .slice(0, 15) // Show top 15 queries
+        .map(item => ({
+          query: item.query,
+          value: parseFloat(item.value.replace(/[^0-9.]/g, '')) || 0
+        }))
+        .sort((a, b) => b.value - a.value);
     };
-
-    // Split the analysis into sections
-    const sections = aiAnalysis.split('\n\n').map(section => {
-      // Check if it's a heading
-      if (section.includes(':')) {
-        const [title, ...content] = section.split(':');
-        return {
-          title: formatAnalysisText(title),
-          content: formatAnalysisText(content.join(':'))
-        };
-      }
-      return {
-        content: formatAnalysisText(section)
-      };
-    });
-
+  
+    const chartData = getVisualizationData(selectedKeyword);
+  
     return (
-      <div className="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          AI Trend Analysis
-        </h2>
-        
-        <div className="space-y-6">
-          {sections.map((section, index) => (
-            <div key={index} className="space-y-3">
-              {section.title && (
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                  {section.title}
-                </h3>
-              )}
-              {section.content && (
-                <div className="prose dark:prose-invert max-w-none">
-                  {section.content.split('\n').map((paragraph, pIndex) => (
-                    <p 
-                      key={pIndex} 
-                      className="text-gray-700 dark:text-gray-300 leading-relaxed"
-                    >
-                      {paragraph.trim()}
-                    </p>
+      <div className="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-8">
+        <div className="border-b p-4">
+          <h2 className="text-xl font-medium mb-4 text-gray-900 dark:text-white">
+            Movers and Shakers
+          </h2>
+          
+          {/* Improved Dropdown */}
+          <div className="relative inline-block w-auto">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between px-4 py-2 border rounded-md bg-white dark:bg-gray-800 dark:text-white w-[250px]"
+            >
+              <span className="truncate">{selectedKeyword}</span>
+              <ChevronDown size={16} />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-[250px] bg-white dark:bg-gray-800 border rounded-md shadow-lg">
+                {keywords.map(keyword => (
+                  <button
+                    key={keyword}
+                    onClick={() => {
+                      setSelectedKeyword(keyword);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white truncate"
+                  >
+                    {keyword}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+  
+        <div className="p-6">
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={600}> 
+              <BarChart
+                data={chartData}
+                margin={{ top: 40, right: 20, left: 20, bottom: 10 }} 
+              >
+                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                <XAxis
+                  dataKey="query"
+                  angle={-45}
+                  textAnchor="end"
+                  interval={0}
+                  height={100} // Increased height
+                  tickSize={8}
+                  tick={{
+                    fontSize: 16,
+                    fill: 'var(--text-primary, currentColor)',
+                    fontWeight: 500
+                  }}
+                />
+                <YAxis 
+                  tick={{
+                    fontSize: 12,
+                    fill: 'var(--text-secondary, #6b7280)',
+                    fontWeight: 500
+                  }}
+                  tickFormatter={(value) => `${value}%`}
+                  label={{ 
+                    value: 'Index Search Volume', 
+                    angle: -90, 
+                    position: 'insideLeft',
+                    style: { 
+                      textAnchor: 'middle',
+                      fill: 'var(--text-primary, currentColor)',
+                      fontSize: 18
+                    }
+                  }}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
+                  contentStyle={{
+                    backgroundColor: 'var(--background, #fff)',
+                    borderColor: 'var(--border, #e2e8f0)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    fontSize: '14px',
+                    fontWeight: 500
+                  }}
+                  formatter={(value) => [`Score: ${value}`, selectedKeyword]}
+                  labelStyle={{
+                    color: 'var(--text-primary, currentColor)',
+                    fontWeight: 600,
+                    marginBottom: '4px'
+                  }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[6, 6, 0, 0]} // Increased radius
+                  fill="#8884d8" // Single color for all bars
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill="#8884d8" // Same color as parent Bar
+                      style={{
+                        filter: 'brightness(1.1)',
+                        transition: 'filter 0.2s'
+                      }}
+                    />
                   ))}
-                </div>
-              )}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+              No visualization data available
             </div>
-          ))}
+          )}
         </div>
       </div>
     );
   };
 
-  if (isLoading) return <div className="p-5">Loading all data...</div>;
+  // Add this new component for the date range controls
+const DateRangeControls = () => {
+  return (
+    <div className="flex flex-col space-y-4 mb-4">
+      {/* Single slider for date range */}
+      <div className="px-4 w-full">
+        <input
+          type="range"
+          min={0}
+          max={interestData.length}
+          value={sliderRange.start}
+          onChange={(e) => {
+            const newStart = parseInt(e.target.value);
+            setSliderRange(prev => ({
+              start: Math.min(newStart, prev.end - 1),
+              end: prev.end
+            }));
+          }}
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
+};
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="w-full max-w-2xl"
+          >
+            <LoadingMessages messages={LOADING_MESSAGES} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
   if (error) return <div className="p-5 text-red-500">Error: {error}</div>;
 
   return (
     <Layout>
-      {/* Change background to lighter black in dark mode */}
       <div className="p-6 max-w-6xl mx-auto bg-white dark:bg-zinc-900 transition-colors">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          Google Trends Dashboard
+          Artha Search Trends Dashboard
         </h1>
 
         <div className="mb-6 flex flex-col space-y-4">
@@ -627,147 +1125,252 @@ export default function GoogleTrendsDashboard() {
 
         {keywords.length > 0 ? (
           <div className="space-y-8">
-            <AIAnalysisSection />
-            {/* Interest Over Time Section */}
+            {/* Search Trends Section */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
-              <div className="border-b p-4 flex justify-between items-center">
-                <h2 className="text-xl font-medium">Interest Over Time: {keywords.join(", ")}</h2>
-                <button 
-                  className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black" 
-                  onClick={() => downloadTimeCSV()}
-                  disabled={interestData.length === 0}
-                >
-                  <Download size={16}  />
-                  <span>Export</span>
-                </button>
-              </div>
-              <div className="p-6">
-                {isLoadingInterest ? (
-                  <div className="text-center py-10">Loading interest data...</div>
-                ) : interestError ? (
-                  <div className="text-red-500 p-5">{interestError}</div>
-                ) : interestData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={interestData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" className="dark:text-white"/>
-                      <YAxis />
-                      <Tooltip/>
-                      <Legend />
-                      
-                      {/* Dynamically generate lines for each keyword */}
-                      {keywords.map((keyword, index) => (
-                        <Line
-                          key={keyword}
-                          type="monotone"
-                          dataKey={keyword}
-                          stroke={colors[index % colors.length]} 
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-center py-10 text-gray-500 dark:text-white">No interest data available for the selected keywords.</div>
-                )}
-              </div>
-            </div>
-
-            {/* Geographic Comparison Section */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
-              <div className="border-b p-4 flex justify-between items-center ">
-                <h2 className="text-xl font-medium ">
-                  Interest by location: {keywords.join(", ")}
-                </h2>
-                <div className="flex items-center space-x-2 ">
+              <div className="border-b p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-medium text-gray-900 dark:text-white">
+                    Search Trends Analysis
+                  </h2>
                   <button 
-                    className="px-3 py-1 flex items-center space-x-1 border rounded-md bg-white hover:bg-gray-50 dark:bg-black dark:hover:bg-gray-900" 
-                    onClick={() => downloadGeoCSV()}
-                    disabled={!geoData}
+                    className="px-3 py-1 flex items-center space-x-1 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-800" 
+                    onClick={() => downloadTimeCSV()}
+                    disabled={interestData.length === 0}
                   >
                     <Download size={16} />
                     <span>Export</span>
                   </button>
-                  <button className="p-1 rounded hover:bg-gray-100  dark:hover:bg-gray-900 ">
-                    <Filter size={18} />
+                </div>
+                <DateRangeControls />
+              </div>
+              
+              <div className="p-6">
+                {isLoadingInterest ? (
+                  <div className="flex justify-center py-8">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-lg text-gray-600 dark:text-gray-300"
+                    >
+                      Processing trend data...
+                    </motion.div>
+                  </div>
+                ) : interestError ? (
+                  <div className="text-red-500 p-5">{interestError}</div>
+                ) : interestData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={450}>
+                    <BarChart 
+                      data={getFilteredInterestData()}  
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        vertical={false}
+                        stroke="var(--border-secondary, #e5e7eb)"
+                        opacity={0.5}
+                      />
+                      <XAxis 
+                        dataKey="date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        interval={Math.max(Math.floor(interestData.length / 30), 0)}
+                        tick={{
+                          fontSize: 12,
+                          fill: 'var(--text-secondary, #6b7280)',
+                          fontWeight: 500
+                        }}
+                      />
+                      <YAxis 
+                        tick={{
+                          fontSize: 12,
+                          fill: 'var(--text-secondary, #6b7280)',
+                          fontWeight: 500
+                        }}
+                        tickFormatter={(value) => `${value}%`}
+                        label={{ 
+                          value: 'Index Search Volume', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { 
+                            textAnchor: 'middle',
+                            fill: 'var(--text-primary, currentColor)',
+                            fontSize: 18
+                          }
+                        }}
+                      />
+                      
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--background, #fff)',
+                          borderColor: 'var(--border, #e2e8f0)',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          color: 'var(--text-primary, currentColor)'
+                        }}
+                        cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
+                        labelFormatter={(value) => value.replace(/\u2009/g, ' ')}
+                        formatter={(value, name) => [`${value}%`, name]}
+                      />
+                      <Legend 
+                        wrapperStyle={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          paddingTop: '20px'
+                        }}
+                      />
+                      {keywords.map((keyword, index) => (
+                        <Bar
+                          key={keyword}
+                          dataKey={keyword}
+                          fill={colors[index % colors.length]}
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={35}
+                          name={keyword}
+                        >
+                          {interestData.map((_, idx) => (
+                            <Cell
+                              key={`cell-${idx}`}
+                              fill={colors[index % colors.length]}
+                              style={{
+                                filter: 'brightness(1.1)',
+                                transition: 'all 0.3s ease'
+                              }}
+                            />
+                          ))}
+                        </Bar>
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                    No trend data available for the selected keywords.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 2. AI Analysis Section */}
+            <AIAnalysisSection />
+
+            {/* Geographic Comparison Section */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden dark:bg-black">
+              <div className="border-b p-4 flex justify-between items-center">
+                <h2 className="text-xl font-medium">
+                  Interest by location: {keywords.join(", ")}
+                </h2>
+                <div className="flex items-center space-x-4">
+                  <div className="flex space-x-2">
+                    {geoData?.keywords.map(keyword => (
+                      <button 
+                        key={keyword}
+                        className={`px-3 py-1 ${sortConfig.key === keyword ? 'bg-blue-100 text-blue-800' : 'bg-white'} dark:bg-black text-sm`}
+                        onClick={() => handleSort(keyword)}
+                      >
+                        {keyword}
+                        {sortConfig.key === keyword && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <button 
+                    className="px-3 py-1 flex items-center space-x-1 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-900" 
+                    onClick={() => downloadGeoCSV()}
+                  >
+                    <Download size={16} />
+                    <span>Export</span>
                   </button>
                 </div>
               </div>
 
-              <div className="p-4">
+              <div className="p-6">
                 {isLoadingGeo ? (
-                  <div className="text-center py-10 dark:text-white">Loading geographic data...</div>
+                  <div className="flex justify-center py-8">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-lg text-gray-600 dark:text-gray-300"
+                    >
+                      Analyzing geographic patterns...
+                    </motion.div>
+                  </div>
                 ) : geoError ? (
                   <div className="text-red-500 p-5">{geoError}</div>
                 ) : geoData ? (
                   <>
-                    <div className="mb-3 text-sm text-gray-500 dark:text-white">
-                      Sort by:
-                      <div className="flex space-x-2 mt-1">
-                        {geoData.keywords.map(keyword => (
-                          <button 
+                    <ResponsiveContainer width="100%" height={500}>
+                      <BarChart
+                        data={paginatedGeoData()}
+                        margin={{ top: 20, right: 20, left: 30, bottom: 30 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          interval={0}
+                          height={100}
+                          tick={{ 
+                            fill: 'var(--text-primary, currentColor)', 
+                            fontSize: 12 
+                          }}
+                        />
+                        <YAxis
+                          label={{ 
+                            value: 'Index Search Interest', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: 'var(--text-primary, currentColor)',
+                              fontSize: 18
+                            }
+                          }}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(0, 0, 0, 0.04)' }}
+                          contentStyle={{
+                            backgroundColor: 'var(--background, #fff)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          }}
+                        />
+                        <Legend 
+                          wrapperStyle={{
+                            paddingTop: '22px'
+                          }}
+                        />
+                        {geoData.keywords.map((keyword, index) => (
+                          <Bar
                             key={keyword}
-                            className={`px-3 py-1 border rounded-md ${sortConfig.key === keyword ? 'bg-blue-100 text-blue-800' : 'bg-white'} dark:bg-black`}
-                            onClick={() => handleSort(keyword)}
-                          >
-                            Interest for {keyword}
-                            {sortConfig.key === keyword && (
-                              <span className="ml-1">
-                                {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                              </span>
-                            )}
-                          </button>
+                            dataKey={`values.${keyword}`}
+                            name={keyword}
+                            fill={colors[index % colors.length]}
+                            radius={[4, 4, 0, 0]}
+                          />
                         ))}
-                      </div>
-
-                    </div>
-
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="w-12 text-center">#</TableHead>
-                          <TableHead>Location</TableHead>
-                          {geoData.keywords.map(keyword => (
-                            <TableHead key={keyword} className="w-24 text-right">
-                              {keyword}
-                            </TableHead>
-                          ))}
-                          <TableHead className="w-1/3">Comparison</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedGeoData().map((location, index) => (
-                          <TableRow key={location.code} className="border-t">
-                            <TableCell className="text-center text-gray-500">
-                              {(geoCurrentPage - 1) * itemsPerPage + index + 1}
-                            </TableCell>
-                            <TableCell className="font-medium">{location.name}</TableCell>
-                            {geoData.keywords.map(keyword => (
-                              <TableCell key={keyword} className="text-right">
-                                {location.values[keyword] || 0}
-                              </TableCell>
-                            ))}
-                            <TableCell>
-                              {renderBarChart(location.values, geoData.keywords)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                      </BarChart>
+                    </ResponsiveContainer>
 
                     {/* Pagination Controls */}
-                    <div className="flex justify-between items-center p-3 text-sm text-gray-500">
+                    <div className="flex justify-between items-center p-3 mt-4 text-sm text-gray-500">
                       <button
                         onClick={() => handleGeoPageChange(geoCurrentPage - 1)}
                         disabled={geoCurrentPage === 1}
                         className="flex items-center space-x-2 disabled:opacity-50"
                       >
                         <ChevronLeft size={18} />
-                        <span>Previous</span>
+                        <span>Previous 5</span>
                       </button>
 
                       <span>
-                        Showing {(geoCurrentPage - 1) * itemsPerPage + 1}-{Math.min(geoCurrentPage * itemsPerPage, sortedLocations.length)} of {sortedLocations.length} locations
+                        Showing {(geoCurrentPage - 1) * itemsPerPage + 1}-
+                        {Math.min(geoCurrentPage * itemsPerPage, sortedLocations.length)} of {sortedLocations.length}
                       </span>
 
                       <button
@@ -775,24 +1378,35 @@ export default function GoogleTrendsDashboard() {
                         disabled={geoCurrentPage === geoTotalPages()}
                         className="flex items-center space-x-2 disabled:opacity-50"
                       >
-                        <span>Next</span>
+                        <span>Next 5</span>
                         <ChevronRight size={18} />
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-10 text-gray-500">No geographic data available for the selected keywords.</div>
+                  <div className="text-center py-10 text-gray-500">
+                    No geographic data available
+                  </div>
                 )}
               </div>
             </div>
+
+            {/* 4. Related Queries Visualization */}
+            <RelatedQueriesVisualization />
 
             {/* Related Queries Section */}
             <div>
               <h2 className="text-xl font-medium mb-4">Related Queries</h2>
               
               {isLoadingQuery ? (
-                <div className="text-center py-10 bg-white rounded-lg shadow-md dark:text-white">
-                  Loading related queries data...
+                <div className="flex justify-center py-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-lg text-gray-600 dark:text-gray-300"
+                  >
+                    Gathering related queries...
+                  </motion.div>
                 </div>
               ) : queryError ? (
                 <div className="text-red-500 p-5 bg-white rounded-lg shadow-md">{queryError}</div>
@@ -907,3 +1521,20 @@ export default function GoogleTrendsDashboard() {
     </Layout>
   );
 }
+
+// Add this function at the top level, near other utility functions
+const processTimeSeriesData = (data: TimeSeriesItem[]): TimeData[] => {
+  if (!Array.isArray(data)) return [];
+  
+  return data.map(item => {
+    // Convert the date format for display
+    const dateStr = item.date.replace(/\u2009|\u2013/g, ' ');
+    return {
+      date: dateStr,
+      ...Object.fromEntries(
+        Object.entries(item).filter(([key]) => key !== 'date')
+      )
+    };
+  });
+};
+

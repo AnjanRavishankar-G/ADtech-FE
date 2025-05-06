@@ -13,37 +13,7 @@ import {
 } from "@/app/components/ui/table";
 
 import Footer from "@/app/components/ui/footer";
-import BasicPieChart from "../components/ui/bargraph";
 import MainSidebar from "../components/ui/mainsidebar";
-
-type AsinData = {
-  SN: number;
-  asin: string;
-  sku: string;
-  adFormat: string;
-  campaignStatus: string;
-  dailySpends: number;
-  dailySales: number;
-  ACOS: string;
-  ROAS: string;
-
-  advertisedAsin: string;
-  advertisedSku: string;
-  impressions: number;
-  clicks: number;
-  clickThroughRate: string;
-  cost: number;
-  adGroupId: string;
-  campaignId: string;
-};
-
-type KeywordData = {
-  keyword: string;
-  theme: string;
-  match_type: string;
-  rank: number;
-  bid: number;
-};
 
 type KeywordPerformanceData = {
   SN: number;
@@ -64,6 +34,76 @@ type NegativeKeyword = {
   matchType: string;
   adGroupId: string;
   campaignId: string;
+  state: string;
+};
+
+type NegativeKeywordResponse = {
+  keywordId: string;
+  keywordText: string;
+  matchType: string;
+  adGroupId: string;
+  campaignId: string;
+  state: string;
+};
+
+type AdType = 'SP' | 'SD';
+
+type SPAdData = {
+  endDate: string;
+  unitsSoldClicks1d: number;
+  sales1d: number;
+  sales7d: number;
+  adGroupId: string;
+  spend: number;
+  purchasesSameSku1d: number;
+  campaignStatus: string;
+  advertisedSku: string;
+  advertisedAsin: string;
+  purchases1d: number;
+  purchases7d: number;
+  cost: number;
+  adGroupName: string;
+  acosClicks7d: number;
+  campaignId: string;
+  sales14d: number;
+  clickThroughRate: number;
+  sales30d: number;
+  impressions: number;
+  adId: string;
+  portfolioId: string;
+  clicks: number;
+  campaignName: string;
+  startDate: string;
+  roasClicks7d: number;
+  created_at: string;
+};
+
+type SDAdData = {
+  promotedAsin: string;
+  cost: number;
+  endDate: string;
+  adGroupName: string;
+  purchases: number;
+  campaignId: string;
+  impressions: number;
+  promotedSku: string;
+  adGroupId: string;
+  adId: string;
+  clicks: number;
+  campaignName: string;
+  startDate: string;
+  created_at: string;
+};
+
+type KeywordPerformanceResponse = {
+  Targeting: string;
+  'Match Type'?: string;
+  matchType?: string;
+  sales1d: number;
+  cost: number;
+  Clicks: number;
+  Impressions: number;
+  'Keyword Bid': number;
 };
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -83,13 +123,12 @@ function getRequiredHeaders() {
   return {
     'Authorization': `Bearer ${authToken}`,
     'Content-Type': 'application/json',
-    'X-ID-Token': idToken
   };
 }
 
-async function fetchNegativeKeywords() {
+async function fetchNegativeKeywords(campaignId: string) {
   try {
-    const res = await fetch(`${backendURL}/report/negative_keyword`, {
+    const res = await fetch(`${backendURL}/negative-keywords?campaignId=${campaignId}`, {
       cache: "no-store",
       headers: getRequiredHeaders()
     });
@@ -99,12 +138,14 @@ async function fetchNegativeKeywords() {
     }
 
     const data = await res.json();
-    return data.map((kw: NegativeKeyword) => ({
-      keywordID: kw.keywordID.toString(),
-      keyword: kw.keyword,
+    
+    return data.negativeKeywords.map((kw: NegativeKeywordResponse) => ({
+      keywordID: kw.keywordId,
+      keyword: kw.keywordText,
       matchType: kw.matchType,
-      adGroupId: '',
-      campaignId: ''
+      adGroupId: kw.adGroupId,
+      campaignId: kw.campaignId,
+      state: kw.state
     }));
   } catch (error) {
     console.error("Error fetching negative keywords:", error);
@@ -112,91 +153,79 @@ async function fetchNegativeKeywords() {
   }
 }
 
-async function fetchAsinData() {
+async function fetchKeywordPerformance(campaignId: string, adGroupId: string) {
   try {
-    const res = await fetch(`${backendURL}/report/asin_level_table?page=1&limit=1000`, {
+    const queryParams = new URLSearchParams({
+      campaignId: campaignId.replace('.0', ''),
+      'Ad Group ID': adGroupId.replace('.0', '')
+    });
+
+    const res = await fetch(`${backendURL}/report/target_portfolio?${queryParams}`, {
       cache: "no-store",
       headers: getRequiredHeaders()
     });
-    if (!res.ok) throw new Error("Failed to fetch ASIN data");
+
+    if (!res.ok) throw new Error("Failed to fetch targeting data");
     const data = await res.json();
+    
+    return data.map((item: KeywordPerformanceResponse, index: number) => ({
+      SN: index + 1,
+      keyword: item.Targeting || '-',
+      matchType: item['Match Type'] || item.matchType || '-',
+      revenue: Number(item.sales1d) || 0,
+      spend: Number(item.cost) || 0,
+      clicks: Number(item.Clicks) || 0,
+      impresssion: Number(item.Impressions) || 0,
+      bid: Number(item['Keyword Bid']) || 0,
+      ACOS: ((Number(item.cost) / Number(item.sales1d)) * 100 || 0).toFixed(2),
+      ROAS: (Number(item.sales1d) / Number(item.cost) || 0).toFixed(2)
+    }));
+  } catch (error) {
+    console.error("Error fetching target portfolio data:", error);
+    throw error;
+  }
+}
+
+async function fetchSPAdData(campaignId: string, adGroupId: string) {
+  try {
+    const queryParams = new URLSearchParams({
+      campaignId: campaignId.replace('.0', ''),
+      adGroupId: adGroupId.replace('.0', '')  // Make sure this matches the backend parameter name
+    });
+    
+    const res = await fetch(`${backendURL}/report/sp_ad_details?${queryParams}`, {
+      cache: "no-store",
+      headers: getRequiredHeaders()
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch SP ad data");
+    const data = await res.json();
+    console.log('SP Ad Data:', data);
     return data;
   } catch (error) {
-    console.error("Error fetching ASIN data:", error);
+    console.error("Error fetching SP ad data:", error);
     throw error;
   }
 }
 
-async function fetchKeywordData() {
+async function fetchSDAdData(campaignId: string, adGroupId: string) {
   try {
-    const res = await fetch(`${backendURL}/report/keyword_recommendation`, {
+    const queryParams = new URLSearchParams({
+      campaignId: campaignId.replace('.0', ''),
+      adGroupId: adGroupId.replace('.0', '')
+    });
+
+    const res = await fetch(`${backendURL}/report/sd_ad_details?${queryParams}`, {
       cache: "no-store",
       headers: getRequiredHeaders()
     });
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch keyword recommendations: ${res.status}`);
-    }
-
-    interface KeywordResponse {
-      keyword: string;
-      keyword_for: string;
-      match_type: string;
-      keyword_rank: string;
-      bids: number;
-    }
-
+    if (!res.ok) throw new Error("Failed to fetch SD ad data");
     const data = await res.json();
-    return data.map((item: KeywordResponse) => ({
-      keyword: item.keyword,
-      theme: item.keyword_for,
-      match_type: item.match_type,
-      rank: parseInt(item.keyword_rank),
-      bid: item.bids
-    }));
+    console.log('SD Ad Data:', data);
+    return data;
   } catch (error) {
-    console.error("Error fetching keyword data:", error);
-    throw error;
-  }
-}
-
-async function fetchKeywordPerformance() {
-  try {
-    const res = await fetch(`${backendURL}/report/targeting_level_table`, {
-      cache: "no-store",
-      headers: getRequiredHeaders()
-    });
-
-    if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
-
-    interface KeywordPerformanceResponse {
-      SN: number;
-      keyword?: string;
-      matchType?: string;
-      revenue: number;
-      spend: number;
-      ACOS: number;
-      ROAS: number;
-      clicks: number;
-      impresssion: number;
-      bid: number;
-    }
-
-    const data = await res.json();
-    return data.map((item: KeywordPerformanceResponse) => ({
-      SN: item.SN,
-      keyword: item.keyword || '-',
-      matchType: item.matchType || '-',
-      revenue: Number(item.revenue) || 0,
-      spend: Number(item.spend) || 0,
-      ACOS: Number(item.ACOS),
-      ROAS: Number(item.ROAS),
-      clicks: Number(item.clicks) || 0,
-      impresssion: Number(item.impresssion) || 0,
-      bid: Number(item.bid) || 0
-    }));
-  } catch (error) {
-    console.error("Error fetching keyword performance:", error);
+    console.error("Error fetching SD ad data:", error);
     throw error;
   }
 }
@@ -221,13 +250,15 @@ const checkAuthentication = () => {
 
 function AdGroupContent() {
   const [collapsed, setCollapsed] = useState(false);
-  const [asinData, setAsinData] = useState<AsinData[]>([]);
-  const [keywordData, setKeywordData] = useState<KeywordData[]>([]);
   const [keywordPerformanceData, setKeywordPerformanceData] = useState<KeywordPerformanceData[]>([]);
   const [negativeKeywords, setNegativeKeywords] = useState<NegativeKeyword[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<string>('asin');
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isDataReady, setIsDataReady] = useState(false);
+  const [adType, setAdType] = useState<AdType>('SP');
+  const [spAdData, setSpAdData] = useState<SPAdData[]>([]);
+  const [sdAdData, setSDAdData] = useState<SDAdData[]>([]);
 
   const searchParams = useSearchParams();
   const selectedBrand = searchParams.get('brand');
@@ -237,95 +268,95 @@ function AdGroupContent() {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setIsLoading(true);
+        setIsInitialLoad(true);
+        
+        const campaignId = searchParams.get('campaignId');
+        const adGroupId = searchParams.get('adGroupId');
 
-        if (!checkAuthentication()) {
-          console.error('Authentication check failed');
-          return;
+        if (!campaignId || !adGroupId) {
+          throw new Error('Missing campaign ID or ad group ID');
         }
 
-        const [asinResults, keywordPerformance] = await Promise.all([
-          fetchAsinData(),
-          fetchKeywordPerformance()
+        const [spData, keywordPerformance] = await Promise.all([
+          fetchSPAdData(campaignId, adGroupId),
+          fetchKeywordPerformance(campaignId, adGroupId)
         ]);
 
-        console.log('Data loaded:', {
-          asinCount: asinResults.length,
-          keywordCount: keywordPerformance.length
-        });
-
-        setAsinData(asinResults);
+        setSpAdData(spData);
         setKeywordPerformanceData(keywordPerformance);
+        setIsDataReady(true);
 
       } catch (err) {
         console.error("Error loading initial data:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setIsLoading(false);
+        setIsInitialLoad(false);
       }
     };
 
     loadInitialData();
-  }, []);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const loadAdTypeData = async () => {
+      try {
+        const campaignId = searchParams.get('campaignId');
+        const adGroupId = searchParams.get('adGroupId');
+
+        if (!campaignId || !adGroupId) return;
+
+        if (adType === 'SD') {
+          const sdData = await fetchSDAdData(campaignId, adGroupId);
+          setSDAdData(sdData);
+        }
+      } catch (err) {
+        console.error("Error loading ad type data:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      }
+    };
+
+    loadAdTypeData();
+  }, [adType, searchParams]);
 
   useEffect(() => {
     const loadTabData = async () => {
       if (!checkAuthentication()) return;
 
       try {
-        setIsLoading(true);
-
         if (selectedTab === 'NegativeKeyword') {
-          const negativeKeywordResults = await fetchNegativeKeywords();
+          const campaignId = searchParams.get('campaignId');
+          if (!campaignId) {
+            throw new Error('Missing campaign ID');
+          }
+          const negativeKeywordResults = await fetchNegativeKeywords(campaignId);
           setNegativeKeywords(negativeKeywordResults);
-        }
-
-        if (selectedTab === 'keywordRecommendation') {
-          const keywordResults = await fetchKeywordData();
-          setKeywordData(keywordResults);
         }
       } catch (err) {
         console.error('Error loading tab data:', err);
         setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
       }
     };
 
     loadTabData();
-  }, [selectedTab]);
+  }, [selectedTab, searchParams]);
 
-  if (isLoading) return <div className="p-5">Loading...</div>;
-  if (error) return (
-    <div className="p-5">
-      <div className="text-red-500">Error: {error}</div>
-      <button
-        onClick={() => window.location.href = '/'}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Return to Login
-      </button>
-    </div>
-  );
-  if (!asinData.length) return <div className="p-5 text-red-500">No ASIN data available for this ad group</div>;
+  if (isInitialLoad || !isDataReady) {
+    return <div className="p-5">Loading...</div>;
+  }
 
-  const top5BySales = [...asinData]
-    .sort((a, b) => b.dailySales - a.dailySales)
-    .slice(0, 5);
-
-  const top5BySpends = [...asinData]
-    .sort((a, b) => b.dailySpends - a.dailySpends)
-    .slice(0, 5);
-
-  const salesChartData = {
-    series: top5BySales.map((asin) => asin.dailySales),
-    labels: top5BySales.map((asin) => asin.asin),
-  };
-
-  const spendsChartData = {
-    series: top5BySpends.map((asin) => asin.dailySpends),
-    labels: top5BySpends.map((asin) => asin.asin),
-  };
+  if (error) {
+    return (
+      <div className="p-5">
+        <div className="text-red-500">Error: {error}</div>
+        <button
+          onClick={() => window.location.href = '/'}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Return to Login
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
@@ -338,143 +369,153 @@ function AdGroupContent() {
       <main className={`flex-1 p-5 overflow-auto transition-all duration-300 ${
         collapsed ? "ml-16" : "ml-64"
       }`}>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex gap-4 mb-6">
           <Link
             href="/brand"
-            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:text-white dark:bg-black transition-colors"
+            className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
+            font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+            dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
-            <button className="flex items-center">
-              Brand: {selectedBrand || 'N/A'}
-            </button>
+            <span className="flex items-center">Brand: {selectedBrand || 'N/A'}</span>
           </Link>
           <Link
             href={`/campaign?brand=${encodeURIComponent(selectedBrand || '')}`}
-            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:text-white dark:bg-black transition-colors"
+            className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
+            font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+            dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
-            <button className="flex items-center">
-              Campaign: {selectedCampaign || 'N/A'}
-            </button>
+            <span className="flex items-center">Campaign: {selectedCampaign || 'N/A'}</span>
           </Link>
           <Link
-            href={`/ad_details?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(selectedCampaign || '')}`}
-            className="text-Black bg-white shadow-2xl hover:bg-gray-400 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 dark:hover:bg-gray-700 dark:text-white dark:bg-black transition-colors"
+            href={`/campaign?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(selectedCampaign || '')}`}
+            className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
+            font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+            dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
-            <button className="flex items-center">
-              Ad Group: {selectedAdGroup || 'N/A'}
-            </button>
+            <span className="flex items-center">AdGroup: {selectedAdGroup || 'N/A'}</span>
           </Link>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAdType('SP')}
+              className={`text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
+              font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+              dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg
+              ${adType === 'SP' ? 'bg-blue-600 text-white' : ''}`}
+            >
+              SP
+            </button>
+            <button
+              onClick={() => setAdType('SD')}
+              className={`text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
+              font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+              dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg
+              ${adType === 'SD' ? 'bg-blue-600 text-white' : ''}`}
+            >
+              SD
+            </button>
+          </div>
         </div>
         {selectedTab === 'asin' && (
           <div>
-            <div className="shadow-2xl p-4 bg-white rounded-2xl  dark:bg-black">
-              <h2 className="text-lg font-bold mt-6">ASIN Performance</h2>
-              <Table className="border border-default-300">
-                <TableHeader className="bg-black text-white sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="border border-default-300">ASIN</TableHead>
-                    <TableHead className="border border-default-300">SKU</TableHead>
-                    <TableHead className="border border-default-300 relative ">Ad format</TableHead>
-                    <TableHead className="border border-default-300">Campaign Status</TableHead>
-                    <TableHead className="border border-default-300">Daily Spend</TableHead>
-                    <TableHead className="border border-default-300">Daily sales</TableHead>
-                    <TableHead className="border border-default-300">ACOS</TableHead>
-                    <TableHead className="border border-default-300">ROAS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {asinData.map((asin) => (
-                    <TableRow key={asin.SN} className="text-center">
-                      <TableCell className="border border-default-300">{asin.asin}</TableCell>
-                      <TableCell className="border border-default-300">{asin.sku}</TableCell>
-                      <TableCell className="border border-default-300">{asin.adFormat}</TableCell>
-                      <TableCell className="border border-default-300">{asin.campaignStatus}</TableCell>
-                      <TableCell className="border border-default-300">{asin.dailySpends?.toLocaleString() || '-'}</TableCell>
-                      <TableCell className="border border-default-300">{asin.dailySales?.toLocaleString() || '-'}</TableCell>
-                      <TableCell className="border border-default-300">{asin.ACOS}</TableCell>
-                      <TableCell className="border border-default-300">{asin.ROAS}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+            <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black">
+              <h2 className="text-2xl font-bold mb-8 text-center">Ad Performance</h2>
+              <Table className="border border-default-300 mt-6">
+                {adType === 'SP' ? (
+                  <>
+                    <TableHeader className="bg-black text-white sticky top-0 z-10">
+                      <TableRow>
+                        <TableHead className="border border-default-300">Advertised ASIN</TableHead>
+                        <TableHead className="border border-default-300">Advertised SKU</TableHead>
+                        <TableHead className="border border-default-300">Campaign Status</TableHead>
+                        <TableHead className="border border-default-300">Spend</TableHead>
+                        <TableHead className="border border-default-300">Purchases 1d</TableHead>
+                        <TableHead className="border border-default-300">Purchases 7d</TableHead>
+                        <TableHead className="border border-default-300">ACOS Clicks 7d</TableHead>
+                        <TableHead className="border border-default-300">Sales 1d</TableHead>
+                        <TableHead className="border border-default-300">Sales 7d</TableHead>
+                        <TableHead className="border border-default-300">Sales 14d</TableHead>
+                        <TableHead className="border border-default-300">Units Sold 1d</TableHead>
+                        <TableHead className="border border-default-300">Clicks</TableHead>
+                        <TableHead className="border border-default-300">Impressions</TableHead>
+                        <TableHead className="border border-default-300">CTR</TableHead>
+                        <TableHead className="border border-default-300">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {spAdData.length > 0 ? (
+                        spAdData.map((ad) => (
+                          <TableRow key={ad.adId} className="text-center">
+                            <TableCell className="border border-default-300">{ad.advertisedAsin}</TableCell>
+                            <TableCell className="border border-default-300">{ad.advertisedSku}</TableCell>
+                            <TableCell className="border border-default-300">{ad.campaignStatus}</TableCell>
+                            <TableCell className="border border-default-300">{ad.spend?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{ad.purchases1d}</TableCell>
+                            <TableCell className="border border-default-300">{ad.purchases7d}</TableCell>
+                            <TableCell className="border border-default-300">{`${Number(ad.acosClicks7d || 0).toFixed(2)}%`}</TableCell>
+                            <TableCell className="border border-default-300">{ad.sales1d?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{ad.sales7d?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{ad.sales14d?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{ad.unitsSoldClicks1d}</TableCell>
+                            <TableCell className="border border-default-300">{ad.clicks}</TableCell>
+                            <TableCell className="border border-default-300">{ad.impressions?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{`${Number(ad.clickThroughRate || 0).toFixed(2)}%`}</TableCell>
+                            <TableCell className="border border-default-300">{ad.cost?.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={15} className="text-center py-4">No SP ad data available</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </>
+                ) : (
+                  <>
+                    <TableHeader className="bg-black text-white sticky top-0 z-10">
+                      <TableRow>
+                        <TableHead className="border border-default-300">Promoted SKU</TableHead>
+                        <TableHead className="border border-default-300">Promoted ASIN</TableHead>
+                        <TableHead className="border border-default-300">Ad ID</TableHead>
+                        <TableHead className="border border-default-300">Impressions</TableHead>
+                        <TableHead className="border border-default-300">Purchases</TableHead>
+                        <TableHead className="border border-default-300">Clicks</TableHead>
+                        <TableHead className="border border-default-300">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sdAdData.length > 0 ? (
+                        sdAdData.map((ad) => (
+                          <TableRow key={ad.adId} className="text-center">
+                            <TableCell className="border border-default-300">{ad.promotedSku}</TableCell>
+                            <TableCell className="border border-default-300">{ad.promotedAsin}</TableCell>
+                            <TableCell className="border border-default-300">{ad.adId}</TableCell>
+                            <TableCell className="border border-default-300">{ad.impressions?.toLocaleString()}</TableCell>
+                            <TableCell className="border border-default-300">{ad.purchases}</TableCell>
+                            <TableCell className="border border-default-300">{ad.clicks}</TableCell>
+                            <TableCell className="border border-default-300">{ad.cost?.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-4">No SD ad data available</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </>
+                )}
               </Table>
-            </div>
-            <div className="mt-12 flex gap-4 rounded-2xl">
-              <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
-                <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 ASIN Based on Spends</h2>
-                <div className="flex flex-col">
-                  <div className="overflow-x-auto mb-4">
-                    <Table className="min-w-full border text-center">
-                      <TableHeader className="bg-black text-white top-0 z-10">
-                        <TableRow>
-                          <TableHead>ASIN</TableHead>
-                          <TableHead>Daily Spends</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {top5BySpends.map((asin) => (
-                          <TableRow key={asin.advertisedAsin}>
-                            <TableCell className="w-1/2">{asin.asin}</TableCell>
-                            <TableCell className="w-1/2">{asin.dailySpends?.toLocaleString() || '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div className="h-[300px]">
-                    <BasicPieChart 
-                      series={spendsChartData.series} 
-                      height={800}
-                      labels={spendsChartData.labels}
-                      colors={["#F44336", "#2196F3", "#4CAF50", "#FFC107", "#9C27B0"]}
-                      width={300}
-                    />
-                  </div>
-                </div>     
-              </div>
-
-              <div className="w-1/2 shadow-2xl p-4 bg-white rounded-lg dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
-                <h2 className="text-2xl font-bold mb-4 mt-8 text-center">Top 5 ASIN Based on Sales</h2>
-                <div className="flex flex-col">
-                  <div className="overflow-x-auto mb-4">
-                    <Table className="min-w-full border text-center">
-                      <TableHeader className="bg-black text-white top-0 z-10">
-                        <TableRow>
-                          <TableHead>ASIN</TableHead>
-                          <TableHead>Daily Sales</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {top5BySales.map((asin) => (
-                          <TableRow key={asin.advertisedAsin}>
-                            <TableCell className="w-1/2">{asin.asin}</TableCell>
-                            <TableCell className="w-1/2">{asin.dailySales?.toLocaleString() || '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div className="h-[300px]">
-                    <BasicPieChart 
-                      series={salesChartData.series} 
-                      height={800}
-                      labels={salesChartData.labels}
-                      colors={["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]}
-                      width={300}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
         {selectedTab === 'keywordPerformance' && (
           <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black">
-            <h2 className="text-lg font-bold mt-6">Keyword Performance</h2>
-            <Table className="border border-default-300">
+            <h2 className="text-2xl font-bold mb-8 text-center">Keyword Performance</h2>
+            <Table className="border border-default-300 mt-6">
               <TableHeader className="bg-black text-white sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="border border-default-300">Keyword</TableHead>
                   <TableHead className="border border-default-300">Match Type</TableHead>
-                  <TableHead className="border border-default-300">Revenue</TableHead>
+                  <TableHead className="border border-default-300">Funnel</TableHead>
                   <TableHead className="border border-default-300">Spend</TableHead>
                   <TableHead className="border border-default-300">ACOS</TableHead>
                   <TableHead className="border border-default-300">ROAS</TableHead>
@@ -503,16 +544,17 @@ function AdGroupContent() {
         )}
         {selectedTab === 'NegativeKeyword' && (
           <div className="shadow-2xl p-4 bg-white rounded-lg dark:bg-black">
-            <h2 className="text-lg font-bold">Negative Keywords</h2>
+            <h2 className="text-2xl font-bold mb-8 text-center">Negative Keywords</h2>
             {negativeKeywords.length === 0 ? (
-              <div className="text-gray-500 p-4">No negative keywords found for this campaign</div>
+              <div className="text-gray-500 p-4 text-center">No negative keywords found for this campaign</div>
             ) : (
-              <Table className="border border-default-300">
+              <Table className="border border-default-300 mt-6">
                 <TableHeader className="bg-black text-white sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="border border-default-300">Keyword ID</TableHead>
                     <TableHead className="border border-default-300">Keyword</TableHead>
                     <TableHead className="border border-default-300">Match Type</TableHead>
+                    <TableHead className="border border-default-300">State</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -523,46 +565,11 @@ function AdGroupContent() {
                       <TableCell className="border border-default-300">
                         {keyword.matchType.replace('NEGATIVE_', '')}
                       </TableCell>
+                      <TableCell className="border border-default-300">{keyword.state}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            )}
-          </div>
-        )}
-        {selectedTab === 'keywordRecommendation' && (
-          <div>
-            <h2 className="text-lg font-bold mt-6">Keyword Recommendations</h2>
-            {keywordData.length === 0 ? (
-              <div className="text-gray-500 p-4">No keyword recommendations available</div>
-            ) : (
-              ['BROAD', 'EXACT', 'PHRASE'].map((matchType) => (
-                <div key={matchType}>
-                  <h3 className="font-semibold mt-4">{matchType} Match Keywords</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Keyword</TableHead>
-                        <TableHead>Theme</TableHead>
-                        <TableHead>Rank</TableHead>
-                        <TableHead>Bid</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {keywordData
-                        .filter(kw => kw.match_type === matchType)
-                        .map((keyword, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{keyword.keyword}</TableCell>
-                            <TableCell>{keyword.theme}</TableCell>
-                            <TableCell>{keyword.rank}</TableCell>
-                            <TableCell>₹{keyword.bid.toFixed(2)}</TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ))
             )}
           </div>
         )}
@@ -576,11 +583,7 @@ function AdGroupContent() {
 
 export default function AdGroupPage() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    }>
+    <Suspense fallback={<div className="p-5">Loading...</div>}>
       <AdGroupContent />
     </Suspense>
   );
