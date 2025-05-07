@@ -17,14 +17,19 @@ import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import Image from 'next/image';
 
+const PORTFOLIO_ID = "17632003063708";
+
 type PortfolioData = {
-  portfolio_id: string;
+  portfolio_id: string;  // Change to string type
   name: string;
   budget_amount: number;
+  status: string;
+  spend: string;
+  orders: number;
+  sales: string;
+  roas: string;
   budget_start_date: string;
   budget_end_date: string;
-  state: string;
-  budget_policy: string;
 };
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -35,7 +40,7 @@ async function fetchPortfolioData() {
     console.log('Fetching portfolio data...');
     const userRole = Cookies.get('id_token');
     
-    const response = await fetchWithAuth(`${backendURL}/report/Brand_portfolio`, {
+    const response = await fetchWithAuth(`${backendURL}/report/brand_portfolios`, {
       mode: 'cors',
       credentials: 'omit',
       headers: {
@@ -49,7 +54,13 @@ async function fetchPortfolioData() {
       throw new Error(`Failed to fetch portfolio data: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    // Ensure portfolio_id is always set to our constant value
+    return data.map((portfolio: PortfolioData) => ({
+      ...portfolio,
+      portfolio_id: PORTFOLIO_ID
+    }));
   } catch (error) {
     console.error('Error in fetchPortfolioData:', error);
     throw error;
@@ -147,10 +158,13 @@ export default function BrandTargetTables() {
                       <TableRow>
                         <TableHead>Portfolio</TableHead>
                         <TableHead>Budget (₹)</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Spend (₹)</TableHead>
+                        <TableHead>Orders</TableHead>
+                        <TableHead>Sales (₹)</TableHead>
+                        <TableHead>ROAS</TableHead>
                         <TableHead>Budget Start Date</TableHead>
                         <TableHead>Budget End Date</TableHead>
-                        <TableHead>State</TableHead>
-                        <TableHead>Budget Policy</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -164,11 +178,26 @@ export default function BrandTargetTables() {
                               {portfolio.name}
                             </Link>
                           </TableCell>
-                          <TableCell>{portfolio.budget_amount?.toLocaleString() || '-'}</TableCell>
+                          <TableCell>{Number(portfolio.budget_amount)?.toLocaleString('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            minimumFractionDigits: 2
+                          }) || '-'}</TableCell>
+                          <TableCell>{portfolio.status || '-'}</TableCell>
+                          <TableCell>{Number(portfolio.spend)?.toLocaleString('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            minimumFractionDigits: 2
+                          }) || '-'}</TableCell>
+                          <TableCell>{portfolio.orders?.toLocaleString('en-IN') || '-'}</TableCell>
+                          <TableCell>{Number(portfolio.sales)?.toLocaleString('en-IN', {
+                            style: 'currency',
+                            currency: 'INR',
+                            minimumFractionDigits: 2
+                          }) || '-'}</TableCell>
+                          <TableCell>{portfolio.roas || '-'}</TableCell>
                           <TableCell>{portfolio.budget_start_date || '-'}</TableCell>
                           <TableCell>{portfolio.budget_end_date || '-'}</TableCell>
-                          <TableCell>{portfolio.state}</TableCell>
-                          <TableCell>{portfolio.budget_policy}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

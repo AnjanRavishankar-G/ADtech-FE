@@ -79,9 +79,11 @@ function AdDetailsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  // const router = useRouter();
   const selectedBrand = searchParams.get('brand');
   const selectedCampaign = searchParams.get('campaign');
   const selectedCampaignId = searchParams.get('campaignId'); // Add this line
+  // const portfolioId = searchParams.get('portfolioId');
 
   const [selectedSales, setSelectedSales] = useState<{
     isOpen: boolean;
@@ -116,6 +118,14 @@ function AdDetailsContent() {
 
     loadData();
   }, [selectedCampaignId]);
+
+  // const handleBack = () => {
+  //   const queryParams = new URLSearchParams();
+  //   if (portfolioId) queryParams.append('portfolioId', portfolioId);
+  //   if (selectedBrand) queryParams.append('brand', selectedBrand);
+    
+  //   router.push(`/campaign?${queryParams.toString()}`);
+  // };
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;

@@ -386,14 +386,14 @@ function AdGroupContent() {
           >
             <span className="flex items-center">Campaign: {selectedCampaign || 'N/A'}</span>
           </Link>
-          <Link
-            href={`/campaign?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(selectedCampaign || '')}`}
+            <Link
+            href={`/ad_details?brand=${encodeURIComponent(selectedBrand || '')}&campaign=${encodeURIComponent(selectedCampaign || '')}&campaignId=${searchParams.get('campaignId') || ''}`}
             className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
             font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
             dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
-          >
+            >
             <span className="flex items-center">AdGroup: {selectedAdGroup || 'N/A'}</span>
-          </Link>
+            </Link>
           <div className="flex gap-2">
             <button
               onClick={() => setAdType('SP')}

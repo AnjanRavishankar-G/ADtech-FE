@@ -102,7 +102,15 @@ function CampaignContent() {
     try {
       const queryParams = new URLSearchParams();
       if (portfolioId) {
-        queryParams.append('portfolioId', portfolioId.replace('.0', ''));
+        // Remove .0 only if it exists at the end of the string
+        const cleanPortfolioId = portfolioId.endsWith('.0') 
+          ? portfolioId.slice(0, -2) 
+          : portfolioId;
+        queryParams.append('portfolioId', cleanPortfolioId);
+      }
+      // Add brand parameter if present
+      if (selectedBrand) {
+        queryParams.append('brand', selectedBrand);
       }
 
       const endpoint = type.toLowerCase() + '_campaign';
@@ -141,7 +149,7 @@ function CampaignContent() {
       console.error(`Error fetching ${type} campaign data:`, error);
       throw error;
     }
-  }, [portfolioId, fetchWithAuth]);
+  }, [portfolioId, selectedBrand, fetchWithAuth]);
 
   const getTop5Campaigns = (type: CampaignType, data: CampaignDataType[], sortKey: string) => {
     if (!data.length) return [];
@@ -163,7 +171,8 @@ function CampaignContent() {
       const queryParams = new URLSearchParams({
         campaign: campaignName,
         campaignId: campaignId,
-        ...(selectedBrand && { brand: selectedBrand })
+        ...(selectedBrand && { brand: selectedBrand }),
+        ...(portfolioId && { portfolioId: portfolioId })
       });
       
       router.push(`/ad_details?${queryParams.toString()}`);
@@ -424,7 +433,7 @@ function CampaignContent() {
     let isSubscribed = true;
 
     async function loadData() {
-      if (!isSubscribed || !portfolioId) return;
+      if (!isSubscribed) return;
       
       try {
         setIsLoading(true);
