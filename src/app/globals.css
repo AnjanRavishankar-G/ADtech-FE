@@ -1,294 +1,295 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+/* eslint-disable */
+/* This file uses Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-  padding: 0;
-  margin: 0;
+    padding: 0;
+    margin: 0;
 }
 
 body.light {
-  /* Base colors - softer whites */
-  --background: #f5f7fa;
-  /* Even softer background */
-  --foreground: #edf2f7;
-  /* Softer foreground */
-  --text-color: #2d3748;
-  /* Softer black for text */
-  --border-color: #e2e8f0;
-  /* Softer border */
-  --border-thickness: 1px;
+    /* Base colors - softer whites */
+    --background: #f5f7fa;
+    /* Even softer background */
+    --foreground: #edf2f7;
+    /* Softer foreground */
+    --text-color: #2d3748;
+    /* Softer black for text */
+    --border-color: #e2e8f0;
+    /* Softer border */
+    --border-thickness: 1px;
 
-  /* Text colors for better readability */
-  --text-primary: #2d3748;
-  /* Less harsh than pure black */
-  --text-secondary: #4a5568;
-  /* Medium gray for secondary text */
-  --text-tertiary: #718096;
-  /* Light gray for tertiary text */
+    /* Text colors for better readability */
+    --text-primary: #2d3748;
+    /* Less harsh than pure black */
+    --text-secondary: #4a5568;
+    /* Medium gray for secondary text */
+    --text-tertiary: #718096;
+    /* Light gray for tertiary text */
 
-  /* Surface colors */
-  --surface-1: #f8fafc;
-  /* Softer surface */
-  --surface-2: #f1f5f9;
-  /* Even softer surface */
+    /* Surface colors */
+    --surface-1: #f8fafc;
+    /* Softer surface */
+    --surface-2: #f1f5f9;
+    /* Even softer surface */
 }
 
 body.dark {
-  /* Base colors */
-  --background: #121212;
-  /* Material Design dark theme background */
-  --foreground: #1e1e1e;
-  /* Slightly lighter for contrast */
-  --surface-1: #242424;
-  /* First elevation level */
-  --surface-2: #2a2a2a;
-  /* Second elevation level */
+    /* Base colors */
+    --background: #121212;
+    /* Material Design dark theme background */
+    --foreground: #1e1e1e;
+    /* Slightly lighter for contrast */
+    --surface-1: #242424;
+    /* First elevation level */
+    --surface-2: #2a2a2a;
+    /* Second elevation level */
 
-  /* Text colors */
-  --text-primary: #e0e0e0;
-  /* Main text - slightly off-white */
-  --text-secondary: #a0a0a0;
-  /* Secondary text */
-  --text-tertiary: #6c6c6c;
-  /* Disabled/helper text */
+    /* Text colors */
+    --text-primary: #e0e0e0;
+    /* Main text - slightly off-white */
+    --text-secondary: #a0a0a0;
+    /* Secondary text */
+    --text-tertiary: #6c6c6c;
+    /* Disabled/helper text */
 
-  /* Border and separation */
-  --border-color: rgba(255, 255, 255, 0.12);
-  --border-thickness: 1px;
+    /* Border and separation */
+    --border-color: rgba(255, 255, 255, 0.12);
+    --border-thickness: 1px;
 
-  /* Brand colors (desaturated) */
-  --primary: #bb86fc;
-  /* Desaturated primary */
-  --error: #cf6679;
-  /* Desaturated error */
-  --success: #03dac6;
-  /* Desaturated success */
+    /* Brand colors (desaturated) */
+    --primary: #bb86fc;
+    /* Desaturated primary */
+    --error: #cf6679;
+    /* Desaturated error */
+    --success: #03dac6;
+    /* Desaturated success */
 }
 
 body {
-  transition: background-color 0.3s, color 0.3s;
-  background-color: var(--background);
-  color: var(--text-color);
-  font-family: 'Lato';
-  margin: 0;
-  padding: 0;
+    transition: background-color 0.3s, color 0.3s;
+    background-color: var(--background);
+    color: var(--text-color);
+    font-family: "Arial";
+    margin: 0;
+    padding: 0;
 }
 
 /* General table styles */
 table {
-  border-radius: 5px;
-  width: 100%;
-  border-spacing: 0;
-  background-color: white;
-  color: var(--text-color);
-  border: var(--border-thickness) solid var(--border-color);
+    border-radius: 5px;
+    width: 100%;
+    border-spacing: 0;
+    background-color: white;
+    color: var(--text-color);
+    border: var(--border-thickness) solid var(--border-color);
 }
 
 /* Table header styles */
 table th {
-  padding: 12px;
-  border: var(--border-thickness) solid var(--border-color);
+    padding: 12px;
+    border: var(--border-thickness) solid var(--border-color);
 }
 
 /* Table data styles */
 table td {
-  padding: 12px;
-  border: var(--border-thickness) solid var(--border-color);
+    padding: 12px;
+    border: var(--border-thickness) solid var(--border-color);
 }
 
 /* Light mode styles */
 body.light table {
-  background-color: #f8f9fa;
-  /* Softer white */
-  border-radius: 5px;
+    background-color: #f8f9fa;
+    /* Softer white */
+    border-radius: 5px;
 }
 
 body.light table th {
-  background-color: #edf2f7;
-  /* Softer header background */
-  color: #2d3748;
-  /* Softer text color */
-  border: 1px solid var(--border-color);
+    background-color: #edf2f7;
+    /* Softer header background */
+    color: #2d3748;
+    /* Softer text color */
+    border: 1px solid var(--border-color);
 }
 
 body.light table td {
-  background-color: #f8f9fa;
-  /* Softer cell background */
-  color: #4a5568;
-  /* Softer text color */
-  border: 1px solid var(--border-color);
+    background-color: #f8f9fa;
+    /* Softer cell background */
+    color: #4a5568;
+    /* Softer text color */
+    border: 1px solid var(--border-color);
 }
 
 /* Dark mode styles */
 body.dark table {
-  background-color: var(--surface-1);
-  border: 1px solid var(--border-color);
-  box-shadow: none;
+    background-color: var(--surface-1);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
 }
 
 body.dark table th {
-  background-color: #1a1a1a;
-  /* Darker background for header */
-  color: #ffffff;
-  border-color: var(--border-color);
-  font-weight: 600;
+    background-color: #1a1a1a;
+    /* Darker background for header */
+    color: #ffffff;
+    border-color: var(--border-color);
+    font-weight: 600;
 }
 
 body.dark table td {
-  color: #e0e0e0;
-  /* Changed from var(--text-secondary) to lighter gray */
-  border-color: var(--border-color);
-  background-color: var(--surface-1);
-  /* Added explicit background */
+    color: #e0e0e0;
+    /* Changed from var(--text-secondary) to lighter gray */
+    border-color: var(--border-color);
+    background-color: var(--surface-1);
+    /* Added explicit background */
 }
 
 /* Hover effects */
 body.light table tr:hover {
-  background-color: rgba(98, 87, 87, 0.1);
+    background-color: rgba(98, 87, 87, 0.1);
 }
 
 body.dark table tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
-  /* Reduced opacity */
-  transition: background-color 0.2s ease;
+    background-color: rgba(255, 255, 255, 0.02);
+    /* Reduced opacity */
+    transition: background-color 0.2s ease;
 }
 
 /* Alternate row styles */
 body.light table tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 body.dark table tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Ensure text remains visible in dark mode */
 .dark {
-  color-scheme: dark;
+    color-scheme: dark;
 }
 
 /* Add this to ensure proper text color inheritance */
 .dark *,
 .dark *::before,
 .dark *::after {
-  color: #e0e0e0;
+    color: #e0e0e0;
 }
 
 /* Specific override for sidebar text */
 .dark .sidebar-text {
-  color: #ffffff !important;
+    color: #ffffff !important;
 }
 
 /* Sidebar toggle button styles */
 .sidebar-toggle {
-  background-color: #ffffff;
-  /* White background in both modes */
-  border-radius: 50%;
-  padding: 0.5rem;
+    background-color: #ffffff;
+    /* White background in both modes */
+    border-radius: 50%;
+    padding: 0.5rem;
 }
 
 .sidebar-toggle:hover {
-  background-color: #f5f5f5;
-  /* Light gray on hover */
+    background-color: #f5f5f5;
+    /* Light gray on hover */
 }
 
 /* Icon styles - keeping black in both modes */
 .menu-icon,
 .close-icon {
-  color: #000000 !important;
-  /* Force black color */
-  stroke: #000000 !important;
-  fill: #000000 !important;
+    color: #000000 !important;
+    /* Force black color */
+    stroke: #000000 !important;
+    fill: #000000 !important;
 }
 
 .sidebar-toggle svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: #000000 !important;
+    color: #000000 !important;
+    stroke: #000000 !important;
+    fill: #000000 !important;
 }
 
 /* Override dark mode styles for toggle button */
 .dark .sidebar-toggle {
-  background-color: #ffffff;
-  /* Keep white background in dark mode */
+    background-color: #ffffff;
+    /* Keep white background in dark mode */
 }
 
 .dark .sidebar-toggle:hover {
-  background-color: #f5f5f5;
+    background-color: #f5f5f5;
 }
 
 /* Override dark mode icon colors */
 .dark .menu-icon,
 .dark .close-icon,
 .dark .sidebar-toggle svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: #000000 !important;
+    color: #000000 !important;
+    stroke: #000000 !important;
+    fill: #000000 !important;
 }
 
 /* Sidebar toggle specific styles */
 .sidebar-toggle-icon {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: #000000 !important;
+    color: #000000 !important;
+    stroke: #000000 !important;
+    fill: #000000 !important;
 }
 
 /* Override any dark mode inheritance */
 .dark .sidebar-toggle-icon {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: #000000 !important;
+    color: #000000 !important;
+    stroke: #000000 !important;
+    fill: #000000 !important;
 }
 
 /* Update card shadows for better dark mode appearance */
 .dark .shadow-2xl {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
 }
 
 /* Visualization container hover effects */
 .dark .chart-container:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: none;
 }
 
 /* Table container styles */
 .table-container {
-  background: rgba(255, 255, 255, 0.01);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.01);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Update card styles for brand and campaign pages */
 .dark .rounded-2xl {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Remove any remaining blue glows */
 .dark [class*="shadow"] {
-  --tw-shadow-color: rgba(0, 0, 0, 0.1);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow);
+    --tw-shadow-color: rgba(0, 0, 0, 0.1);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+        var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 /* Remove any blue tints from dark mode backgrounds */
 .dark .bg-black {
-  background-color: #121212;
+    background-color: #121212;
 }
 
 /* Update any remaining glow effects */
-.dark .dark\:shadow-\[-20px_-10px_30px_6px_rgba\(0\,0\,0\,0\.1\)\,_15px_10px_30px_6px_rgba\(45\,78\,255\,0\.15\)\] {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.dark
+    .dark\:shadow-\[-20px_-10px_30px_6px_rgba\(0\,0\,0\,0\.1\)\,_15px_10px_30px_6px_rgba\(45\,78\,255\,0\.15\)\] {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.dark .dark\:shadow-\[-10px_-10px_30px_4px_rgba\(0\,0\,0\,0\.1\)\,_10px_10px_30px_4px_rgba\(45\,78\,255\,0\.15\)\] {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.dark
+    .dark\:shadow-\[-10px_-10px_30px_4px_rgba\(0\,0\,0\,0\.1\)\,_10px_10px_30px_4px_rgba\(45\,78\,255\,0\.15\)\] {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 h1,
@@ -300,29 +301,29 @@ h6,
 p,
 span,
 div {
-  color: var(--text-color);
+    color: var(--text-color);
 }
 
 /* Login page styles - always dark regardless of theme */
 .login-container {
-  background-color: #121212 !important;
-  color: #e0e0e0 !important;
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
 }
 
 .login-card {
-  background-color: #1e1e1e !important;
-  color: #e0e0e0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .login-input {
-  background-color: #2a2a2a !important;
-  color: #e0e0e0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .login-input::placeholder {
-  color: #6c6c6c !important;
+    color: #6c6c6c !important;
 }
 
 /* Force dark mode styles for login page elements */
@@ -330,135 +331,134 @@ div {
 .login-container h2,
 .login-container p,
 .login-container span {
-  color: #e0e0e0 !important;
+    color: #e0e0e0 !important;
 }
 
 /* Override Tailwind classes for login page */
 .login-container .text-gray-600 {
-  color: #e0e0e0 !important;
+    color: #e0e0e0 !important;
 }
 
 .login-container .bg-black {
-  background-color: #121212 !important;
+    background-color: #121212 !important;
 }
 
 /* Style the eye icon in password input */
 .login-container .text-gray-500 {
-  color: #a0a0a0 !important;
+    color: #a0a0a0 !important;
 }
 
 /* Style the remember me checkbox */
 .login-container .border-gray-300 {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Style the sign in button */
 .login-container .bg-purple-600 {
-  background-color: #bb86fc !important;
+    background-color: #bb86fc !important;
 }
 
 .login-container .hover\:bg-purple-700:hover {
-  background-color: #9d4edd !important;
+    background-color: #9d4edd !important;
 }
 
 .login-container .disabled\:bg-purple-400:disabled {
-  background-color: rgba(187, 134, 252, 0.6) !important;
+    background-color: rgba(187, 134, 252, 0.6) !important;
 }
 
 /* Style the forgot password link */
 .login-container .text-purple-600 {
-  color: #bb86fc !important;
+    color: #bb86fc !important;
 }
 
 .login-container .hover\:text-purple-500:hover {
-  color: #9d4edd !important;
+    color: #9d4edd !important;
 }
 
 /* Add subtle transitions */
 .login-container * {
-  transition: all 0.2s ease !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Remove any theme-based overrides */
 .light .login-container,
 .dark .login-container,
 .login-container {
-  color-scheme: dark !important;
+    color-scheme: dark !important;
 }
 
 /* Update card shadows for light mode */
 .shadow-md {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Visualization container hover effects for light mode */
 .chart-container:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  transform: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transform: none;
 }
 
 /* Update any remaining glow effects for light mode */
 [class*="shadow"] {
-  --tw-shadow-color: rgba(0, 0, 0, 0.05);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow);
+    --tw-shadow-color: rgba(0, 0, 0, 0.05);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+        var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 /* Add transitions for smoother theme switching */
 .chart-container,
 .radial-chart,
 .pie-chart {
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 /* Override ApexCharts tooltip styles */
 .apexcharts-tooltip {
-  background: rgba(0, 0, 0, 0.8) !important;
-  color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: #ffffff !important;
 }
 
 .apexcharts-tooltip-title {
-  background: rgba(0, 0, 0, 0.85) !important;
-  color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    color: #ffffff !important;
 }
 
 /* Sidebar specific styles */
 .sidebar-dropdown-item {
-  @apply flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white rounded-lg transition-colors;
+    @apply flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white rounded-lg transition-colors;
 }
 
 .sidebar-item {
-  @apply flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 transition-colors;
+    @apply flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 transition-colors;
 }
 
 .sidebar-dropdown {
-  @apply mt-2 ml-6 space-y-2;
+    @apply mt-2 ml-6 space-y-2;
 }
 
 /* Fix sidebar icon colors in dark mode */
 .dark .sidebar-icon {
-  @apply text-gray-300;
+    @apply text-gray-300;
 }
 
 /* Smooth transitions */
 .sidebar-transition {
-  @apply transition-all duration-300 ease-in-out;
+    @apply transition-all duration-300 ease-in-out;
 }
 
 /* Improved dropdown animations */
 .dropdown-enter {
-  @apply transition-all duration-200 opacity-0 transform -translate-y-2;
+    @apply transition-all duration-200 opacity-0 transform -translate-y-2;
 }
 
 .dropdown-enter-active {
-  @apply opacity-100 transform translate-y-0;
+    @apply opacity-100 transform translate-y-0;
 }
 
 .dropdown-exit {
-  @apply transition-all duration-200 opacity-100 transform translate-y-0;
+    @apply transition-all duration-200 opacity-100 transform translate-y-0;
 }
 
 .dropdown-exit-active {
-  @apply opacity-0 transform -translate-y-2;
+    @apply opacity-0 transform -translate-y-2;
 }

@@ -138,7 +138,7 @@ async function fetchNegativeKeywords(campaignId: string) {
     }
 
     const data = await res.json();
-    
+
     return data.negativeKeywords.map((kw: NegativeKeywordResponse) => ({
       keywordID: kw.keywordId,
       keyword: kw.keywordText,
