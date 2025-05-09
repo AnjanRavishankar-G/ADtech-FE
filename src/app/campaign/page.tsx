@@ -21,7 +21,7 @@ import Layout from "../components/ui/Layout";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createAuthenticatedFetch } from "../../utils/api";
 import Cookies from "js-cookie";
-
+import Image from "next/image";
 type CampaignType = "SP" | "SB" | "SD";
 
 type SPCampaignData = {
@@ -285,7 +285,7 @@ function CampaignContent() {
                                 row.campaignId
                             )
                         }
-                        className="text-blue-500 hover:text-blue-700 underline cursor-pointer"
+                        className="text-blue-500 hover:text-blue-700 cursor-pointer"
                     >
                         {value}
                     </button>
@@ -538,8 +538,37 @@ function CampaignContent() {
     return (
         <Layout>
             <div className="p-5">
+                {/* Logo Header Section */}
+                <div className="w-full p-4 rounded-lg bg-color:[#f1f4f5]">
+                    <div className="relative flex items-center justify-center w-full min-h-[100px]">
+                        {/* Left-aligned Havells logo */}
+                        <div className="absolute left-3 top-4">
+                            <Image
+                                src="/havells_png.png"
+                                alt="Havells Logo"
+                                width={100}
+                                height={30}
+                                priority
+                                className="mx-auto"
+                            />
+                        </div>
+
+                        {/* Centered Dentsu logo */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2">
+                            <Image
+                                src="/dentsu-seeklogo.png"
+                                alt="Dentsu Logo"
+                                width={200}
+                                height={80}
+                                priority
+                                className="mx-auto"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 {/* Campaign Controls Section */}
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
+                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4 mt-4">
                     {/* Brand Selection Button */}
                     <Link
                         href="/brand"

@@ -15,7 +15,7 @@ import Layout from "@/app/components/ui/Layout";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import Cookies from "js-cookie";
-
+import Image from "next/image";
 const SalesPopup = dynamic(() => import("@/app/components/SalesPopup"), {
     ssr: false,
 });
@@ -168,16 +168,37 @@ function AdDetailsContent() {
     return (
         <Layout>
             <div className="p-5">
-                <div className="w-full p-3 rounded-lg">
-                    <div className="flex justify-between items-center">
-                        <div className="text-white text-4xl">
-                            <h2 className="text-2xl font-light">Dentsu</h2>
+                {/* Logo Header Section */}
+                <div className="w-full p-4 rounded-lg bg-color:[#f1f4f5]">
+                    <div className="relative flex items-center justify-center w-full min-h-[100px]">
+                        {/* Left-aligned Havells logo */}
+                        <div className="absolute left-3 top-4">
+                            <Image
+                                src="/havells_png.png"
+                                alt="Havells Logo"
+                                width={100}
+                                height={30}
+                                priority
+                                className="mx-auto"
+                            />
+                        </div>
+
+                        {/* Centered Dentsu logo */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2">
+                            <Image
+                                src="/dentsu-seeklogo.png"
+                                alt="Dentsu Logo"
+                                width={200}
+                                height={80}
+                                priority
+                                className="mx-auto"
+                            />
                         </div>
                     </div>
                 </div>
-                <h1 className="text-2xl font-bold mb-4 text-center">
-                    Ad Groups
-                </h1>
+
+                {/* Remove the old Dentsu text header and replace with just the page title */}
+                <h1 className="text-2xl font-bold mb-4 text-center">Ad Groups</h1>
 
                 <div className="flex items-center gap-4 mb-6">
                     {/* Brand Button */}
@@ -259,7 +280,7 @@ function AdDetailsContent() {
                                                         adGroup.campaignId,
                                                 },
                                             }}
-                                            className="text-blue-500 hover:text-blue-700 underline cursor-pointer"
+                                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
                                         >
                                             {adGroup.AdGroupName}
                                         </Link>
