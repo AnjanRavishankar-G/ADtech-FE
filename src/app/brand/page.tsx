@@ -200,7 +200,7 @@ export default function BrandTargetTables() {
                                                             )}&portfolioId=${encodeURIComponent(
                                                                 portfolio.portfolio_id
                                                             )}`}
-                                                            className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
+                                                            className="text-black hover:bg-gray-300 block w-full h-full p-4 text-center dark:text-white dark:hover:bg-blue-900"
                                                         >
                                                             {portfolio.name}
                                                         </Link>
