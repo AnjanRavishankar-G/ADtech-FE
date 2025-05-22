@@ -1116,52 +1116,58 @@ function AdGroupContent() {
                         </h2>
                         <div className="relative">
                             <div className="max-h-[600px] overflow-auto">
-                                <table className="w-full border-collapse relative">
-                                    <thead className="sticky top-0 bg-black z-50">
-                                        <tr>
-                                            <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
-                                                Keyword
-                                            </th>
-                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
-                                                Theme
-                                            </th>
-                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
-                                                Match Type
-                                            </th>
-                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
-                                                Rank
-                                            </th>
-                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
-                                                Suggested Bid (₹)
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-[#212830] text-white">
-                                        {recommendations
-                                            .filter(rec => 
-                                                rec.keyword.toLowerCase().includes(searchQuery.toLowerCase())
-                                            )
-                                            .map((rec, index) => (
-                                                <tr key={index} className={`text-center ${index > 0 ? 'blur-sm' : ''}`}>
-                                                    <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {rec.keyword}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {rec.theme}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {rec.match_type}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {rec.rank}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        ₹{(rec.bid / 100).toFixed(2)}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                    </tbody>
-                                </table>
+                                {recommendations.length > 0 ? (
+                                    <table className="w-full border-collapse relative">
+                                        <thead className="sticky top-0 bg-black z-50">
+                                            <tr>
+                                                <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
+                                                    Keyword
+                                                </th>
+                                                <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                    Theme
+                                                </th>
+                                                <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                    Match Type
+                                                </th>
+                                                <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                    Rank
+                                                </th>
+                                                <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                    Suggested Bid (₹)
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-[#212830] text-white">
+                                            {recommendations
+                                                .filter(rec => 
+                                                    rec.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+                                                )
+                                                .map((rec, index) => (
+                                                    <tr key={index} className={`text-center ${index > 0 ? 'blur-sm' : ''}`}>
+                                                        <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                            {rec.keyword}
+                                                        </td>
+                                                        <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                            {rec.theme}
+                                                        </td>
+                                                        <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                            {rec.match_type}
+                                                        </td>
+                                                        <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                            {rec.rank}
+                                                        </td>
+                                                        <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                            ₹{(rec.bid / 100).toFixed(2)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="flex justify-center items-center h-[200px]">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Overlay message for Keyword Recommendations */}
