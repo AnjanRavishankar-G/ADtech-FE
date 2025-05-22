@@ -2,10 +2,11 @@
 import React, { useState } from "react";
 import { useTheme } from '@/app/context/ThemeContext';
 import { FaMoon, FaSun, FaKey } from 'react-icons/fa';
-import { GiOctopus, GiTargeting } from "react-icons/gi";
+import { GiTargeting } from "react-icons/gi";
 import { Handshake, Home, LogOut, ChevronLeft, ChevronRight, ChevronDown, Package2, Settings } from "lucide-react";
 import { usePathname } from 'next/navigation';
-// import Image from 'next/image';
+import Image from 'next/image';
+
 interface SidebarProps {
   collapsed: boolean;
   toggleSidebar: () => void;
@@ -104,6 +105,25 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <span>Negative Keywords</span>
                       </button>
                     </li>
+                    <li>
+                      <button 
+                        onClick={() => setSelectedTab('KeywordRecommendation')}
+                        className={`flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full whitespace-nowrap ${
+                          selectedTab === 'KeywordRecommendation' 
+                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+                            : "text-gray-600 hover:text-black dark:text-gray-300"
+                        }`}
+                      >
+                        <Image 
+                          src="/keyword_recommendation.png"
+                          alt="Keyword Recommendation"
+                          width={20}  // Increased from 16 to 20
+                          height={20} // Increased from 16 to 20
+                          className="dark:filter dark:invert min-w-[20px]"
+                        />
+                        <span>KW Recommendation</span>
+                      </button>
+                    </li>
                   </ul>
                 )}
               </li>
@@ -117,7 +137,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <GiOctopus size={20} />
+                  <Image 
+                    src="/light_house.png"
+                    alt="Lighthouse"
+                    width={24}    // Increased from 20 to 24
+                    height={24}   // Increased from 20 to 24
+                    className="dark:filter dark:invert min-w-[24px]"  // Added min-width to maintain size
+                  />
                   {!collapsed && <span>Lighthouse</span>}
                 </div>
                 {!collapsed && (
@@ -139,13 +165,27 @@ const Sidebar: React.FC<SidebarProps> = ({
                       Retail Insights
                     </a>
                   </li>
-                  {/* <li>
-                    <a href="#" className="text-gray-900 hover:text-black dark:text-white">
-                      You-tube Trends
-                    </a>
-                  </li> */}
                 </ul>
               )}
+            </li>
+
+            {/* Update the Reports menu item to use the custom icon */}
+            <li>
+              <a
+                href="/reports"
+                className={`flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 ${
+                  collapsed ? "justify-center" : ""
+                }`}
+              >
+                <Image 
+                  src="/reports.png"
+                  alt="Reports"
+                  width={24}    // Increased from 20 to 24
+                  height={24}   // Increased from 20 to 24
+                  className="dark:filter dark:invert min-w-[24px]"  // Added min-width to maintain size
+                />
+                {!collapsed && <span>Reports</span>}
+              </a>
             </li>
           </ul>
         </div>

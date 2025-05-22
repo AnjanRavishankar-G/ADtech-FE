@@ -90,6 +90,14 @@ type SPAdData = {
     created_at: string;
 };
 
+type KeywordRecommendation = {
+    keyword: string;
+    theme: string;
+    match_type: string;
+    rank: number;
+    bid: number;
+};
+
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 function getRequiredHeaders() {
@@ -214,6 +222,31 @@ async function fetchSPAdData(campaignId: string, adGroupId: string) {
     }
 }
 
+// Update the fetchKeywordRecommendations function
+async function fetchKeywordRecommendations(campaignId: string, adGroupId: string) {
+    try {
+        // Remove .0 from IDs if present
+        const cleanCampaignId = campaignId.replace(".0", "");
+        const cleanAdGroupId = adGroupId.replace(".0", "");
+
+        // Use path parameters instead of query parameters
+        const res = await fetch(
+            `${backendURL}/keyword-recommendation/${cleanCampaignId}/${cleanAdGroupId}`,
+            {
+                cache: "no-store",
+                headers: getRequiredHeaders(),
+            }
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch keyword recommendations");
+        const data = await res.json();
+        return data.keywords || []; // Extract keywords array from response
+    } catch (error) {
+        console.error("Error fetching keyword recommendations:", error);
+        throw error;
+    }
+}
+
 const checkAuthentication = () => {
     const idToken = Cookies.get("id_token");
     const authToken = Cookies.get("auth_token");
@@ -271,6 +304,12 @@ function AdGroupContent() {
         key: SortableKeywordFields;
         direction: "asc" | "desc";
     }>({ key: "keyword", direction: "desc" });
+    const [recommendations, setRecommendations] = useState<KeywordRecommendation[]>(
+        []
+    );
+
+    // Add this new state for negative keywords loading
+    const [isNegativeKeywordsLoading, setIsNegativeKeywordsLoading] = useState(true);
 
     const searchParams = useSearchParams();
     const selectedBrand = searchParams.get("brand");
@@ -401,12 +440,14 @@ function AdGroupContent() {
         loadInitialData();
     }, [searchParams]);
 
+    // Modify the loadTabData function to handle loading state
     useEffect(() => {
         const loadTabData = async () => {
             if (!checkAuthentication()) return;
 
             try {
                 if (selectedTab === "NegativeKeyword") {
+                    setIsNegativeKeywordsLoading(true);
                     const campaignId = searchParams.get("campaignId");
                     if (!campaignId) {
                         throw new Error("Missing campaign ID");
@@ -415,12 +456,25 @@ function AdGroupContent() {
                         campaignId
                     );
                     setNegativeKeywords(negativeKeywordResults);
+                } else if (selectedTab === "KeywordRecommendation") {
+                    const campaignId = searchParams.get("campaignId");
+                    const adGroupId = searchParams.get("adGroupId");
+                    if (!campaignId || !adGroupId) {
+                        throw new Error("Missing campaign ID or ad group ID");
+                    }
+                    const recommendationResults = await fetchKeywordRecommendations(
+                        campaignId,
+                        adGroupId
+                    );
+                    setRecommendations(recommendationResults);
                 }
             } catch (err) {
                 console.error("Error loading tab data:", err);
                 setError(
                     err instanceof Error ? err.message : "An error occurred"
                 );
+            } finally {
+                setIsNegativeKeywordsLoading(false);
             }
         };
 
@@ -551,6 +605,8 @@ function AdGroupContent() {
                                     ? "Search keywords..."
                                     : selectedTab === "NegativeKeyword"
                                     ? "Search keywords..."
+                                    : selectedTab === "KeywordRecommendation"
+                                    ? "Search keywords..."
                                     : ""
                             }
                             value={searchQuery}
@@ -588,7 +644,7 @@ function AdGroupContent() {
                 </div>
                 {selectedTab === "asin" && (
                     <div>
-                        <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black">
+                        <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:text-white dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
                             <h2 className="text-2xl font-bold mb-8 text-center">
                                 Asin Performance
                             </h2>
@@ -852,132 +908,138 @@ function AdGroupContent() {
                             </span>
                         </div>
 
-                        <div className="relative">
-                            <div className="max-h-[600px] overflow-auto">
-                                <table className="w-full border-collapse relative">
-                                    <thead className="sticky top-0 bg-black z-50">
-                                        <tr>
-                                            <th 
-                                                className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800"
-                                                onClick={() => handleKeywordSort("keyword")}
-                                            >
-                                                <div className="flex items-center justify-center gap-1">
-                                                    Keyword
-                                                    {keywordSortConfig.key === "keyword" && (
-                                                        <span>{keywordSortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                                                    )}
-                                                </div>
-                                            </th>
-                                            {/* Dynamic columns */}
-                                            {[
-                                                { key: "matchType", label: "Match Type" },
-                                                { key: "impressions", label: "Impressions" },
-                                                { key: "spend", label: "Spend" },
-                                                { key: "sales1d", label: "Sales 1D" },
-                                                { key: "sales7d", label: "Sales 7D" },
-                                                { key: "sales14d", label: "Sales 14D" },
-                                                { key: "sales30d", label: "Sales 30D" },
-                                                { key: "cpc", label: "CPC" },
-                                                { key: "clicks", label: "Clicks" },
-                                                { key: "bid", label: "Bid" },
-                                                { key: "purchases1d", label: "Purchases 1D" },
-                                                { key: "purchases7d", label: "Purchases 7D" },
-                                                { key: "purchases14d", label: "Purchases 14D" },
-                                                { key: "purchases30d", label: "Purchases 30D" },
-                                                { key: "roas7d", label: "ROAS 7D" },
-                                                { key: "roas14d", label: "ROAS 14D" },
-                                                { key: "acos7d", label: "ACOS 7D" },
-                                                { key: "acos14d", label: "ACOS 14D" },
-                                            ].map(({ key, label }) => (
-                                                <th
-                                                    key={key}
-                                                    onClick={() => handleKeywordSort(key as SortableKeywordFields)}
-                                                    className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
+                        {keywordPerformanceData.length === 0 ? (
+                            <div className="text-center p-8 text-gray-500 dark:text-gray-400">
+                                No Targeting Keywords found for this Campaign
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <div className="max-h-[600px] overflow-auto">
+                                    <table className="w-full border-collapse relative">
+                                        <thead className="sticky top-0 bg-black z-50">
+                                            <tr>
+                                                <th 
+                                                    className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800"
+                                                    onClick={() => handleKeywordSort("keyword")}
                                                 >
                                                     <div className="flex items-center justify-center gap-1">
-                                                        {label}
-                                                        {keywordSortConfig.key === key && (
+                                                        Keyword
+                                                        {keywordSortConfig.key === "keyword" && (
                                                             <span>{keywordSortConfig.direction === "asc" ? "↑" : "↓"}</span>
                                                         )}
                                                     </div>
                                                 </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-[#212830] text-white">
-                                        {getSortedKeywordData().map((keyword, index) => (
-                                            <tr key={index} className="text-center">
-                                                <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.keyword}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.matchType}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.impressions.toLocaleString()}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.spend.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.sales1d.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.sales7d.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.sales14d.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.sales30d.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.cpc.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.clicks}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    ₹{keyword.bid.toFixed(2)}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.purchases1d}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.purchases7d}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.purchases14d}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {keyword.purchases30d}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {typeof keyword.roas7d === "number"
-                                                        ? keyword.roas7d.toFixed(2)
-                                                        : "-"}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {typeof keyword.roas14d === "number"
-                                                        ? keyword.roas14d.toFixed(2)
-                                                        : "-"}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {typeof keyword.acos7d === "number"
-                                                        ? `${keyword.acos7d.toFixed(2)}%`
-                                                        : "-"}
-                                                </td>
-                                                <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                    {typeof keyword.acos14d === "number"
-                                                        ? `${keyword.acos14d.toFixed(2)}%`
-                                                        : "-"}
-                                                </td>
+                                                {/* Dynamic columns */}
+                                                {[
+                                                    { key: "matchType", label: "Match Type" },
+                                                    { key: "impressions", label: "Impressions" },
+                                                    { key: "spend", label: "Spend" },
+                                                    { key: "sales1d", label: "Sales 1D" },
+                                                    { key: "sales7d", label: "Sales 7D" },
+                                                    { key: "sales14d", label: "Sales 14D" },
+                                                    { key: "sales30d", label: "Sales 30D" },
+                                                    { key: "cpc", label: "CPC" },
+                                                    { key: "clicks", label: "Clicks" },
+                                                    { key: "bid", label: "Bid" },
+                                                    { key: "purchases1d", label: "Purchases 1D" },
+                                                    { key: "purchases7d", label: "Purchases 7D" },
+                                                    { key: "purchases14d", label: "Purchases 14D" },
+                                                    { key: "purchases30d", label: "Purchases 30D" },
+                                                    { key: "roas7d", label: "ROAS 7D" },
+                                                    { key: "roas14d", label: "ROAS 14D" },
+                                                    { key: "acos7d", label: "ACOS 7D" },
+                                                    { key: "acos14d", label: "ACOS 14D" },
+                                                ].map(({ key, label }) => (
+                                                    <th
+                                                        key={key}
+                                                        onClick={() => handleKeywordSort(key as SortableKeywordFields)}
+                                                        className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
+                                                    >
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            {label}
+                                                            {keywordSortConfig.key === key && (
+                                                                <span>{keywordSortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                                                            )}
+                                                        </div>
+                                                    </th>
+                                                ))}
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="bg-[#212830] text-white">
+                                            {getSortedKeywordData().map((keyword, index) => (
+                                                <tr key={index} className="text-center">
+                                                    <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.keyword}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.matchType}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.impressions.toLocaleString()}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.spend.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.sales1d.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.sales7d.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.sales14d.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.sales30d.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.cpc.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.clicks}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{keyword.bid.toFixed(2)}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.purchases1d}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.purchases7d}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.purchases14d}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {keyword.purchases30d}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {typeof keyword.roas7d === "number"
+                                                            ? keyword.roas7d.toFixed(2)
+                                                            : "-"}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {typeof keyword.roas14d === "number"
+                                                            ? keyword.roas14d.toFixed(2)
+                                                            : "-"}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {typeof keyword.acos7d === "number"
+                                                            ? `${keyword.acos7d.toFixed(2)}%`
+                                                            : "-"}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {typeof keyword.acos14d === "number"
+                                                            ? `${keyword.acos14d.toFixed(2)}%`
+                                                            : "-"}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
                 {selectedTab === "NegativeKeyword" && (
@@ -985,7 +1047,11 @@ function AdGroupContent() {
                         <h2 className="text-2xl font-bold mb-8 text-center">
                             Negative Keywords
                         </h2>
-                        {negativeKeywords.length === 0 ? (
+                        {isNegativeKeywordsLoading ? (
+                            <div className="text-center p-4">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                            </div>
+                        ) : negativeKeywords.length === 0 ? (
                             <div className="text-gray-500 p-4 text-center">
                                 No negative keywords found for this campaign
                             </div>
@@ -1041,6 +1107,74 @@ function AdGroupContent() {
                                 </TableBody>
                             </Table>
                         )}
+                    </div>
+                )}
+                {selectedTab === "KeywordRecommendation" && (
+                    <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black">
+                        <h2 className="text-2xl font-bold mb-8 text-center">
+                            Keyword Recommendations
+                        </h2>
+                        <div className="relative">
+                            <div className="max-h-[600px] overflow-auto">
+                                <table className="w-full border-collapse relative">
+                                    <thead className="sticky top-0 bg-black z-50">
+                                        <tr>
+                                            <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
+                                                Keyword
+                                            </th>
+                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                Theme
+                                            </th>
+                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                Match Type
+                                            </th>
+                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                Rank
+                                            </th>
+                                            <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                                                Suggested Bid (₹)
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-[#212830] text-white">
+                                        {recommendations
+                                            .filter(rec => 
+                                                rec.keyword.toLowerCase().includes(searchQuery.toLowerCase())
+                                            )
+                                            .map((rec, index) => (
+                                                <tr key={index} className={`text-center ${index > 0 ? 'blur-sm' : ''}`}>
+                                                    <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {rec.keyword}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {rec.theme}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {rec.match_type}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {rec.rank}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        ₹{(rec.bid / 100).toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {/* Overlay message for Keyword Recommendations */}
+                            {recommendations.length > 1 && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 mt-12">
+                                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md text-center">
+                                        <p className="text-gray-900 dark:text-white font-medium">
+                                            Please Contact the Artha Team to enable this Feature
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
                 <div className="mt-32">

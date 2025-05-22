@@ -9,6 +9,7 @@ import { createAuthenticatedFetch } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import Image from "next/image";
+import CampaignOpportunities from "../components/ui/CampaignOpportunities";
 
 type PortfolioData = {
     id: number;
@@ -346,11 +347,12 @@ const BrandTargetTables = () => {
                                 </div>
                             </div>
 
-                            {/* Add hidden class to the mt-12 flex container and its contents */}
-                            <div className="mt-12 flex gap-4 rounded-2xl hidden"></div>
-                        </div>
-                        <div>
-                            <Footer />
+                            {/* Add Campaign Opportunities section */}
+                            <CampaignOpportunities />
+
+                            <div>
+                                <Footer />
+                            </div>
                         </div>
                     </div>
                 )}
