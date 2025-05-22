@@ -3,33 +3,30 @@ import "@/css/brand.css";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Footer from "../components/ui/footer";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/app/components/ui/table";
+
 import Layout from "../components/ui/Layout";
 import { createAuthenticatedFetch } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import Image from "next/image";
 
-const PORTFOLIO_ID = "17632003063708";
-
 type PortfolioData = {
-    portfolio_id: string; // Change to string type
+    id: number;
+    portfolio_id: number;
     name: string;
-    budget_amount: number;
-    status: string;
-    spend: string;
-    orders: number;
-    sales: string;
-    roas: string;
-    budget_start_date: string;
-    budget_end_date: string;
+    state: string;
+    Budget: string;
+    Budget_start: string;
+    Budget_end: string;
+    Impressions: number;
+    Clicks: number;
+    CTR: string;
+    Spend: string;
+    CPC: string;
+    Orders: number;
+    Sales: string;
+    ACOS: string;
+    ROAS: string;
 };
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -41,7 +38,7 @@ async function fetchPortfolioData() {
         const userRole = Cookies.get("id_token");
 
         const response = await fetchWithAuth(
-            `${backendURL}/report/brand_portfolios`,
+            `${backendURL}/report/Portfolios_Data`,
             {
                 mode: "cors",
                 credentials: "omit",
@@ -54,29 +51,29 @@ async function fetchPortfolioData() {
         );
 
         if (!response.ok) {
-            throw new Error(
-                `Failed to fetch portfolio data: ${response.status}`
-            );
+            throw new Error(`Failed to fetch portfolio data: ${response.status}`);
         }
 
         const data = await response.json();
-
-        // Ensure portfolio_id is always set to our constant value
-        return data.map((portfolio: PortfolioData) => ({
-            ...portfolio,
-            portfolio_id: PORTFOLIO_ID,
-        }));
+        return data; // Return the data as-is, remove the mapping with hardcoded PORTFOLIO_ID
     } catch (error) {
         console.error("Error in fetchPortfolioData:", error);
         throw error;
     }
 }
 
-export default function BrandTargetTables() {
+const BrandTargetTables = () => {
     const router = useRouter();
     const [portfolioData, setPortfolioData] = useState<PortfolioData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [sortConfig, setSortConfig] = useState<{
+        key: string;
+        direction: "asc" | "desc";
+    }>({
+        key: "",
+        direction: "desc",
+    });
 
     useEffect(() => {
         async function loadData() {
@@ -105,9 +102,36 @@ export default function BrandTargetTables() {
         loadData();
     }, [router]);
 
+    const handleSort = (columnKey: string) => {
+        setSortConfig((prevConfig) => ({
+            key: columnKey,
+            direction:
+                prevConfig.key === columnKey && prevConfig.direction === "desc"
+                    ? "asc"
+                    : "desc",
+        }));
+    };
+
+    const getSortedData = () => {
+        const sortedData = [...portfolioData];
+
+        if (sortConfig.key) {
+            sortedData.sort((a, b) => {
+                const aValue = a[sortConfig.key as keyof PortfolioData] ?? 0;
+                const bValue = b[sortConfig.key as keyof PortfolioData] ?? 0;
+
+                if (sortConfig.direction === "asc") {
+                    return Number(aValue) - Number(bValue);
+                }
+                return Number(bValue) - Number(aValue);
+            });
+        }
+
+        return sortedData;
+    };
+
     if (isLoading) return <div>Loading...</div>;
 
-    const displayData = portfolioData;
 
     return (
         <Layout>
@@ -166,48 +190,77 @@ export default function BrandTargetTables() {
                                 className={`hidden flex flex-col md:flex-row flex-wrap justify-start gap-5 bg-[#f8f9fa] dark:bg-[#1e1e1e] rounded-2xl`}
                             ></div>
 
-                            <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:text-white dark:shadow-[-10px_-10px_30px_4px_rgba(0,0,0,0.1),_10px_10px_30px_4px_rgba(45,78,255,0.15)]">
-                                <div className="overflow-auto max-h-[500px]">
-                                    <Table className="min-w-full border text-center">
-                                        <TableHeader className="bg-gray-200 dark:bg-gray-800">
-                                            <TableRow>
-                                                <TableHead>Portfolio</TableHead>
-                                                <TableHead>
-                                                    Budget (₹)
-                                                </TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Spend (₹)</TableHead>
-                                                <TableHead>Orders</TableHead>
-                                                <TableHead>Sales (₹)</TableHead>
-                                                <TableHead>ROAS</TableHead>
-                                                <TableHead>
-                                                    Budget Start Date
-                                                </TableHead>
-                                                <TableHead>
-                                                    Budget End Date
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {displayData.map((portfolio) => (
-                                                <TableRow
-                                                    key={portfolio.portfolio_id}
-                                                >
-                                                    <TableCell className="border border-default-300 hover:bg-default-100 transition-colors cursor-pointer p-0">
+                            <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black mt-4">
+                                <div className="relative max-h-[600px] overflow-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead className="sticky top-0 z-50">
+                                            <tr>
+                                                <th className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-8 py-4 font-semibold text-white border border-gray-700 text-base h-[60px] min-w-[250px]">
+                                                    Name
+                                                </th>
+                                                <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                                                    State
+                                                </th>
+                                                {(
+                                                    [
+                                                        { key: "Budget", label: "Budget (₹)" },
+                                                        { key: "Impressions", label: "Impressions" },
+                                                        { key: "Clicks", label: "Clicks" },
+                                                        { key: "CTR", label: "CTR (%)" },
+                                                        { key: "Spend", label: "Spend (₹)" },
+                                                        { key: "CPC", label: "CPC (₹)" },
+                                                        { key: "Orders", label: "Orders" },
+                                                        { key: "Sales", label: "Sales (₹)" },
+                                                        { key: "ACOS", label: "ACOS (%)" },
+                                                        { key: "ROAS", label: "ROAS" },
+                                                    ] as const
+                                                ).map(({ key, label }) => (
+                                                    <th
+                                                        key={key}
+                                                        onClick={() => handleSort(key)}
+                                                        className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base h-[60px]"
+                                                    >
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            {label}
+                                                            {sortConfig.key === key && (
+                                                                <span className="ml-1 text-lg">
+                                                                    {sortConfig.direction === "asc"
+                                                                        ? "↑"
+                                                                        : "↓"}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </th>
+                                                ))}
+                                                <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                                                    Budget Start
+                                                </th>
+                                                <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                                                    Budget End
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-[#212830] text-white">
+                                            {getSortedData().map((portfolio) => (
+                                                <tr key={portfolio.id}>
+                                                    <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-4 py-2 whitespace-nowrap min-w-[250px]">
                                                         <Link
                                                             href={`/campaign?brand=${encodeURIComponent(
                                                                 portfolio.name
                                                             )}&portfolioId=${encodeURIComponent(
                                                                 portfolio.portfolio_id
                                                             )}`}
-                                                            className="text-black hover:bg-gray-300 block w-full h-full p-4 dark:text-white dark:hover:bg-blue-900"
+                                                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
                                                         >
                                                             {portfolio.name}
                                                         </Link>
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </td>
+                                                    <td>
+                                                        {portfolio.state || "-"}
+                                                    </td>
+                                                    <td>
                                                         {Number(
-                                                            portfolio.budget_amount
+                                                            portfolio.Budget
                                                         )?.toLocaleString(
                                                             "en-IN",
                                                             {
@@ -216,14 +269,25 @@ export default function BrandTargetTables() {
                                                                 minimumFractionDigits: 2,
                                                             }
                                                         ) || "-"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {portfolio.status ||
-                                                            "-"}
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </td>
+                                                    <td>
+                                                        {
+                                                            portfolio.Impressions
+                                                                ?.toLocaleString() || "-"
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        {portfolio.Clicks?.toLocaleString() || "-"}
+                                                    </td>
+                                                    <td>
+                                                        {(Number(portfolio.CTR) * 100).toFixed(
+                                                            2
+                                                        )}
+                                                        %
+                                                    </td>
+                                                    <td>
                                                         {Number(
-                                                            portfolio.spend
+                                                            portfolio.Spend
                                                         )?.toLocaleString(
                                                             "en-IN",
                                                             {
@@ -232,15 +296,10 @@ export default function BrandTargetTables() {
                                                                 minimumFractionDigits: 2,
                                                             }
                                                         ) || "-"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {portfolio.orders?.toLocaleString(
-                                                            "en-IN"
-                                                        ) || "-"}
-                                                    </TableCell>
-                                                    <TableCell>
+                                                    </td>
+                                                    <td>
                                                         {Number(
-                                                            portfolio.sales
+                                                            portfolio.CPC
                                                         )?.toLocaleString(
                                                             "en-IN",
                                                             {
@@ -249,22 +308,41 @@ export default function BrandTargetTables() {
                                                                 minimumFractionDigits: 2,
                                                             }
                                                         ) || "-"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {portfolio.roas || "-"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {portfolio.budget_start_date ||
-                                                            "-"}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {portfolio.budget_end_date ||
-                                                            "-"}
-                                                    </TableCell>
-                                                </TableRow>
+                                                    </td>
+                                                    <td>
+                                                        {portfolio.Orders?.toLocaleString() || "-"}
+                                                    </td>
+                                                    <td>
+                                                        {Number(
+                                                            portfolio.Sales
+                                                        )?.toLocaleString(
+                                                            "en-IN",
+                                                            {
+                                                                style: "currency",
+                                                                currency: "INR",
+                                                                minimumFractionDigits: 2,
+                                                            }
+                                                        ) || "-"}
+                                                    </td>
+                                                    <td>
+                                                        {(Number(portfolio.ACOS) * 100).toFixed(
+                                                            2
+                                                        )}
+                                                        %
+                                                    </td>
+                                                    <td>
+                                                        {Number(portfolio.ROAS).toFixed(2)}
+                                                    </td>
+                                                    <td>
+                                                        {portfolio.Budget_start || "-"}
+                                                    </td>
+                                                    <td>
+                                                        {portfolio.Budget_end || "-"}
+                                                    </td>
+                                                </tr>
                                             ))}
-                                        </TableBody>
-                                    </Table>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
@@ -280,3 +358,5 @@ export default function BrandTargetTables() {
         </Layout>
     );
 }
+
+export default BrandTargetTables;

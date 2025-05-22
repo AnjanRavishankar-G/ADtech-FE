@@ -86,6 +86,11 @@ function AdDetailsContent() {
     const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState(""); // Add this line
+    const [sortConfig, setSortConfig] = useState<{
+        key: string;
+        direction: 'asc' | 'desc';
+    }>({ key: '', direction: 'desc' });
     const searchParams = useSearchParams();
     // const router = useRouter();
     const selectedBrand = searchParams.get("brand");
@@ -102,6 +107,36 @@ function AdDetailsContent() {
         value: 0,
         adGroup: "",
     });
+
+    const handleSort = (columnKey: string) => {
+        setSortConfig((prevConfig) => ({
+            key: columnKey,
+            direction: 
+                prevConfig.key === columnKey && prevConfig.direction === 'desc' 
+                ? 'asc' 
+                : 'desc'
+        }));
+    };
+
+    const getSortedData = () => {
+        const filteredData = campaignData.filter((adGroup) =>
+            adGroup.AdGroupName.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        if (sortConfig.key) {
+            filteredData.sort((a, b) => {
+                const aValue = a[sortConfig.key as keyof CampaignData] ?? 0;
+                const bValue = b[sortConfig.key as keyof CampaignData] ?? 0;
+                
+                if (sortConfig.direction === 'asc') {
+                    return Number(aValue) - Number(bValue);
+                }
+                return Number(bValue) - Number(aValue);
+            });
+        }
+
+        return filteredData;
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -200,13 +235,13 @@ function AdDetailsContent() {
                 {/* Remove the old Dentsu text header and replace with just the page title */}
                 <h1 className="text-2xl font-bold mb-4 text-center">Ad Groups</h1>
 
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-4 mb-4 mt-4">
                     {/* Brand Button */}
                     <Link
                         href="/brand"
                         className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
-            font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
-            dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
+                        font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+                        dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
                     >
                         <span className="flex items-center">
                             Brand: {selectedBrand || "N/A"}
@@ -219,105 +254,150 @@ function AdDetailsContent() {
                             selectedBrand || ""
                         )}&campaignId=${selectedCampaignId || ""}`}
                         className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
-            font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
-            dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
+                        font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+                        dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
                     >
                         <span className="flex items-center">
                             Campaign: {selectedCampaign || "N/A"}
                         </span>
                     </Link>
+
+                    {/* Search Bar */}
+                    <div className="relative w-[300px]">
+                        <input
+                            type="text"
+                            placeholder="Search ad groups..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={`w-full h-[42px] px-5 rounded-lg transition-all duration-200
+                                border-blue-200 focus:border-blue-400
+                                bg-white text-black placeholder-gray-600
+                                hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500
+                                dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                                dark:border-gray-700 dark:hover:bg-gray-700/70
+                                text-base font-medium shadow-md border-2`}
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 
+                                         hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200
+                                         transition-colors duration-200"
+                                title="Clear search"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="shadow-2xl p-4 bg-white rounded-2xl overflow-x-auto max-h-96 dark:bg-black mt-4">
-                    <Table className="border border-default-100 rounded-lg">
-                        <TableHeader className="bg-black text-white top-0 z-10">
-                            <TableRow>
-                                <TableHead className="text-center">
-                                    Ad Group Name
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    Type
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    Clicks
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    Impressions
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    Sales (₹)
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    Spend (₹)
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    CTR (%)
-                                </TableHead>
-                                <TableHead className="text-center">
-                                    DPV
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody className="text-white">
-                            {campaignData.map((adGroup) => (
-                                <TableRow
-                                    key={adGroup.SN}
-                                    className="text-center"
-                                >
-                                    <TableCell className="border border-default-300">
-                                        <Link
-                                            href={{
-                                                pathname: "/adGroupDetails",
-                                                query: {
-                                                    brand: selectedBrand || "",
-                                                    campaign:
-                                                        selectedCampaign || "",
-                                                    adGroup:
-                                                        adGroup.AdGroupName,
-                                                    adGroupId:
-                                                        adGroup.adGroupId,
-                                                    campaignId:
-                                                        adGroup.campaignId,
-                                                },
-                                            }}
-                                            className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black mt-4">
+                    {/* Add an outer container with fixed height and overflow */}
+                    <div className="relative max-h-[600px] overflow-auto">
+                        <table className="w-full border-collapse">
+                            {/* Update thead styles */}
+                            <thead className="sticky top-0 z-50">
+                                <tr>
+                                    <th 
+                                        className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]"
+                                    >
+                                        Ad Group Name
+                                    </th>
+                                    <th 
+                                        className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]"
+                                    >
+                                        Type
+                                    </th>
+                                    {[
+                                        { key: 'Clicks', label: 'Clicks' },
+                                        { key: 'Impressions', label: 'Impressions' },
+                                        { key: 'Sales', label: 'Sales (₹)' },
+                                        { key: 'Spend', label: 'Spend (₹)' },
+                                        { key: 'CTR', label: 'CTR (%)' },
+                                        { key: 'DPV', label: 'DPV' }
+                                    ].map(({ key, label }) => (
+                                        <th
+                                            key={key}
+                                            onClick={() => handleSort(key)}
+                                            className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base h-[60px]"
                                         >
-                                            {adGroup.AdGroupName}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.Type}
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.Clicks.toLocaleString()}
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.Impressions.toLocaleString()}
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.Sales.toLocaleString("en-IN", {
-                                            style: "currency",
-                                            currency: "INR",
-                                            minimumFractionDigits: 2,
-                                        })}
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.Spend.toLocaleString("en-IN", {
-                                            style: "currency",
-                                            currency: "INR",
-                                            minimumFractionDigits: 2,
-                                        })}
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {(adGroup.CTR * 100).toFixed(2)}%
-                                    </TableCell>
-                                    <TableCell className="border border-default-300">
-                                        {adGroup.DPV.toLocaleString()}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                                            <div className="flex items-center justify-center gap-1">
+                                                {label}
+                                                {sortConfig.key === key && (
+                                                    <span className="ml-1 text-lg">
+                                                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="bg-[#212830] text-white">
+                                {getSortedData().map((adGroup) => (
+                                    <TableRow key={adGroup.SN} className="text-center">
+                                        <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                            <Link
+                                                href={{
+                                                    pathname: "/adGroupDetails",
+                                                    query: {
+                                                        brand: selectedBrand || "",
+                                                        campaign: selectedCampaign || "",
+                                                        adGroup: adGroup.AdGroupName,
+                                                        adGroupId: adGroup.adGroupId,
+                                                        campaignId: adGroup.campaignId,
+                                                    },
+                                                }}
+                                                className="text-blue-500 hover:text-blue-700 cursor-pointer"
+                                            >
+                                                {adGroup.AdGroupName}
+                                            </Link>
+                                        </td>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.Type}
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.Clicks.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.Impressions.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.Sales.toLocaleString("en-IN", {
+                                                style: "currency",
+                                                currency: "INR",
+                                                minimumFractionDigits: 2,
+                                            })}
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.Spend.toLocaleString("en-IN", {
+                                                style: "currency",
+                                                currency: "INR",
+                                                minimumFractionDigits: 2,
+                                            })}
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {(adGroup.CTR * 100).toFixed(2)}%
+                                        </TableCell>
+                                        <TableCell className="border border-gray-700">
+                                            {adGroup.DPV.toLocaleString()}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div className="mt-12 flex gap-4 rounded-2xl">
                     {/* First Top 5 Section */}

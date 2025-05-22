@@ -102,7 +102,8 @@ function CampaignContent() {
     const [sbCampaignData, setSbCampaignData] = useState<SBCampaignData[]>([]);
     const [sdCampaignData, setSDCampaignData] = useState<SDCampaignData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError,] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const fetchCampaignData = useCallback(
         async (type: CampaignType) => {
@@ -192,6 +193,11 @@ function CampaignContent() {
     };
 
     const CampaignTable = () => {
+        const [sortConfig, setSortConfig] = useState<{
+            key: string;
+            direction: 'asc' | 'desc';
+        }>({ key: '', direction: 'desc' });
+
         const handleCampaignClick = (
             campaignName: string,
             campaignId: string
@@ -206,67 +212,130 @@ function CampaignContent() {
             router.push(`/ad_details?${queryParams.toString()}`);
         };
 
+        const handleSort = (columnKey: string) => {
+            setSortConfig((prevConfig) => ({
+                key: columnKey,
+                direction: 
+                    prevConfig.key === columnKey && prevConfig.direction === 'desc' 
+                    ? 'asc' 
+                    : 'desc'
+            }));
+        };
+
         const getTableData = () => {
-            switch (campaignType) {
-                case "SP":
-                    return {
-                        data: spCampaignData,
-                        columns: [
-                            "campaignName",
-                            "sales1d",
-                            "sales7d",
-                            "sales14d",
-                            "sales30d",
-                            "cost",
-                            "purchases1d",
-                            "purchases14d",
-                            "purchases30d",
-                            "spend",
-                            "clickThroughRate",
-                            "impressions",
-                            "clicks",
-                            "endDate",
-                            "startDate",
-                        ],
-                    };
-                case "SB":
-                    return {
-                        data: sbCampaignData,
-                        columns: [
-                            "campaignName",
-                            "campaignStatus",
-                            "cost",
-                            "detailPageViews",
-                            "purchases",
-                            "topOfSearchImpressionShare",
-                            "clicks",
-                            "impressions",
-                            "sales",
-                            "startDate",
-                            "endDate",
-                        ],
-                    };
-                case "SD":
-                    return {
-                        data: sdCampaignData,
-                        columns: [
-                            "campaignName",
-                            "campaignStatus",
-                            "clicks",
-                            "impressions",
-                            "detailPageViews",
-                            "purchases",
-                            "campaignBudgetAmount",
-                            "sales",
-                            "cost",
-                            "startDate",
-                            "endDate",
-                        ],
-                    };
+            const baseData = (() => {
+                switch (campaignType) {
+                    case "SP":
+                        return {
+                            data: spCampaignData,
+                            columns: [
+                                "campaignName",
+                                "sales1d",
+                                "sales7d",
+                                "sales14d",
+                                "sales30d",
+                                "cost",
+                                "purchases1d",
+                                "purchases14d",
+                                "purchases30d",
+                                "spend",
+                                "clickThroughRate",
+                                "impressions",
+                                "clicks",
+                                "endDate",
+                                "startDate",
+                            ],
+                        };
+                    case "SB":
+                        return {
+                            data: sbCampaignData,
+                            columns: [
+                                "campaignName",
+                                "campaignStatus",
+                                "cost",
+                                "detailPageViews",
+                                "purchases",
+                                "topOfSearchImpressionShare",
+                                "clicks",
+                                "impressions",
+                                "sales",
+                                "startDate",
+                                "endDate",
+                            ],
+                        };
+                    case "SD":
+                        return {
+                            data: sdCampaignData,
+                            columns: [
+                                "campaignName",
+                                "campaignStatus",
+                                "clicks",
+                                "impressions",
+                                "detailPageViews",
+                                "purchases",
+                                "campaignBudgetAmount",
+                                "sales",
+                                "cost",
+                                "startDate",
+                                "endDate",
+                            ],
+                        };
+                }
+            })();
+
+            // Filter data based on search query
+            const filteredData = baseData.data.filter(row =>
+                row.campaignName.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            // Sort data if sort config is set
+            const sortedData = [...filteredData];
+            if (sortConfig.key) {
+                sortedData.sort((a: CampaignRow, b: CampaignRow) => {
+                    const aValue = a[sortConfig.key] ?? 0;
+                    const bValue = b[sortConfig.key] ?? 0;
+                    
+                    if (sortConfig.direction === 'asc') {
+                        return Number(aValue) - Number(bValue);
+                    }
+                    return Number(bValue) - Number(aValue);
+                });
             }
+
+            return {
+                ...baseData,
+                data: sortedData,
+            };
+        };
+
+        const formatColumnHeader = (column: string) => {
+            // Special case for campaignName
+            if (column === "campaignName") return "Campaign Name";
+            
+            // General case: capitalize first letter and add spaces before capitals
+            return column
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase());
         };
 
         const { data, columns } = getTableData();
+
+        // If there's no data, show a message
+        if (data.length === 0) {
+            return (
+                <div className="shadow-2xl p-8 ml-1 bg-white rounded-2xl dark:bg-black">
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                            No Campaigns Found
+                        </div>
+                        <p className="text-gray-500 dark:text-gray-400 text-center">
+                            This portfolio does not contain any {campaignType} campaigns.
+                            {selectedBrand && ` for ${selectedBrand}`}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
 
         const formatValue = (
             value: string | number | null | undefined,
@@ -326,35 +395,63 @@ function CampaignContent() {
         };
 
         return (
-            <div className="shadow-2xl p-4 ml-1 bg-white rounded-2xl dark:bg-black overflow-auto max-h-[500px]">
-                <Table className="w-full">
-                    <TableHeader>
-                        <TableRow>
-                            {columns.map((column) => (
-                                <TableHead
-                                    key={column}
-                                    className="text-center whitespace-nowrap px-4 py-2 font-semibold"
-                                >
-                                    {column}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-[#212830] text-white">
-                        {data.map((row: CampaignRow, index) => (
-                            <TableRow key={index} className="text-center">
+            <div className="shadow-2xl p-4 ml-1 bg-white rounded-2xl dark:bg-black">
+                <div className="overflow-auto max-h-[500px]">
+                    <table className="w-full border-collapse relative">
+                        <thead className="sticky top-0 bg-black z-50">
+                            <tr>
                                 {columns.map((column) => (
-                                    <TableCell
+                                    <th
                                         key={column}
-                                        className="px-4 py-2 whitespace-nowrap"
+                                        className={`
+                                            text-center whitespace-nowrap px-4 py-4 font-semibold
+                                            text-white border border-gray-700
+                                            ${column === "campaignName" 
+                                                ? "sticky left-0 bg-black z-50" 
+                                                : "cursor-pointer hover:bg-gray-800"
+                                            }
+                                        `}
+                                        onClick={() => {
+                                            if (column !== "campaignName" && 
+                                                column !== "startDate" && 
+                                                column !== "endDate" && 
+                                                column !== "campaignStatus") {
+                                                handleSort(column);
+                                            }
+                                        }}
                                     >
-                                        {formatValue(row[column], column, row)}
-                                    </TableCell>
+                                        {formatColumnHeader(column)}
+                                        {sortConfig.key === column && (
+                                            <span className="ml-1">
+                                                {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                                            </span>
+                                        )}
+                                    </th>
                                 ))}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-[#212830] text-white">
+                            {data.map((row: CampaignRow, index) => (
+                                <tr key={index} className="text-center">
+                                    {columns.map((column) => (
+                                        <td
+                                            key={column}
+                                            className={`
+                                                px-4 py-2 whitespace-nowrap border border-gray-700
+                                                ${column === "campaignName" 
+                                                    ? "sticky left-0 bg-[#212830] z-40" 
+                                                    : ""
+                                                }
+                                            `}
+                                        >
+                                            {formatValue(row[column], column, row)}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     };
@@ -537,7 +634,7 @@ function CampaignContent() {
 
     return (
         <Layout>
-            <div className="p-5">
+            <div className="p-5 ml-4">
                 {/* Logo Header Section */}
                 <div className="w-full p-4 rounded-lg bg-color:[#f1f4f5]">
                     <div className="relative flex items-center justify-center w-full min-h-[100px]">
@@ -568,11 +665,11 @@ function CampaignContent() {
                 </div>
 
                 {/* Campaign Controls Section */}
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-4 mt-4">
+                <div className="flex flex-col sm:flex-row items-start gap-6 mb-4 mt-6 px-2">
                     {/* Brand Selection Button */}
                     <Link
                         href="/brand"
-                        className="inline-flex items-center px-4 py-2 bg-white text-black 
+                        className="inline-flex items-center px-6 py-2.5 bg-white text-black 
               shadow-lg hover:bg-gray-100 font-medium rounded-lg text-sm 
               transition-all duration-200 ease-in-out border border-gray-200 
               dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 
@@ -599,6 +696,47 @@ function CampaignContent() {
                             </button>
                         ))}
                     </div>
+
+                    {/* Add Search Bar */}
+                    <div className="flex items-center">
+                        <div className="relative w-[300px]">
+                            <input
+                                type="text"
+                                placeholder="Search campaigns..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={`w-full h-[40px] px-5 rounded-lg transition-all duration-200
+                                    ${campaignType ? 'border-blue-200 focus:border-blue-400' : 'border-gray-200'}
+                                    bg-white text-black placeholder-gray-500 text-base
+                                    hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500
+                                    dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                                    dark:border-gray-700 dark:hover:bg-gray-700/70
+                                    font-medium shadow-md border-2`}
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 
+                                             hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200
+                                             transition-colors duration-200"
+                                    title="Clear search"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-5 w-5"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Table Section */}
@@ -618,8 +756,15 @@ function CampaignContent() {
                     </div>
                 ) : (
                     <>
-                        <CampaignTable />
-                        <Top5Visualizations />
+                        <div className="px-2">
+                            <CampaignTable />
+                            {/* Only show visualizations if there's data */}
+                            {((campaignType === 'SP' && spCampaignData.length > 0) ||
+                              (campaignType === 'SB' && sbCampaignData.length > 0) ||
+                              (campaignType === 'SD' && sdCampaignData.length > 0)) && (
+                                <Top5Visualizations />
+                            )}
+                        </div>
                         <div className="mt-8">
                             <Footer />
                         </div>
