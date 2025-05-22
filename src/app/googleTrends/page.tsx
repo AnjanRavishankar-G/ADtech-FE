@@ -470,8 +470,8 @@ const shouldShowMonthsOnly = (dates: TimeData[]): boolean => {
         })
     );
 
-    // If we have more than 3 unique months, show months only
-    return uniqueMonths.size > 3;
+    // If we have more than 4 unique months, show months only
+    return uniqueMonths.size > 4;
 };
 
 // Update the formatDateLabel function
