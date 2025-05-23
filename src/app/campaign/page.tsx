@@ -230,20 +230,14 @@ function CampaignContent() {
                             data: spCampaignData,
                             columns: [
                                 "campaignName",
-                                "sales1d",
-                                "sales7d",
-                                "sales14d",
-                                "sales30d",
-                                "cost",
-                                "purchases1d",
-                                "purchases14d",
-                                "purchases30d",
-                                "spend",
-                                "clickThroughRate",
                                 "impressions",
+                                "sales30d", // Will be displayed as "Sales"
+                                "spend",
+                                "purchases30d", // Will be displayed as "Orders"
                                 "clicks",
-                                "endDate",
+                                "clickThroughRate",
                                 "startDate",
+                                "endDate",
                             ],
                         };
                     case "SB":
@@ -252,13 +246,13 @@ function CampaignContent() {
                             columns: [
                                 "campaignName",
                                 "campaignStatus",
-                                "cost",
-                                "detailPageViews",
-                                "purchases",
-                                "topOfSearchImpressionShare",
-                                "clicks",
                                 "impressions",
+                                "cost", // Will be displayed as "Spends"
                                 "sales",
+                                "purchases", // Will be displayed as "Orders"
+                                "clicks",
+                                "detailPageViews",
+                                "topOfSearchImpressionShare",
                                 "startDate",
                                 "endDate",
                             ],
@@ -269,13 +263,12 @@ function CampaignContent() {
                             columns: [
                                 "campaignName",
                                 "campaignStatus",
-                                "clicks",
                                 "impressions",
-                                "detailPageViews",
-                                "purchases",
-                                "campaignBudgetAmount",
+                                "cost", // Will be displayed as "Spends"
                                 "sales",
-                                "cost",
+                                "purchases", // Will be displayed as "Orders"
+                                "clicks", 
+                                "detailPageViews",
                                 "startDate",
                                 "endDate",
                             ],
@@ -309,13 +302,27 @@ function CampaignContent() {
         };
 
         const formatColumnHeader = (column: string) => {
-            // Special case for campaignName
-            if (column === "campaignName") return "Campaign Name";
-            
-            // General case: capitalize first letter and add spaces before capitals
-            return column
-                .replace(/([A-Z])/g, ' $1')
-                .replace(/^./, str => str.toUpperCase());
+            // Special case mappings
+            const specialCases: { [key: string]: string } = {
+                "campaignName": "Campaign Name",
+                "sales30d": "Sales",
+                "purchases30d": "Orders",
+                "cost": "Spends",
+                "purchases": "Orders",
+                "clickThroughRate": "Click Through Rate",
+                "detailPageViews": "Detail Page Views",
+                "topOfSearchImpressionShare": "Top Of Search Impression Share",
+                "campaignStatus": "Campaign Status",
+                "startDate": "Start Date",
+                "endDate": "End Date"
+            };
+
+            if (specialCases[column]) {
+                return specialCases[column];
+            }
+
+            // For other columns, capitalize first letter
+            return column.charAt(0).toUpperCase() + column.slice(1);
         };
 
         const { data, columns } = getTableData();

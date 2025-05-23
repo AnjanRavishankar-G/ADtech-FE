@@ -337,7 +337,6 @@ function AdGroupContent() {
     };
 
     const getSortedData = () => {
-        // Fix 2: Use 'const' instead of 'let' for filteredData
         const filteredData = spAdData.filter((ad) =>
             ad.advertisedAsin.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (ad.product_name && ad.product_name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -349,17 +348,23 @@ function AdGroupContent() {
                 const bValue = b[sortConfig.key as keyof SPAdData] ?? 0;
 
                 // Special handling for text fields
-                if (sortConfig.key === "product_name") {
+                if (sortConfig.key === "product_name" || sortConfig.key === "advertisedAsin") {
                     return sortConfig.direction === "asc"
                         ? String(aValue).localeCompare(String(bValue))
                         : String(bValue).localeCompare(String(aValue));
                 }
 
-                // Numeric sorting for price and other numeric fields
-                if (sortConfig.direction === "asc") {
-                    return Number(aValue) - Number(bValue);
+                // Handle percentage values
+                if (sortConfig.key === "clickThroughRate" || sortConfig.key === "acosClicks7d") {
+                    return sortConfig.direction === "asc"
+                        ? Number(aValue || 0) - Number(bValue || 0)
+                        : Number(bValue || 0) - Number(aValue || 0);
                 }
-                return Number(bValue) - Number(aValue);
+
+                // Handle numeric values
+                return sortConfig.direction === "asc"
+                    ? Number(aValue || 0) - Number(bValue || 0)
+                    : Number(bValue || 0) - Number(aValue || 0);
             });
         }
 
@@ -654,38 +659,18 @@ function AdGroupContent() {
                                         <thead className="sticky top-0 bg-black z-50">
                                             <tr>
                                                 <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
-                                                    Advertised ASIN
-                                                </th>
-                                                <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
                                                     Product Name
                                                 </th>
-                                                <th 
-                                                    onClick={() => handleSort("price")}
-                                                    className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
-                                                >
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        Price (₹)
-                                                        {sortConfig.key === "price" && (
-                                                            <span className="ml-1">
-                                                                {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </th>
                                                 {[
-                                                    { key: "spend", label: "Spend" },
-                                                    { key: "purchases1d", label: "Purchases 1d" },
-                                                    { key: "purchases7d", label: "Purchases 7d" },
-                                                    { key: "acosClicks7d", label: "ACOS Clicks 7d" },
-                                                    { key: "sales1d", label: "Sales 1d" },
-                                                    { key: "sales7d", label: "Sales 7d" },
-                                                    { key: "sales14d", label: "Sales 14d" },
-                                                    { key: "sales30d", label: "Sales 30d" },
-                                                    { key: "unitsSoldClicks1d", label: "Units Sold 1d" },
-                                                    { key: "clicks", label: "Clicks" },
+                                                    { key: "price", label: "Price (₹)" },
                                                     { key: "impressions", label: "Impressions" },
+                                                    { key: "spend", label: "Spend" },
+                                                    { key: "sales30d", label: "Sales" },
+                                                    { key: "purchases7d", label: "Orders" },
+                                                    { key: "clicks", label: "Clicks" },
                                                     { key: "clickThroughRate", label: "CTR" },
-                                                    { key: "cost", label: "Cost" },
+                                                    { key: "acosClicks7d", label: "ACOS" },
+                                                    { key: "advertisedAsin", label: "Advertised ASIN" }
                                                 ].map(({ key, label }) => (
                                                     <th
                                                         key={key}
@@ -695,9 +680,7 @@ function AdGroupContent() {
                                                         <div className="flex items-center justify-center gap-1">
                                                             {label}
                                                             {sortConfig.key === key && (
-                                                                <span className="ml-1">
-                                                                    {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                                                                </span>
+                                                                <span>{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                                                             )}
                                                         </div>
                                                     </th>
@@ -707,11 +690,14 @@ function AdGroupContent() {
                                         <tbody className="bg-[#212830] text-white">
                                             {getSortedData().map((ad) => (
                                                 <tr key={ad.adId} className="text-center">
-                                                    <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.advertisedAsin}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.product_name || '-'}
+                                                    <td 
+                                                        className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap"
+                                                        title={ad.product_name} // This enables hover tooltip
+                                                    >
+                                                        {ad.product_name 
+                                                            ? ad.product_name.split(' ').slice(0, 7).join(' ') + (ad.product_name.split(' ').length > 7 ? '...' : '')
+                                                            : '-'
+                                                        }
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         {ad.price?.toLocaleString('en-IN', {
@@ -721,47 +707,28 @@ function AdGroupContent() {
                                                         }) || '-'}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                                                        {ad.impressions?.toLocaleString()}
+                                                    </td>
+                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         {ad.spend?.toLocaleString()}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.purchases1d}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.purchases7d}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {`${Number(
-                                                            ad.acosClicks7d || 0
-                                                        ).toFixed(2)}%`}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.sales1d?.toLocaleString()}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.sales7d?.toLocaleString()}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.sales14d?.toLocaleString()}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         {ad.sales30d?.toLocaleString()}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.unitsSoldClicks1d}
+                                                        {ad.purchases7d}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         {ad.clicks}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.impressions?.toLocaleString()}
+                                                        {`${Number(ad.clickThroughRate || 0).toFixed(2)}%`}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {`${Number(
-                                                            ad.clickThroughRate || 0
-                                                        ).toFixed(2)}%`}
+                                                        {`${Number(ad.acosClicks7d || 0).toFixed(2)}%`}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {ad.cost?.toLocaleString()}
+                                                        {ad.advertisedAsin}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -934,21 +901,13 @@ function AdGroupContent() {
                                                     { key: "matchType", label: "Match Type" },
                                                     { key: "impressions", label: "Impressions" },
                                                     { key: "spend", label: "Spend" },
-                                                    { key: "sales1d", label: "Sales 1D" },
-                                                    { key: "sales7d", label: "Sales 7D" },
-                                                    { key: "sales14d", label: "Sales 14D" },
-                                                    { key: "sales30d", label: "Sales 30D" },
+                                                    { key: "sales30d", label: "Sales" },
                                                     { key: "cpc", label: "CPC" },
                                                     { key: "clicks", label: "Clicks" },
                                                     { key: "bid", label: "Bid" },
-                                                    { key: "purchases1d", label: "Purchases 1D" },
-                                                    { key: "purchases7d", label: "Purchases 7D" },
-                                                    { key: "purchases14d", label: "Purchases 14D" },
-                                                    { key: "purchases30d", label: "Purchases 30D" },
-                                                    { key: "roas7d", label: "ROAS 7D" },
-                                                    { key: "roas14d", label: "ROAS 14D" },
-                                                    { key: "acos7d", label: "ACOS 7D" },
-                                                    { key: "acos14d", label: "ACOS 14D" },
+                                                    { key: "purchases30d", label: "Orders" },
+                                                    { key: "roas14d", label: "ROAS" },
+                                                    { key: "acos14d", label: "ACOS" },
                                                 ].map(({ key, label }) => (
                                                     <th
                                                         key={key}
@@ -981,15 +940,6 @@ function AdGroupContent() {
                                                         ₹{keyword.spend.toFixed(2)}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        ₹{keyword.sales1d.toFixed(2)}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        ₹{keyword.sales7d.toFixed(2)}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        ₹{keyword.sales14d.toFixed(2)}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         ₹{keyword.sales30d.toFixed(2)}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
@@ -1002,36 +952,13 @@ function AdGroupContent() {
                                                         ₹{keyword.bid.toFixed(2)}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {keyword.purchases1d}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {keyword.purchases7d}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {keyword.purchases14d}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
                                                         {keyword.purchases30d}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {typeof keyword.roas7d === "number"
-                                                            ? keyword.roas7d.toFixed(2)
-                                                            : "-"}
+                                                        {typeof keyword.roas14d === "number" ? keyword.roas14d.toFixed(2) : "-"}
                                                     </td>
                                                     <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {typeof keyword.roas14d === "number"
-                                                            ? keyword.roas14d.toFixed(2)
-                                                            : "-"}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {typeof keyword.acos7d === "number"
-                                                            ? `${keyword.acos7d.toFixed(2)}%`
-                                                            : "-"}
-                                                    </td>
-                                                    <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
-                                                        {typeof keyword.acos14d === "number"
-                                                            ? `${keyword.acos14d.toFixed(2)}%`
-                                                            : "-"}
+                                                        {typeof keyword.acos14d === "number" ? `${keyword.acos14d.toFixed(2)}%` : "-"}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -1112,7 +1039,7 @@ function AdGroupContent() {
                 {selectedTab === "KeywordRecommendation" && (
                     <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black">
                         <h2 className="text-2xl font-bold mb-8 text-center">
-                            Keyword Recommendations
+                            Artha Keyword Recommendations
                         </h2>
                         <div className="relative">
                             <div className="max-h-[600px] overflow-auto">
@@ -1175,7 +1102,7 @@ function AdGroupContent() {
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 mt-12">
                                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md text-center">
                                         <p className="text-gray-900 dark:text-white font-medium">
-                                            Please Contact the Artha Team to enable this Feature
+                                            Please contact the Artha team to enable this feature
                                         </p>
                                     </div>
                                 </div>
