@@ -9,9 +9,7 @@ type OpportunityItem = {
 };
 
 const opportunities: OpportunityItem[] = [
-  { name: 'BLDC', spendRange: '7-10%' },
-  { name: 'Water Purifier', spendRange: '7-10%' },
-  { name: 'ES', spendRange: '5-7%' },
+  { name: 'BLDC', spendRange: '7-10%' }
 ];
 
 export default function CampaignOpportunities() {

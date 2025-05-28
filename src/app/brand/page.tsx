@@ -9,7 +9,7 @@ import { createAuthenticatedFetch } from "@/utils/api";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import Image from "next/image";
-import CampaignOpportunities from "../components/ui/CampaignOpportunities";
+// import CampaignOpportunities from "../components/ui/CampaignOpportunities";
 
 type PortfolioData = {
     id: number;
@@ -348,7 +348,7 @@ const BrandTargetTables = () => {
                             </div>
 
                             {/* Add Campaign Opportunities section */}
-                            <CampaignOpportunities />
+                            {/* <CampaignOpportunities /> */}
 
                             <div>
                                 <Footer />

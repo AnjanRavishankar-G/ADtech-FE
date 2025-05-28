@@ -18,7 +18,6 @@ import BasicPieChart from "./bargraph";
 import Footer from "./footer";
 import Layout from "./Layout";
 
-
 type CampaignData = {
   SN: number;
   campaignId: number;
@@ -250,7 +249,8 @@ const top5SpendBrandData = top5CampaignsBySpend.map(campaign => campaign.Spend);
                 <TableHead className="text-center">
                   Campaign Type
                   <select 
-                    className="ml-3 bg-black text-white  rounded">
+                    aria-label="Filter by campaign type"
+                    className="ml-3 bg-black text-white rounded">
                       <option className="py-3" value="SP">SP</option>
                       <option value="SB">SB</option>
                       <option value="SD">SD</option>
