@@ -462,3 +462,15 @@ div {
 .dropdown-exit-active {
     @apply opacity-0 transform -translate-y-2;
 }
+
+/* Add to globals.css */
+video {
+  -o-object-fit: cover;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  video {
+    object-position: 70% center;
+  }
+}
