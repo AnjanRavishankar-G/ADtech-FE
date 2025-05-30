@@ -2,6 +2,7 @@
 import { useState } from "react";
 import MainSidebar from "../components/ui/mainsidebar";
 import Image from "next/image";
+import Footer from "@/app/components/ui/footer"; // Add this import
 
 export default function ReportsPage() {
   const [collapsed, setCollapsed] = useState(false);
@@ -29,30 +30,23 @@ export default function ReportsPage() {
         }`}
       >
         {/* Logo Header Section */}
-        <div className="w-full p-4 rounded-lg bg-color:[#f1f4f5]">
-          <div className="relative flex items-center justify-center w-full min-h-[100px]">
-            <div className="absolute left-3 top-4">
+        <div className="w-full p-0 rounded-lg bg-color:[#f1f4f5]">
+          <div className="relative flex items-center justify-center w-full min-h-[40px]">
+            <div className="absolute left-1/2 transform -translate-x-1/2 -top-1">
               <Image
                 src="/havells_png.png"
                 alt="Havells Logo"
-                width={100}
-                height={30}
-                priority
-                className="mx-auto"
-              />
-            </div>
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <Image
-                src="/dentsu-seeklogo.png"
-                alt="Dentsu Logo"
-                width={200}
-                height={80}
+                width={120}
+                height={35}
                 priority
                 className="mx-auto"
               />
             </div>
           </div>
         </div>
+
+        {/* Add spacing between logo and content */}
+        <div className="h-[45px]"></div>
 
         {/* Reports Content */}
         <div className="flex flex-col justify-center items-center h-[calc(100vh-200px)] space-y-6">
@@ -74,6 +68,11 @@ export default function ReportsPage() {
           >
             Download WBR Report
           </button>
+        </div>
+
+        {/* Add Footer */}
+        <div className="mt-32">
+          <Footer />
         </div>
       </main>
     </div>

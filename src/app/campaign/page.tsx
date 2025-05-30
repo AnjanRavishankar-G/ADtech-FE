@@ -46,6 +46,7 @@ type SPCampaignData = {
   campaignName: string;
   startDate: string;
   Portfolio_ID: string | null;
+  campaign_budget_amount: number;
 };
 
 type SBCampaignData = {
@@ -63,6 +64,7 @@ type SBCampaignData = {
   sales: number;
   created_at: string;
   Portfolio_Id: string | null;
+  campaign_budget_amount: number;
 };
 
 type SDCampaignData = {
@@ -80,6 +82,7 @@ type SDCampaignData = {
   sales: number;
   created_at: string;
   Portfolio_Id: string | null;
+  campaign_budget_amount: number;
 };
 
 type CampaignDataType = SPCampaignData | SBCampaignData | SDCampaignData;
@@ -105,6 +108,20 @@ function CampaignContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Add these new state variables
+  const [editingBudget, setEditingBudget] = useState<{
+    campaignId: string;
+    value: string;
+  } | null>(null);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetModalData, setBudgetModalData] = useState<{
+    dailyBudget: number;
+    weeklyBudget: number;
+    monthlyBudget: number;
+    campaignName: string;
+  } | null>(null);
+  const [otpValue, setOtpValue] = useState("");
 
   const fetchCampaignData = useCallback(
     async (type: CampaignType) => {
@@ -191,6 +208,45 @@ function CampaignContent() {
       .slice(0, 5);
   };
 
+  // Add these helper functions before CampaignTable
+  const handleBudgetEdit = (campaignId: string, currentBudget: number) => {
+    setEditingBudget({
+      campaignId,
+      value: currentBudget.toString(),
+    });
+  };
+
+  const handleBudgetCancel = () => {
+    setEditingBudget(null);
+  };
+
+  const handleBudgetApprove = (campaignName: string) => {
+    if (!editingBudget) return;
+
+    const dailyBudget = parseFloat(editingBudget.value);
+    setBudgetModalData({
+      dailyBudget,
+      weeklyBudget: dailyBudget * 7,
+      monthlyBudget: dailyBudget * 30,
+      campaignName,
+    });
+    setShowBudgetModal(true);
+    setEditingBudget(null);
+  };
+
+  const handleModalSubmit = () => {
+    console.log("Budget update simulated - no actual changes saved");
+    setShowBudgetModal(false);
+    setBudgetModalData(null);
+    setOtpValue("");
+  };
+
+  const handleModalClose = () => {
+    setShowBudgetModal(false);
+    setBudgetModalData(null);
+    setOtpValue("");
+  };
+
   const CampaignTable = () => {
     const [sortConfig, setSortConfig] = useState<{
       key: string;
@@ -226,6 +282,7 @@ function CampaignContent() {
               data: spCampaignData,
               columns: [
                 "campaignName",
+                "campaign_budget_amount",
                 "impressions",
                 "sales30d", // Will be displayed as "Sales"
                 "spend",
@@ -242,6 +299,7 @@ function CampaignContent() {
               columns: [
                 "campaignName",
                 "campaignStatus",
+                "campaign_budget_amount",
                 "impressions",
                 "cost", // Will be displayed as "Spends"
                 "sales",
@@ -259,6 +317,7 @@ function CampaignContent() {
               columns: [
                 "campaignName",
                 "campaignStatus",
+                "campaign_budget_amount",
                 "impressions",
                 "cost", // Will be displayed as "Spends"
                 "sales",
@@ -301,6 +360,7 @@ function CampaignContent() {
       // Special case mappings
       const specialCases: { [key: string]: string } = {
         campaignName: "Campaign Name",
+        campaign_budget_amount: "Budget",
         sales30d: "Sales",
         purchases30d: "Orders",
         cost: "Spends",
@@ -347,7 +407,6 @@ function CampaignContent() {
     ) => {
       if (value === null || value === undefined) return "-";
 
-      // Handle campaign name column with link
       if (column === "campaignName") {
         return (
           <button
@@ -361,7 +420,69 @@ function CampaignContent() {
         );
       }
 
-      // Format monetary values
+      if (column === "campaign_budget_amount") {
+        const isEditing = editingBudget?.campaignId === row.campaignId;
+
+        if (isEditing) {
+          return (
+            <div className="flex items-center gap-2 justify-center">
+              <input
+                type="number"
+                value={editingBudget.value}
+                onChange={(e) =>
+                  setEditingBudget({
+                    ...editingBudget,
+                    value: e.target.value,
+                  })
+                }
+                className="w-24 px-2 py-1 border rounded text-black text-center"
+                autoFocus
+              />
+              <button
+                onClick={handleBudgetCancel}
+                className="text-red-500 hover:text-red-700 text-xs"
+                title="Cancel"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleBudgetApprove(row.campaignName)}
+                className="text-green-500 hover:text-green-700 text-xs"
+                title="Approve"
+              >
+                Approve
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex items-center gap-2 justify-center">
+            <span>
+              {"₹" +
+                Number(value).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+            </span>
+            <button
+              onClick={() => handleBudgetEdit(row.campaignId, Number(value))}
+              className="text-gray-500 hover:text-blue-500 ml-1"
+              title="Edit Budget"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
+              </svg>
+            </button>
+          </div>
+        );
+      }
+
       if (
         [
           "cost",
@@ -381,12 +502,10 @@ function CampaignContent() {
         );
       }
 
-      // Format percentages
       if (column === "clickThroughRate") {
         return (Number(value) * 100).toFixed(2) + "%";
       }
 
-      // Format numbers with commas
       if (typeof value === "number") {
         return value.toLocaleString("en-IN");
       }
@@ -584,6 +703,87 @@ function CampaignContent() {
     );
   };
 
+  const BudgetModal = () => {
+    if (!showBudgetModal || !budgetModalData) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md mx-4">
+          <h3 className="text-lg font-semibold mb-4 text-center">
+            Budget Update Confirmation
+          </h3>
+
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Campaign: {budgetModalData.campaignName}
+            </p>
+
+            <div className="space-y-2 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+              <div className="flex justify-between">
+                <span>Daily Budget:</span>
+                <span className="font-medium">
+                  ₹
+                  {budgetModalData.dailyBudget.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Weekly Budget:</span>
+                <span className="font-medium">
+                  ₹
+                  {budgetModalData.weeklyBudget.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Monthly Budget:</span>
+                <span className="font-medium">
+                  ₹
+                  {budgetModalData.monthlyBudget.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Enter OTP:</label>
+            <input
+              type="text"
+              value={otpValue}
+              onChange={(e) => setOtpValue(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg text-black"
+              placeholder="Enter OTP"
+              maxLength={6}
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={handleModalClose}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 border rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleModalSubmit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={!otpValue.trim()}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     let isSubscribed = true;
 
@@ -615,38 +815,26 @@ function CampaignContent() {
 
   return (
     <Layout>
-      <div className="p-5 ml-4">
+      <div className="p-3 ml-4">
         {/* Logo Header Section */}
-        <div className="w-full p-4 rounded-lg bg-color:[#f1f4f5]">
-          <div className="relative flex items-center justify-center w-full min-h-[100px]">
-            {/* Left-aligned Havells logo */}
-            <div className="absolute left-3 top-4">
+        <div className="w-full p-0 rounded-lg bg-color:[#f1f4f5]">
+          <div className="relative flex items-center justify-center w-full min-h-[40px]">
+            <div className="absolute left-1/2 transform -translate-x-1/2 -top-1">
               <Image
                 src="/havells_png.png"
                 alt="Havells Logo"
-                width={100}
-                height={30}
-                priority
-                className="mx-auto"
-              />
-            </div>
-
-            {/* Centered Dentsu logo */}
-            <div className="absolute left-1/2 transform -translate-x-1/2">
-              <Image
-                src="/dentsu-seeklogo.png"
-                alt="Dentsu Logo"
-                width={200}
-                height={80}
+                width={120}
+                height={35}
                 priority
                 className="mx-auto"
               />
             </div>
           </div>
         </div>
-
+        {/* Add spacing between logo and controls */}
+        <div className="h-[65px]"></div> {/* Add this spacer */}
         {/* Campaign Controls Section */}
-        <div className="flex flex-col sm:flex-row items-start gap-6 mb-4 mt-6 px-2">
+        <div className="flex flex-col sm:flex-row items-start gap-6 mb-4 px-2">
           {/* Brand Selection Button */}
           <Link
             href="/brand"
@@ -723,7 +911,6 @@ function CampaignContent() {
             </div>
           </div>
         </div>
-
         {/* Table Section */}
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[200px]">
@@ -763,6 +950,7 @@ function CampaignContent() {
             </div>
           </>
         )}
+        <BudgetModal />
       </div>
     </Layout>
   );
