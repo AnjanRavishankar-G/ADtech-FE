@@ -368,7 +368,7 @@ export default function Home() {
         {/* Section 3 - Feature Cards with Wave Background */}
         <div
           ref={section3Ref}
-          className="relative py-32 overflow-hidden min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900"
+          className="relative py-20 overflow-hidden min-h-[80vh] bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900"
         >
           {/* Animated Wave Background */}
           <div className="absolute inset-0 z-0">
@@ -411,8 +411,8 @@ export default function Home() {
             </svg>
           </div>
 
-          {/* Content Container */}
-          <div className="relative z-10 max-w-7xl mx-auto px-8">
+          {/* Update content container */}
+          <div className="relative z-10 max-w-7xl mx-auto px-8 flex items-center justify-center min-h-[80vh]">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
               {features.map((feature, index) => (
                 <EnhancedFeatureCard
@@ -482,9 +482,9 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="bg-gray-900 text-gray-300 py-8">
+        <footer className="bg-gray-900 text-gray-300 py-4">
           <div className="max-w-6xl mx-auto px-8">
-            <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8 mb-6">
+            <div className="flex flex-col md:flex-row justify-center items-center space-y-2 md:space-y-0 md:space-x-8 mb-4">
               <a
                 href="#"
                 className="hover:text-white transition-colors"
@@ -514,7 +514,7 @@ export default function Home() {
                 Accessibility Statement
               </a>
             </div>
-            <div className="text-center">
+            <div className="text-center text-sm">
               <p style={{ fontFamily: "League Spartan, sans-serif" }}>
                 © 2025 Artha. All rights reserved.
               </p>
@@ -802,7 +802,7 @@ const EnhancedFeatureCard = ({
 }: FeatureCardProps) => {
   const [ref, inView] = useInView({
     threshold: 0.1,
-    triggerOnce: false, // Changed from true to false
+    triggerOnce: false,
   });
 
   return (
@@ -820,23 +820,23 @@ const EnhancedFeatureCard = ({
         ease: "easeOut",
       }}
       whileHover={{ scale: 1.05, y: -5 }}
-      className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 transition-all duration-300"
+      className="bg-white/10 backdrop-blur-md p-10 rounded-2xl border border-white/20 transition-all duration-300" // Changed p-8 to p-10
     >
       <motion.div
-        className="w-16 h-16 mb-6 relative"
+        className="w-20 h-20 mb-8 relative" // Changed from w-16 h-16 mb-6
         whileHover={{ rotate: 360 }}
         transition={{ duration: 0.6 }}
       >
         {icon}
       </motion.div>
       <h3
-        className="text-2xl font-bold text-white mb-4"
+        className="text-3xl font-bold text-white mb-6" // Changed from text-2xl and mb-4
         style={{ fontFamily: "League Spartan, sans-serif" }}
       >
         {title}
       </h3>
       <p
-        className="text-gray-300 leading-relaxed"
+        className="text-lg text-gray-300 leading-relaxed" // Added text-lg
         style={{ fontFamily: "League Spartan, sans-serif" }}
       >
         {description}
