@@ -1,6 +1,6 @@
 "use client"
 import Image from "next/image"
-import { TrendingUp, ArrowUp, ArrowDown} from "lucide-react"
+import { TrendingUp } from "lucide-react"
 import { useState } from "react"
 
 type OpportunityItem = {
@@ -249,9 +249,13 @@ export default function CampaignOpportunities() {
                           onMouseLeave={() => setHoveredStrategy(null)}
                         >
                           {detail.budgetStrategy === "Increase" ? (
-                            <ArrowUp className="text-black dark:text-white" size={16} />
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12,2 22,20 2,20"/>
+                            </svg>
                           ) : (
-                            <ArrowDown className="text-black dark:text-white" size={16} />
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="12,22 2,4 22,4"/>
+                            </svg>
                           )}
                           <span
                             className={
