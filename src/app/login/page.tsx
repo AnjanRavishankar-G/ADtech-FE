@@ -86,7 +86,7 @@ export default function LoginForm() {
         Cookies.set("auth_token", data.auth_token, { expires: 1 });
         Cookies.set("id_token", data.id_token, { expires: 1 });
         login(data.auth_token, data.id_token);
-        router.push("/brand");
+        router.push("/campaign?brand=BLDC&portfolioId=17632003063708");
       } else {
         alert(data.error || "OTP verification failed");
       }

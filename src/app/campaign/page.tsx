@@ -22,6 +22,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createAuthenticatedFetch } from "../../utils/api";
 import Cookies from "js-cookie";
 import CampaignOpportunities from "../components/ui/CampaignOpportunities";
+import OutOfBudgetCampaigns from "../components/ui/OutOfBudgetCampaigns";
 import Image from "next/image";
 type CampaignType = "SP" | "SB" | "SD";
 
@@ -935,6 +936,7 @@ function CampaignContent() {
               {selectedBrand === "BLDC" && !isLoading && (
                 <div className="px-2 mt-6">
                   <CampaignOpportunities />
+                  <OutOfBudgetCampaigns />
                 </div>
               )}
 
