@@ -652,7 +652,7 @@ function AdGroupContent() {
                   <table className="w-full border-collapse relative">
                     <thead className="sticky top-0 bg-black z-50">
                       <tr>
-                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
+                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[250px]">
                           Product Name
                         </th>
                         {[
@@ -669,9 +669,9 @@ function AdGroupContent() {
                           <th
                             key={key}
                             onClick={() => handleSort(key)}
-                            className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
+                            className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
                           >
-                            <div className="flex items-center justify-center gap-1">
+                            <div className="flex items-center justify-end gap-1">
                               {label}
                               {sortConfig.key === key && (
                                 <span>
@@ -685,50 +685,54 @@ function AdGroupContent() {
                     </thead>
                     <tbody className="bg-[#212830] text-white">
                       {getSortedData().map((ad) => (
-                        <tr key={ad.adId} className="text-center">
+                        <tr key={ad.adId}>
                           <td
-                            className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap"
-                            title={ad.product_name} // This enables hover tooltip
+                            className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-6 pt-2 pb-6 pl-3 relative min-w-[250px]"
+                            title={ad.product_name || "-"} // Simple native tooltip
                           >
-                            {ad.product_name
-                              ? ad.product_name
-                                  .split(" ")
-                                  .slice(0, 7)
-                                  .join(" ") +
-                                (ad.product_name.split(" ").length > 7
-                                  ? "..."
-                                  : "")
-                              : "-"}
+                            <div className="text-left">
+                              <div className="truncate">
+                                {ad.product_name
+                                  ? ad.product_name
+                                      .split(" ")
+                                      .slice(0, 7)
+                                      .join(" ") +
+                                    (ad.product_name.split(" ").length > 7
+                                      ? "..."
+                                      : "")
+                                  : "-"}
+                              </div>
+                            </div>
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.price?.toLocaleString("en-IN", {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 2,
                             }) || "-"}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.impressions?.toLocaleString()}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.spend?.toLocaleString()}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.sales30d?.toLocaleString()}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.purchases7d}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {ad.clicks}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {`${Number(ad.clickThroughRate || 0).toFixed(2)}%`}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {`${Number(ad.acosClicks7d || 0).toFixed(2)}%`}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
                             {ad.advertisedAsin}
                           </td>
                         </tr>
@@ -875,24 +879,13 @@ function AdGroupContent() {
                   <table className="w-full border-collapse relative">
                     <thead className="sticky top-0 bg-black z-50">
                       <tr>
-                        <th
-                          className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800"
-                          onClick={() => handleKeywordSort("keyword")}
-                        >
-                          <div className="flex items-center justify-center gap-1">
-                            Keyword
-                            {keywordSortConfig.key === "keyword" && (
-                              <span>
-                                {keywordSortConfig.direction === "asc"
-                                  ? "↑"
-                                  : "↓"}
-                              </span>
-                            )}
-                          </div>
+                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 min-w-[250px]">
+                          Keyword
                         </th>
-                        {/* Dynamic columns */}
+                        <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black min-w-[150px]">
+                          Match Type
+                        </th>
                         {[
-                          { key: "matchType", label: "Match Type" },
                           { key: "impressions", label: "Impressions" },
                           { key: "spend", label: "Spend" },
                           { key: "sales30d", label: "Sales" },
@@ -908,9 +901,9 @@ function AdGroupContent() {
                             onClick={() =>
                               handleKeywordSort(key as SortableKeywordFields)
                             }
-                            className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
+                            className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black cursor-pointer hover:bg-gray-800"
                           >
-                            <div className="flex items-center justify-center gap-1">
+                            <div className="flex items-center justify-end gap-1">
                               {label}
                               {keywordSortConfig.key === key && (
                                 <span>
@@ -926,40 +919,40 @@ function AdGroupContent() {
                     </thead>
                     <tbody className="bg-[#212830] text-white">
                       {getSortedKeywordData().map((keyword, index) => (
-                        <tr key={index} className="text-center">
-                          <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
+                        <tr key={index}>
+                          <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-6 pt-2 pb-6 pl-3 text-left min-w-[250px]">
                             {keyword.keyword}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="border border-gray-700 px-6 pt-2 pb-6 pl-3 text-left min-w-[150px]">
                             {keyword.matchType}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {keyword.impressions.toLocaleString()}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             ₹{keyword.spend.toFixed(2)}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             ₹{keyword.sales30d.toFixed(2)}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             ₹{keyword.cpc.toFixed(2)}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {keyword.clicks}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             ₹{keyword.bid.toFixed(2)}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {keyword.purchases30d}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {typeof keyword.roas14d === "number"
                               ? keyword.roas14d.toFixed(2)
                               : "-"}
                           </td>
-                          <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {typeof keyword.acos14d === "number"
                               ? `${keyword.acos14d.toFixed(2)}%`
                               : "-"}
@@ -987,48 +980,52 @@ function AdGroupContent() {
                 No negative keywords found for this campaign
               </div>
             ) : (
-              <Table className="border border-default-300 mt-6">
-                <TableHeader className="bg-black text-white sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="border border-default-300">
-                      Keyword ID
-                    </TableHead>
-                    <TableHead className="border border-default-300">
-                      Keyword
-                    </TableHead>
-                    <TableHead className="border border-default-300">
-                      Match Type
-                    </TableHead>
-                    <TableHead className="border border-default-300">
-                      State
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {negativeKeywords
-                    .filter((kw) =>
-                      kw.keyword
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                    )
-                    .map((keyword) => (
-                      <TableRow key={keyword.keywordID} className="text-center">
-                        <TableCell className="border border-default-300">
-                          {keyword.keywordID}
-                        </TableCell>
-                        <TableCell className="border border-default-300">
-                          {keyword.keyword}
-                        </TableCell>
-                        <TableCell className="border border-default-300">
-                          {keyword.matchType.replace("NEGATIVE_", "")}
-                        </TableCell>
-                        <TableCell className="border border-default-300">
-                          {keyword.state}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
+              <div className="relative">
+                <div className="max-h-[600px] overflow-auto">
+                  <table className="w-full border-collapse relative">
+                    <thead className="sticky top-0 bg-black z-50">
+                      <tr>
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[150px]">
+                          Keyword ID
+                        </th>
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[250px]">
+                          Keyword
+                        </th>
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[150px]">
+                          Match Type
+                        </th>
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[150px]">
+                          State
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-[#212830] text-white">
+                      {negativeKeywords
+                        .filter((kw) =>
+                          kw.keyword
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                        )
+                        .map((keyword) => (
+                          <tr key={keyword.keywordID}>
+                            <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
+                              {keyword.keywordID}
+                            </td>
+                            <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
+                              {keyword.keyword}
+                            </td>
+                            <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
+                              {keyword.matchType.replace("NEGATIVE_", "")}
+                            </td>
+                            <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
+                              {keyword.state}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -1043,19 +1040,19 @@ function AdGroupContent() {
                   <table className="w-full border-collapse relative">
                     <thead className="sticky top-0 bg-black z-50">
                       <tr>
-                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700">
+                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[250px]">
                           Keyword
                         </th>
-                        <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                        <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black text-left min-w-[150px]">
                           Theme
                         </th>
-                        <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                        <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black text-left min-w-[150px]">
                           Match Type
                         </th>
-                        <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                        <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pr-3 font-semibold text-white border border-gray-700 bg-black text-right min-w-[100px]">
                           Rank
                         </th>
-                        <th className="z-30 whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 bg-black">
+                        <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pr-3 font-semibold text-white border border-gray-700 bg-black text-right min-w-[150px]">
                           Suggested Bid (₹)
                         </th>
                       </tr>
@@ -1070,23 +1067,21 @@ function AdGroupContent() {
                         .map((rec, index) => (
                           <tr
                             key={index}
-                            className={`text-center ${
-                              index > 0 ? "blur-sm" : ""
-                            }`}
+                            className={`${index > 0 ? "blur-sm" : ""}`}
                           >
-                            <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-4 py-2 whitespace-nowrap">
+                            <td className="sticky left-0 z-40 bg-[#212830] border border-gray-700 px-6 pt-2 pb-6 pl-3 whitespace-nowrap text-left">
                               {rec.keyword}
                             </td>
-                            <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                            <td className="border border-gray-700 px-6 pt-2 pb-6 pl-3 whitespace-nowrap text-left">
                               {rec.theme}
                             </td>
-                            <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                            <td className="border border-gray-700 px-6 pt-2 pb-6 pl-3 whitespace-nowrap text-left">
                               {rec.match_type}
                             </td>
-                            <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                            <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 whitespace-nowrap text-right">
                               {rec.rank}
                             </td>
-                            <td className="border border-gray-700 px-4 py-2 whitespace-nowrap">
+                            <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 whitespace-nowrap text-right">
                               ₹{(rec.bid / 100).toFixed(2)}
                             </td>
                           </tr>

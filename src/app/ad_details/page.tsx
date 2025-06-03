@@ -287,15 +287,16 @@ function AdDetailsContent() {
           {/* Add an outer container with fixed height and overflow */}
           <div className="relative max-h-[600px] overflow-auto">
             <table className="w-full border-collapse">
-              {/* Update thead styles */}
               <thead className="sticky top-0 z-50">
                 <tr>
-                  <th className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                  {/* Text columns - top left aligned */}
+                  <th className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base">
                     Ad Group Name
                   </th>
-                  <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                  <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base">
                     Type
                   </th>
+                  {/* Numeric columns - top right aligned */}
                   {[
                     { key: "Clicks", label: "Clicks" },
                     { key: "Impressions", label: "Impressions" },
@@ -307,9 +308,9 @@ function AdDetailsContent() {
                     <th
                       key={key}
                       onClick={() => handleSort(key)}
-                      className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base h-[60px]"
+                      className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pr-3 font-semibold text-right text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base"
                     >
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-start justify-end gap-1">
                         {label}
                         {sortConfig.key === key && (
                           <span className="ml-1 text-lg">
@@ -324,7 +325,8 @@ function AdDetailsContent() {
               <tbody className="bg-[#212830] text-white">
                 {getSortedData().map((adGroup) => (
                   <TableRow key={adGroup.SN} className="text-center">
-                    <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-4 py-2 whitespace-nowrap">
+                    {/* Text columns - left aligned */}
+                    <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-6 pt-2 pb-6 pl-3 text-left whitespace-nowrap">
                       <Link
                         href={{
                           pathname: "/adGroupDetails",
@@ -341,35 +343,36 @@ function AdDetailsContent() {
                         {adGroup.AdGroupName}
                       </Link>
                     </td>
-                    <TableCell className="border border-gray-700">
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pl-3 text-left whitespace-nowrap">
                       {adGroup.Type}
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    {/* Numeric columns - right aligned */}
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {adGroup.Clicks.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {adGroup.Impressions.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {adGroup.Sales.toLocaleString("en-IN", {
                         style: "currency",
                         currency: "INR",
                         minimumFractionDigits: 2,
                       })}
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {adGroup.Spend.toLocaleString("en-IN", {
                         style: "currency",
                         currency: "INR",
                         minimumFractionDigits: 2,
                       })}
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {(adGroup.CTR * 100).toFixed(2)}%
-                    </TableCell>
-                    <TableCell className="border border-gray-700">
+                    </td>
+                    <td className="border border-gray-700 px-6 pt-2 pb-6 pr-3 text-right whitespace-nowrap">
                       {adGroup.DPV.toLocaleString()}
-                    </TableCell>
+                    </td>
                   </TableRow>
                 ))}
               </tbody>

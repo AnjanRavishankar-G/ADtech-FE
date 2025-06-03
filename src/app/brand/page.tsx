@@ -180,10 +180,10 @@ const BrandTargetTables = () => {
                   <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-50">
                       <tr>
-                        <th className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-8 py-4 font-semibold text-white border border-gray-700 text-base h-[60px] min-w-[250px]">
+                        <th className="sticky top-0 left-0 z-[60] bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base min-w-[250px]">
                           Name
                         </th>
-                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base">
                           State
                         </th>
                         {(
@@ -203,9 +203,9 @@ const BrandTargetTables = () => {
                           <th
                             key={key}
                             onClick={() => handleSort(key)}
-                            className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base h-[60px]"
+                            className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 cursor-pointer hover:bg-gray-800 text-base"
                           >
-                            <div className="flex items-center justify-center gap-1">
+                            <div className="flex items-start gap-1">
                               {label}
                               {sortConfig.key === key && (
                                 <span className="ml-1 text-lg">
@@ -215,10 +215,10 @@ const BrandTargetTables = () => {
                             </div>
                           </th>
                         ))}
-                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base">
                           Budget Start
                         </th>
-                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 py-4 font-semibold text-white border border-gray-700 text-base h-[60px]">
+                        <th className="sticky top-0 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left text-white border border-gray-700 text-base">
                           Budget End
                         </th>
                       </tr>
@@ -226,7 +226,7 @@ const BrandTargetTables = () => {
                     <tbody className="bg-[#212830] text-white">
                       {getSortedData().map((portfolio) => (
                         <tr key={portfolio.id}>
-                          <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-4 py-2 whitespace-nowrap min-w-[250px]">
+                          <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-6 pt-2 pb-6 pl-3 whitespace-nowrap min-w-[250px]">
                             <Link
                               href={`/campaign?brand=${encodeURIComponent(
                                 portfolio.name
@@ -238,45 +238,61 @@ const BrandTargetTables = () => {
                               {portfolio.name}
                             </Link>
                           </td>
-                          <td>{portfolio.state || "-"}</td>
-                          <td>
+                          <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
+                            {portfolio.state || "-"}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {Number(portfolio.Budget)?.toLocaleString("en-IN", {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 2,
                             }) || "-"}
                           </td>
-                          <td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {portfolio.Impressions?.toLocaleString() || "-"}
                           </td>
-                          <td>{portfolio.Clicks?.toLocaleString() || "-"}</td>
-                          <td>{(Number(portfolio.CTR) * 100).toFixed(2)}%</td>
-                          <td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {portfolio.Clicks?.toLocaleString() || "-"}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {(Number(portfolio.CTR) * 100).toFixed(2)}%
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {Number(portfolio.Spend)?.toLocaleString("en-IN", {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 2,
                             }) || "-"}
                           </td>
-                          <td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {Number(portfolio.CPC)?.toLocaleString("en-IN", {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 2,
                             }) || "-"}
                           </td>
-                          <td>{portfolio.Orders?.toLocaleString() || "-"}</td>
-                          <td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {portfolio.Orders?.toLocaleString() || "-"}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
                             {Number(portfolio.Sales)?.toLocaleString("en-IN", {
                               style: "currency",
                               currency: "INR",
                               minimumFractionDigits: 2,
                             }) || "-"}
                           </td>
-                          <td>{(Number(portfolio.ACOS) * 100).toFixed(2)}%</td>
-                          <td>{Number(portfolio.ROAS).toFixed(2)}</td>
-                          <td>{portfolio.Budget_start || "-"}</td>
-                          <td>{portfolio.Budget_end || "-"}</td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {(Number(portfolio.ACOS) * 100).toFixed(2)}%
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {Number(portfolio.ROAS).toFixed(2)}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {portfolio.Budget_start || "-"}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {portfolio.Budget_end || "-"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

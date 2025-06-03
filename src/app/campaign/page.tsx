@@ -414,7 +414,7 @@ function CampaignContent() {
             onClick={() =>
               handleCampaignClick(row.campaignName, row.campaignId)
             }
-            className="text-blue-500 hover:text-blue-700 cursor-pointer"
+            className="text-blue-500 hover:text-blue-700 cursor-pointer text-left w-full"
           >
             {value}
           </button>
@@ -426,7 +426,7 @@ function CampaignContent() {
 
         if (isEditing) {
           return (
-            <div className="flex items-center gap-2 justify-center">
+            <div className="flex items-center gap-2 justify-end">
               <input
                 type="number"
                 value={editingBudget.value}
@@ -436,7 +436,7 @@ function CampaignContent() {
                     value: e.target.value,
                   })
                 }
-                className="w-24 px-2 py-1 border rounded text-black text-center"
+                className="w-24 px-2 py-1 border rounded text-black text-right"
                 autoFocus
               />
               <button
@@ -458,7 +458,7 @@ function CampaignContent() {
         }
 
         return (
-          <div className="flex items-center gap-2 justify-center">
+          <div className="flex items-center gap-2 justify-end">
             <span>
               {"₹" +
                 Number(value).toLocaleString("en-IN", {
@@ -484,6 +484,7 @@ function CampaignContent() {
         );
       }
 
+      // Handle numeric columns
       if (
         [
           "cost",
@@ -492,25 +493,33 @@ function CampaignContent() {
           "sales1d",
           "sales7d",
           "spend",
+          "impressions",
+          "clicks",
+          "purchases",
+          "purchases30d",
+          "detailPageViews",
+          "topOfSearchImpressionShare",
         ].includes(column)
       ) {
-        return (
-          "₹" +
-          Number(value).toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })
-        );
+        if (typeof value === "number") {
+          if (["cost", "sales14d", "sales30d", "sales1d", "sales7d", "spend"].includes(column)) {
+            return (
+              "₹" +
+              value.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            );
+          }
+          return value.toLocaleString("en-IN");
+        }
       }
 
       if (column === "clickThroughRate") {
         return (Number(value) * 100).toFixed(2) + "%";
       }
 
-      if (typeof value === "number") {
-        return value.toLocaleString("en-IN");
-      }
-
+      // For text columns (campaignName, campaignStatus)
       return value;
     };
 
@@ -524,14 +533,14 @@ function CampaignContent() {
                   <th
                     key={column}
                     className={`
-                                            text-center whitespace-nowrap px-4 py-4 font-semibold
-                                            text-white border border-gray-700
-                                            ${
-                                              column === "campaignName"
-                                                ? "sticky left-0 bg-black z-50"
-                                                : "cursor-pointer hover:bg-gray-800"
-                                            }
-                                        `}
+    whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-left
+    text-white border border-gray-700
+    ${
+      column === "campaignName"
+        ? "sticky left-0 bg-black z-50"
+        : "cursor-pointer hover:bg-gray-800"
+    }
+  `}
                     onClick={() => {
                       if (
                         column !== "campaignName" &&
@@ -560,13 +569,18 @@ function CampaignContent() {
                     <td
                       key={column}
                       className={`
-                                                px-4 py-2 whitespace-nowrap border border-gray-700
-                                                ${
-                                                  column === "campaignName"
-                                                    ? "sticky left-0 bg-[#212830] z-40"
-                                                    : ""
-                                                }
-                                            `}
+    px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700
+    ${
+      column === "campaignName" || column === "campaignStatus"
+        ? "text-left"
+        : "text-right"
+    }
+    ${
+      column === "campaignName"
+        ? "sticky left-0 bg-[#212830] z-40"
+        : ""
+    }
+  `}
                     >
                       {formatValue(row[column], column, row)}
                     </td>

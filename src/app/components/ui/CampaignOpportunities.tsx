@@ -1,88 +1,88 @@
-"use client"
-import Image from "next/image"
-import { TrendingUp } from "lucide-react"
-import { useState } from "react"
+"use client";
+import Image from "next/image";
+import { TrendingUp } from "lucide-react";
+import { useState } from "react";
 
 type OpportunityItem = {
-  name: string
-  spendRange: string
-}
+  name: string;
+  spendRange: string;
+};
 
 type CampaignDetail = {
-  campaignName: string
-  keyword: string
-  bidAdjustment: number
-  budgetStrategy: "Increase" | "Decrease"
-  isBlurred?: boolean
-}
+  campaignName: string;
+  keyword: string;
+  bidAdjustment: number;
+  budgetStrategy: "Increase" | "Decrease";
+  isBlurred?: boolean;
+};
 
 const opportunities: OpportunityItem[] = [
   {
     name: "Havells - AC020625",
-    spendRange: "7-10%"
-  }
-]
+    spendRange: "7-10%",
+  },
+];
 
 const campaignDetails: CampaignDetail[] = [
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
     keyword: "fans ceiling fans 5 star",
     bidAdjustment: 21.34,
-    budgetStrategy: "Decrease"
+    budgetStrategy: "Decrease",
   },
   {
     campaignName: "Sok | SP | Brand | EM | BLDC",
     keyword: "havells ceiling fans for home",
     bidAdjustment: 17.85,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | BLDC | Broad | Temp",
     keyword: "ceiling fan",
     bidAdjustment: 19.5,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | Brand | EM | BLDC",
     keyword: "havells fans",
     bidAdjustment: 19.78,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
     keyword: "bldc fan ceiling 1200mm",
     bidAdjustment: 20.6,
-    budgetStrategy: "Decrease"
+    budgetStrategy: "Decrease",
   },
   {
     campaignName: "Sok | SP | BLDC | Broad | Temp",
     keyword: "bldc ceiling fan",
     bidAdjustment: 21.55,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | Generic | Broad | Blade length",
     keyword: "bldc ceiling fan 1200mm",
     bidAdjustment: 21.5,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | Generic | Exact | New | BLDC | 2",
     keyword: "ceiling fans",
     bidAdjustment: 18.8,
-    budgetStrategy: "Decrease"
+    budgetStrategy: "Decrease",
   },
   {
     campaignName: "Sok | SP | Brand | PM | BLDC",
     keyword: "havels",
     bidAdjustment: 17.55,
-    budgetStrategy: "Increase"
+    budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | Brand | PM | ES | Ceiling Fan",
     keyword: "havells",
     bidAdjustment: 7.98,
-    budgetStrategy: "Decrease"
+    budgetStrategy: "Decrease",
   },
   // Blurred rows
   {
@@ -90,56 +90,56 @@ const campaignDetails: CampaignDetail[] = [
     keyword: "havells ceiling fans for home",
     bidAdjustment: 12.75,
     budgetStrategy: "Increase",
-    isBlurred: true
+    isBlurred: true,
   },
   {
     campaignName: "Sok | SP | Brand | Exact | Ceiling Fan | ES",
     keyword: "havells ceiling fans for home",
     bidAdjustment: 14.68,
     budgetStrategy: "Decrease",
-    isBlurred: true
+    isBlurred: true,
   },
   {
     campaignName: "Sok | SP | Generic | Exact | New | BLDC | 2",
     keyword: "fan",
     bidAdjustment: 18.116,
     budgetStrategy: "Increase",
-    isBlurred: true
+    isBlurred: true,
   },
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
     keyword: "bldc+ceiling+fan",
     bidAdjustment: 26.585,
     budgetStrategy: "Increase",
-    isBlurred: true
+    isBlurred: true,
   },
   {
     campaignName: "Sok | SP | Generic | Broad | Blade length",
     keyword: "ceiling fan 1200mm",
     bidAdjustment: 21,
     budgetStrategy: "Increase",
-    isBlurred: true
-  }
-]
+    isBlurred: true,
+  },
+];
 
 export default function CampaignOpportunities() {
-  const [showModal, setShowModal] = useState(false)
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null);
 
   const handleApproveClick = () => {
-    setShowModal(true)
-  }
+    setShowModal(true);
+  };
 
   const handleShowMore = () => {
-    setShowDetailsModal(true)
-  }
+    setShowDetailsModal(true);
+  };
 
   const getStrategyTooltip = (strategy: string) => {
     return strategy === "Increase"
-      ? "High Potential Bid Opportunities"
-      : "Budget Efficiency Recommendations"
-  }
+      ? "High Potential Bid Opportunity"
+      : "Budget Efficiency Recommendation";
+  };
 
   return (
     <div className="mt-8 mb-8">
@@ -193,7 +193,7 @@ export default function CampaignOpportunities() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-7xl mx-4 max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                Campaign Details
+                Campaign Opportunity : {opportunities[0].name}
               </h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -207,10 +207,19 @@ export default function CampaignOpportunities() {
               <table className="w-full border-collapse">
                 <thead className="bg-gray-100 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 py-3 text-left">Campaign Name</th>
-                    <th className="px-4 py-3 text-left">Keyword</th>
-                    <th className="px-4 py-3 text-center">Bid Adjustment</th>
-                    <th className="px-4 py-3 text-center">Budget Strategy</th>
+                    {/* All headers left aligned */}
+                    <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
+                      Campaign Name
+                    </th>
+                    <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
+                      Keyword
+                    </th>
+                    <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
+                      Bid Adjustment
+                    </th>
+                    <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
+                      Budget Strategy
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,43 +236,50 @@ export default function CampaignOpportunities() {
                         ${detail.isBlurred ? "blur-sm" : ""}
                       `}
                     >
-                      <td className="px-4 py-3">{detail.campaignName}</td>
-                      <td className="px-4 py-3">{detail.keyword}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 pt-2 pb-6 pl-3">
+                        {detail.campaignName}
+                      </td>
+                      <td className="px-6 pt-2 pb-6 pl-3">{detail.keyword}</td>
+                      <td className="px-6 pt-2 pb-6 pr-3 text-right">
                         ₹{detail.bidAdjustment.toFixed(2)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 pt-2 pb-6 pl-3">
                         <div
-                          className={`
-                            flex items-center justify-center gap-2 relative group
-                            px-3 py-2 rounded-lg mx-2
-                            ${
-                              detail.budgetStrategy === "Increase"
-                                ? "bg-green-50 border border-green-200"
-                                : "bg-red-50 border border-red-200"
-                            }
-                          `}
+                          className="flex items-center justify-center gap-2 relative group"
                           onMouseEnter={() =>
-                            !detail.isBlurred && setHoveredStrategy(detail.keyword)
+                            !detail.isBlurred &&
+                            setHoveredStrategy(detail.keyword)
                           }
                           onMouseLeave={() => setHoveredStrategy(null)}
                         >
                           {detail.budgetStrategy === "Increase" ? (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="12,2 22,20 2,20"/>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="#22c55e"
+                              stroke="#22c55e"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polygon points="12,2 22,20 2,20" />
                             </svg>
                           ) : (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="12,22 2,4 22,4"/>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="#ef4444"
+                              stroke="#ef4444"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polygon points="12,22 2,4 22,4" />
                             </svg>
                           )}
-                          <span
-                            className={
-                              detail.budgetStrategy === "Increase"
-                                ? "!text-green-600 font-medium"
-                                : "!text-red-600 font-medium"
-                            }
-                          >
+                          <span className="text-white font-medium">
                             {detail.budgetStrategy}
                           </span>
                           {!detail.isBlurred &&
@@ -286,10 +302,10 @@ export default function CampaignOpportunities() {
                   style={{
                     top: `${
                       campaignDetails.findIndex((d) => d.isBlurred) * 56 + 56
-                    }px`, // Added 56px for header height
+                    }px`,
                     height: `${
                       campaignDetails.filter((d) => d.isBlurred).length * 56
-                    }px`
+                    }px`,
                   }}
                 >
                   <div className="bg-gray-800/90 text-white px-6 py-3 rounded-lg shadow-lg backdrop-blur-sm z-20">
@@ -319,5 +335,5 @@ export default function CampaignOpportunities() {
         </div>
       )}
     </div>
-  )
+  );
 }
