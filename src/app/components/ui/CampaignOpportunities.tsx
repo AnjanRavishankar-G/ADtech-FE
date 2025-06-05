@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { TrendingUp } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 type OpportunityItem = {
   name: string;
@@ -10,7 +11,10 @@ type OpportunityItem = {
 
 type CampaignDetail = {
   campaignName: string;
-  keyword: string;
+  campaignId: string;
+  adGroupId: string;
+  adGroup: string;
+  keyword: string; // Add this field
   bidAdjustment: number;
   budgetStrategy: "Increase" | "Decrease";
   isBlurred?: boolean;
@@ -26,67 +30,73 @@ const opportunities: OpportunityItem[] = [
 const campaignDetails: CampaignDetail[] = [
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
+    campaignId: "542216646352991",
+    adGroupId: "388913329999095",
+    adGroup: "new",
     keyword: "fans ceiling fans 5 star",
     bidAdjustment: 21.34,
     budgetStrategy: "Decrease",
   },
   {
     campaignName: "Sok | SP | Brand | EM | BLDC",
+    campaignId: "122452353397403",
+    adGroupId: "179807517346774",
+    adGroup: "Brand",
     keyword: "havells ceiling fans for home",
     bidAdjustment: 17.85,
     budgetStrategy: "Increase",
   },
   {
-    campaignName: "Sok | SP | BLDC | Broad | Temp",
-    keyword: "ceiling fan",
-    bidAdjustment: 19.5,
-    budgetStrategy: "Increase",
-  },
-  {
     campaignName: "Sok | SP | Brand | EM | BLDC",
+    campaignId: "122452353397403",
+    adGroupId: "179807517346774",
+    adGroup: "Brand",
     keyword: "havells fans",
     bidAdjustment: 19.78,
     budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
+    campaignId: "542216646352991",
+    adGroupId: "388913329999095",
+    adGroup: "new",
     keyword: "bldc fan ceiling 1200mm",
     bidAdjustment: 20.6,
     budgetStrategy: "Decrease",
   },
   {
-    campaignName: "Sok | SP | BLDC | Broad | Temp",
-    keyword: "bldc ceiling fan",
-    bidAdjustment: 21.55,
-    budgetStrategy: "Increase",
-  },
-  {
     campaignName: "Sok | SP | Generic | Broad | Blade length",
+    campaignId: "318070592425456",
+    adGroupId: "425782101994375",
+    adGroup: "broad",
     keyword: "bldc ceiling fan 1200mm",
     bidAdjustment: 21.5,
     budgetStrategy: "Increase",
   },
   {
     campaignName: "Sok | SP | Generic | Exact | New | BLDC | 2",
+    campaignId: "442664711895590",
+    adGroupId: "541799847823517",
+    adGroup: "generic new",
     keyword: "ceiling fans",
     bidAdjustment: 18.8,
     budgetStrategy: "Decrease",
   },
   {
     campaignName: "Sok | SP | Brand | PM | BLDC",
-    keyword: "havels",
+    campaignId: "553085685075925",
+    adGroupId: "504800382808547",
+    adGroup: "Brand",
+    keyword: "havells",
     bidAdjustment: 17.55,
     budgetStrategy: "Increase",
-  },
-  {
-    campaignName: "Sok | SP | Brand | PM | ES | Ceiling Fan",
-    keyword: "havells",
-    bidAdjustment: 7.98,
-    budgetStrategy: "Decrease",
   },
   // Blurred rows
   {
     campaignName: "Sok | SP | Brand | EM | BLDC",
+    campaignId: "122452353397403",
+    adGroupId: "179807517346774",
+    adGroup: "Brand",
     keyword: "havells ceiling fans for home",
     bidAdjustment: 12.75,
     budgetStrategy: "Increase",
@@ -94,6 +104,9 @@ const campaignDetails: CampaignDetail[] = [
   },
   {
     campaignName: "Sok | SP | Brand | Exact | Ceiling Fan | ES",
+    campaignId: "122452353397403",
+    adGroupId: "179807517346774",
+    adGroup: "Brand",
     keyword: "havells ceiling fans for home",
     bidAdjustment: 14.68,
     budgetStrategy: "Decrease",
@@ -101,6 +114,9 @@ const campaignDetails: CampaignDetail[] = [
   },
   {
     campaignName: "Sok | SP | Generic | Exact | New | BLDC | 2",
+    campaignId: "442664711895590",
+    adGroupId: "541799847823517",
+    adGroup: "generic new",
     keyword: "fan",
     bidAdjustment: 18.116,
     budgetStrategy: "Increase",
@@ -108,13 +124,19 @@ const campaignDetails: CampaignDetail[] = [
   },
   {
     campaignName: "Sok | SP | New | Generic | Exact | BLDC",
-    keyword: "bldc+ceiling+fan",
+    campaignId: "542216646352991",
+    adGroupId: "388913329999095",
+    adGroup: "new",
+    keyword: "bldc-ceiling-fan",
     bidAdjustment: 26.585,
     budgetStrategy: "Increase",
     isBlurred: true,
   },
   {
     campaignName: "Sok | SP | Generic | Broad | Blade length",
+    campaignId: "318070592425456",
+    adGroupId: "425782101994375",
+    adGroup: "broad",
     keyword: "ceiling fan 1200mm",
     bidAdjustment: 21,
     budgetStrategy: "Increase",
@@ -212,6 +234,9 @@ export default function CampaignOpportunities() {
                       Campaign Name
                     </th>
                     <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
+                      Ad Group
+                    </th>
+                    <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
                       Keyword
                     </th>
                     <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
@@ -239,7 +264,27 @@ export default function CampaignOpportunities() {
                       <td className="px-6 pt-2 pb-6 pl-3">
                         {detail.campaignName}
                       </td>
-                      <td className="px-6 pt-2 pb-6 pl-3">{detail.keyword}</td>
+                      <td className="px-6 pt-2 pb-6 pl-3">{detail.adGroup}</td>
+                      <td className="px-6 pt-2 pb-6 pl-3">
+                        {detail.isBlurred ? (
+                          detail.keyword
+                        ) : (
+                          <Link
+                            href={`/adGroupDetails?brand=BLDC&campaign=${encodeURIComponent(
+                              detail.campaignName
+                            )}&adGroup=${encodeURIComponent(
+                              detail.adGroup
+                            )}&adGroupId=${encodeURIComponent(
+                              detail.adGroupId
+                            )}&campaignId=${encodeURIComponent(
+                              detail.campaignId
+                            )}`}
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                          >
+                            {detail.keyword}
+                          </Link>
+                        )}
+                      </td>
                       <td className="px-6 pt-2 pb-6 pr-3 text-right">
                         ₹{detail.bidAdjustment.toFixed(2)}
                       </td>

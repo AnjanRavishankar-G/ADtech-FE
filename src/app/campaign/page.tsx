@@ -27,27 +27,26 @@ import Image from "next/image";
 type CampaignType = "SP" | "SB" | "SD";
 
 type SPCampaignData = {
-  id: number;
-  purchases7d: number;
-  campaignBiddingStrategy: string;
-  cost: number;
-  endDate: string;
-  sales14d: number;
+  date: string;
   campaignId: string;
+  campaignName: string;
+  campaignStatus: string;
+  campaign_budget_amount: number;
+  campaign_budget_type: string;
   clickThroughRate: number;
-  sales30d: number;
-  sales1d: number;
+  costPerClick: number;
+  topOfSearchImpressionShare: number;
+  cost: number;
   impressions: number;
+  clicks: number;
+  sales1d: number;
   sales7d: number;
+  sales14d: number;
+  sales30d: number;
+  purchases1d: number;
+  purchases7d: number;
   purchases14d: number;
   purchases30d: number;
-  spend: number;
-  clicks: number;
-  purchases1d: number;
-  campaignName: string;
-  startDate: string;
-  Portfolio_ID: string | null;
-  campaign_budget_amount: number;
 };
 
 type SBCampaignData = {
@@ -55,7 +54,7 @@ type SBCampaignData = {
   detailPageViews: number;
   purchases: number;
   endDate: string;
-  campaignId: string;
+  campaign_id: string;
   topOfSearchImpressionShare: number;
   campaignStatus: string;
   clicks: number;
@@ -69,21 +68,31 @@ type SBCampaignData = {
 };
 
 type SDCampaignData = {
-  cost: number;
-  detailPageViews: number;
-  purchases: number;
-  endDate: string;
-  campaignId: string;
-  campaignStatus: string;
-  clicks: number;
-  impressions: number;
+  date: string;
+  campaign_id: string;
   campaignName: string;
-  startDate: string;
-  campaignBudgetAmount: number;
-  sales: number;
-  created_at: string;
-  Portfolio_Id: string | null;
+  campaignStatus: string;
   campaign_budget_amount: number;
+  campaign_budget_currency_code: string;
+  add_to_cart: number;
+  clicks: number;
+  cost: number;
+  cost_type: string;
+  detailPageViews: number;
+  impressions: number;
+  new_to_brand_purchases: number;
+  new_to_brand_sales: number;
+  purchases: number;
+  sales: number;
+  cumulative_reach: number;
+  branded_searches: number;
+  branded_search_rate: number;
+  view_click_through_rate: number;
+  viewability_rate: number;
+  ecp_add_to_cart: number;
+  ecp_brand_search: number;
+  new_to_brand_detail_page_view_rate: number;
+  new_to_brand_ecp_detail_page_view: number;
 };
 
 type CampaignDataType = SPCampaignData | SBCampaignData | SDCampaignData;
@@ -140,7 +149,7 @@ function CampaignContent() {
           queryParams.append("brand", selectedBrand);
         }
 
-        const endpoint = type.toLowerCase() + "_campaign";
+        const endpoint = type.toLowerCase() + "_campaigns";
         const url = `${backendURL}/report/${endpoint}${
           queryParams.toString() ? `?${queryParams.toString()}` : ""
         }`;
@@ -259,7 +268,7 @@ function CampaignContent() {
         campaign: campaignName,
         campaignId: campaignId,
         ...(selectedBrand && { brand: selectedBrand }),
-        ...(portfolioId && { portfolioId: portfolioId }),
+        ...(portfolioId && { portfolioId: portfolioId }), // Ensure portfolioId is passed
       });
 
       router.push(`/ad_details?${queryParams.toString()}`);
@@ -285,13 +294,12 @@ function CampaignContent() {
                 "campaignName",
                 "campaign_budget_amount",
                 "impressions",
-                "sales30d", // Will be displayed as "Sales"
-                "spend",
-                "purchases30d", // Will be displayed as "Orders"
+                "sales1d", // Will be displayed as "Sales"
+                "cost",
+                "purchases1d", // Will be displayed as "Orders"
                 "clicks",
                 "clickThroughRate",
-                "startDate",
-                "endDate",
+                "date",
               ],
             };
           case "SB":
@@ -308,8 +316,9 @@ function CampaignContent() {
                 "clicks",
                 "detailPageViews",
                 "topOfSearchImpressionShare",
-                "startDate",
-                "endDate",
+                "add_to_cart",
+                "viewability_rate",
+                "date",
               ],
             };
           case "SD":
@@ -325,8 +334,10 @@ function CampaignContent() {
                 "purchases", // Will be displayed as "Orders"
                 "clicks",
                 "detailPageViews",
-                "startDate",
-                "endDate",
+                "branded_searches",
+                "branded_search_rate",
+                "viewability_rate",
+                "date",
               ],
             };
         }
@@ -362,16 +373,19 @@ function CampaignContent() {
       const specialCases: { [key: string]: string } = {
         campaignName: "Campaign Name",
         campaign_budget_amount: "Budget",
-        sales30d: "Sales",
-        purchases30d: "Orders",
+        sales1d: "Sales",
+        purchases1d: "Orders",
         cost: "Spends",
         purchases: "Orders",
         clickThroughRate: "Click Through Rate",
         detailPageViews: "Detail Page Views",
         topOfSearchImpressionShare: "Top Of Search Impression Share",
         campaignStatus: "Campaign Status",
-        startDate: "Start Date",
-        endDate: "End Date",
+        add_to_cart: "Add to Cart",
+        viewability_rate: "Viewability Rate",
+        date: "Date",
+        branded_searches: "Branded Searches",
+        branded_search_rate: "Branded Search Rate",
       };
 
       if (specialCases[column]) {
@@ -412,7 +426,13 @@ function CampaignContent() {
         return (
           <button
             onClick={() =>
-              handleCampaignClick(row.campaignName, row.campaignId)
+              handleCampaignClick(
+                row.campaignName,
+                // Add this check to handle different ID field names and ensure string type
+                String(
+                  campaignType === "SP" ? row.campaignId : row.campaign_id || ""
+                )
+              )
             }
             className="text-blue-500 hover:text-blue-700 cursor-pointer text-left w-full"
           >
@@ -424,10 +444,15 @@ function CampaignContent() {
       if (column === "campaign_budget_amount") {
         const isEditing = editingBudget?.campaignId === row.campaignId;
 
-        if (isEditing) {
+        if (isEditing && editingBudget) {
+          // Add null check here
           return (
             <div className="flex items-center gap-2 justify-end">
+              <label className="sr-only" htmlFor="budgetInput">
+                Campaign Budget
+              </label>
               <input
+                id="budgetInput"
                 type="number"
                 value={editingBudget.value}
                 onChange={(e) =>
@@ -437,6 +462,8 @@ function CampaignContent() {
                   })
                 }
                 className="w-24 px-2 py-1 border rounded text-black text-right"
+                placeholder="Enter budget"
+                title="Campaign Budget Input"
                 autoFocus
               />
               <button
@@ -467,7 +494,13 @@ function CampaignContent() {
                 })}
             </span>
             <button
-              onClick={() => handleBudgetEdit(row.campaignId, Number(value))}
+              onClick={() => {
+                const campaignId =
+                  campaignType === "SP" ? row.campaignId : row.campaign_id;
+                if (campaignId) {
+                  handleBudgetEdit(String(campaignId), Number(value));
+                }
+              }}
               className="text-gray-500 hover:text-blue-500 ml-1"
               title="Edit Budget"
             >
@@ -485,24 +518,29 @@ function CampaignContent() {
       }
 
       // Handle numeric columns
+      // Handle numeric columns
       if (
         [
           "cost",
-          "sales14d",
-          "sales30d",
           "sales1d",
           "sales7d",
-          "spend",
+          "sales14d",
+          "sales30d",
           "impressions",
           "clicks",
-          "purchases",
+          "purchases1d",
+          "purchases7d",
+          "purchases14d",
           "purchases30d",
-          "detailPageViews",
           "topOfSearchImpressionShare",
         ].includes(column)
       ) {
         if (typeof value === "number") {
-          if (["cost", "sales14d", "sales30d", "sales1d", "sales7d", "spend"].includes(column)) {
+          if (
+            ["cost", "sales1d", "sales7d", "sales14d", "sales30d"].includes(
+              column
+            )
+          ) {
             return (
               "₹" +
               value.toLocaleString("en-IN", {
@@ -515,7 +553,10 @@ function CampaignContent() {
         }
       }
 
-      if (column === "clickThroughRate") {
+      if (
+        column === "clickThroughRate" ||
+        column === "topOfSearchImpressionShare"
+      ) {
         return (Number(value) * 100).toFixed(2) + "%";
       }
 
@@ -575,11 +616,7 @@ function CampaignContent() {
         ? "text-left"
         : "text-right"
     }
-    ${
-      column === "campaignName"
-        ? "sticky left-0 bg-[#212830] z-40"
-        : ""
-    }
+    ${column === "campaignName" ? "sticky left-0 bg-[#212830] z-40" : ""}
   `}
                     >
                       {formatValue(row[column], column, row)}
@@ -603,7 +640,7 @@ function CampaignContent() {
     switch (campaignType) {
       case "SP":
         currentData = spCampaignData;
-        salesKey = "sales30d";
+        salesKey = "sales1d";
         costKey = "cost";
         break;
       case "SB":
@@ -619,7 +656,7 @@ function CampaignContent() {
 
     const salesSeries = top5Sales.map((campaign) => {
       if (campaignType === "SP") {
-        return (campaign as SPCampaignData).sales30d || 0;
+        return (campaign as SPCampaignData).sales1d || 0;
       }
       return (campaign as SBCampaignData | SDCampaignData).sales || 0;
     });
@@ -659,7 +696,7 @@ function CampaignContent() {
                     </TableCell>
                     <TableCell className="w-1/2">
                       {(campaignType === "SP"
-                        ? (campaign as SPCampaignData).sales30d
+                        ? (campaign as SPCampaignData).sales1d
                         : (campaign as SBCampaignData | SDCampaignData).sales
                       )?.toLocaleString("en-IN", {
                         style: "currency",

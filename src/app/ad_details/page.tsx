@@ -20,31 +20,112 @@ const SalesPopup = dynamic(() => import("@/app/components/SalesPopup"), {
   ssr: false,
 });
 
+// Base type for common fields
+type BaseAdGroupData = {
+  SN?: number;
+  adGroupId: string;
+  adGroupName: string;
+  clicks: number;
+  impressions: number;
+  cost: number;
+  date: string;
+  campaignId: string;
+};
+
+type SPAdGroupData = BaseAdGroupData & {
+  status: string;
+  purchases1d: number;
+  sales1d: number;
+  clickThroughRate: number;
+  costPerClick: number;
+};
+
+type SBAdGroupData = BaseAdGroupData & {
+  status: string;
+  addToCart: number;
+  costType: string;
+  detailPageViews: number;
+  purchases: number;
+  sales: number;
+  viewabilityRate: number;
+  videoCompleteViews: number;
+};
+
+type SDAdGroupData = BaseAdGroupData & {
+  addToCart: number;
+  detailPageViews: number;
+  purchases: number;
+  sales: number;
+  brandedSearches: number;
+  brandedSearchRate: number;
+  viewabilityRate: number;
+  viewClickThroughRate: number;
+  newToBrandDetailPageViewRate: number;
+};
+
 type CampaignData = {
   SN: number;
-  AdGroupName: string; // from ad_group_name
-  Type: string; // from ad_type
-  Clicks: number; // from clicks
-  Impressions: number; // from impressions
-  Sales: number; // from sales
-  Spend: number; // from cost
-  CTR: number; // from click_through_rate
-  DPV: number; // from detail_page_views
-  campaignId: string; // keep for reference
-  adGroupId: string; // keep for reference
+  AdGroupName: string;
+  Type: string;
+  Clicks: number;
+  Impressions: number;
+  Sales: number;
+  Spend: number;
+  CTR: number;
+  DPV: number;
+  campaignId: string;
+  adGroupId: string;
 };
 
 const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+const determineCampaignType = (campaignName: string): "SP" | "SB" | "SD" => {
+  if (campaignName.includes("SP")) return "SP";
+  if (campaignName.includes("SB")) return "SB";
+  if (campaignName.includes("SD")) return "SD";
+  return "SP"; // Default to SP
+};
+
+// Create a union type for all ad group data types
+type AdGroupDataType = SPAdGroupData | SBAdGroupData | SDAdGroupData;
+
+// Update the normalizeAdGroupData function to use proper typing
+const normalizeAdGroupData = (
+  data: AdGroupDataType[],
+  type: "SP" | "SB" | "SD"
+): CampaignData[] => {
+  return data.map((item, index) => ({
+    SN: index + 1,
+    AdGroupName: item.adGroupName,
+    Type: type,
+    Clicks: item.clicks,
+    Impressions: item.impressions,
+    Sales:
+      type === "SP"
+        ? (item as SPAdGroupData).sales1d
+        : (item as SBAdGroupData | SDAdGroupData).sales,
+    Spend: item.cost,
+    CTR:
+      type === "SP"
+        ? (item as SPAdGroupData).clickThroughRate
+        : type === "SD"
+        ? (item as SDAdGroupData).viewClickThroughRate
+        : 0,
+    DPV: "detailPageViews" in item ? item.detailPageViews : 0,
+    campaignId: item.campaignId || "",
+    adGroupId: item.adGroupId || "",
+  }));
+};
+
 const fetchCampaignData = async (
   startDate: string | null,
   endDate: string | null,
-  campaignId: string | null
-) => {
+  campaignId: string | null,
+  campaignName: string | null
+): Promise<AdGroupDataType[]> => {
   try {
     const queryParams = new URLSearchParams();
 
-    // Always add campaignId if it exists - this is the key change
     if (campaignId) {
       queryParams.append("campaignId", campaignId.replace(".0", ""));
       console.log("Filtering by campaignId:", campaignId);
@@ -53,7 +134,12 @@ const fetchCampaignData = async (
     if (startDate) queryParams.append("start_date", startDate);
     if (endDate) queryParams.append("end_date", endDate);
 
-    const url = `${backendURL}/report/combined_adgroup_report${
+    const campaignType = campaignName
+      ? determineCampaignType(campaignName)
+      : "SP";
+    const endpoint = `${campaignType.toLowerCase()}_ad_groups`;
+
+    const url = `${backendURL}/report/${endpoint}${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
 
@@ -69,10 +155,7 @@ const fetchCampaignData = async (
 
     if (!res.ok) throw new Error(`Failed to fetch data: ${res.status}`);
     const data = await res.json();
-
-    // Log the results for debugging
-    console.log(`Found ${data.length} ad groups for campaign ${campaignId}`);
-    return data;
+    return data as AdGroupDataType[];
   } catch (error) {
     console.error("Error fetching campaign data:", error);
     throw error;
@@ -81,6 +164,13 @@ const fetchCampaignData = async (
 
 // Separate the main content into a new component
 function AdDetailsContent() {
+  // Add portfolioId to the parameters we get
+  const searchParams = useSearchParams();
+  const selectedBrand = searchParams.get("brand");
+  const selectedCampaign = searchParams.get("campaign");
+  const selectedCampaignId = searchParams.get("campaignId");
+  const portfolioId = searchParams.get("portfolioId"); // Add this line
+
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,11 +179,11 @@ function AdDetailsContent() {
     key: string;
     direction: "asc" | "desc";
   }>({ key: "", direction: "desc" });
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   // const router = useRouter();
-  const selectedBrand = searchParams.get("brand");
-  const selectedCampaign = searchParams.get("campaign");
-  const selectedCampaignId = searchParams.get("campaignId"); // Add this line
+  // const selectedBrand = searchParams.get("brand");
+  // const selectedCampaign = searchParams.get("campaign");
+  // const selectedCampaignId = searchParams.get("campaignId"); // Add this line
   // const portfolioId = searchParams.get('portfolioId');
 
   const [selectedSales, setSelectedSales] = useState<{
@@ -135,21 +225,30 @@ function AdDetailsContent() {
 
     return filteredData;
   };
-
   useEffect(() => {
     async function loadData() {
-      if (!selectedCampaignId) {
-        setError("No campaign ID provided");
+      if (!selectedCampaignId || !selectedCampaign) {
+        setError("No campaign ID or name provided");
         setIsLoading(false);
         return;
       }
 
       try {
-        const results = await fetchCampaignData(null, null, selectedCampaignId);
+        const results = await fetchCampaignData(
+          null,
+          null,
+          selectedCampaignId,
+          selectedCampaign
+        );
+
         if (results.length === 0) {
           console.log(`No ad groups found for campaign: ${selectedCampaignId}`);
         }
-        setCampaignData(results);
+
+        // Normalize data based on campaign type
+        const type = determineCampaignType(selectedCampaign);
+        const normalizedData = normalizeAdGroupData(results, type);
+        setCampaignData(normalizedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -158,7 +257,7 @@ function AdDetailsContent() {
     }
 
     loadData();
-  }, [selectedCampaignId]);
+  }, [selectedCampaignId, selectedCampaign]);
 
   // const handleBack = () => {
   //   const queryParams = new URLSearchParams();
@@ -229,11 +328,13 @@ function AdDetailsContent() {
             </span>
           </Link>
 
-          {/* Campaign Button */}
+          {/* Update Campaign Button to include portfolioId */}
           <Link
-            href={`/campaign?brand=${encodeURIComponent(
-              selectedBrand || ""
-            )}&campaignId=${selectedCampaignId || ""}`}
+            href={`/campaign?${new URLSearchParams({
+              brand: selectedBrand || "",
+              campaignId: selectedCampaignId || "",
+              ...(portfolioId && { portfolioId: portfolioId }),
+            }).toString()}`}
             className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
                         font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
                         dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
@@ -335,7 +436,9 @@ function AdDetailsContent() {
                             campaign: selectedCampaign || "",
                             adGroup: adGroup.AdGroupName,
                             adGroupId: adGroup.adGroupId,
-                            campaignId: adGroup.campaignId,
+                            // Add logging to debug
+                            campaignId:
+                              adGroup.campaignId || selectedCampaignId || "",
                           },
                         }}
                         className="text-blue-500 hover:text-blue-700 cursor-pointer"

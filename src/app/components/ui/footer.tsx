@@ -9,37 +9,25 @@ const Footer: React.FC<FooterProps> = ({ imageAlt }) => {
   return (
     <footer className="w-full py-2 bg-gray-100 border-t dark:bg-[#1e1e1e]">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center justify-center space-y-1">
-          <div className="flex flex-col items-center">
+        <div className="flex items-center justify-center">
+          <span className="text-black dark:text-white text-lg font-medium mr-0">
+            Powered by
+          </span>
+          <div className="h-20 w-[220px] relative -ml-16">
             <Image
-              src="/dentsu-seeklogo.png"
-              alt="Dentsu Logo"
-              width={80}
-              height={28}
+              src="/artha-manta-logo-black.png"
+              alt={imageAlt || "Default alt text"}
+              fill
+              className="object-contain dark:hidden"
               priority
-              className="mx-auto -mb-6 mr-20"
             />
-            <div className="flex items-center">
-              <span className="text-black dark:text-white mr-[-52px] text-base font-medium">
-                Powered by
-              </span>
-              <div className="h-24 w-[140px] relative">
-                <Image
-                  src="/artha-manta-logo-black.png"
-                  alt={imageAlt || "Default alt text"}
-                  fill
-                  className="object-contain dark:hidden"
-                  priority
-                />
-                <Image
-                  src="/artha-manta-logo-white.png"
-                  alt={imageAlt || "Default alt text"}
-                  fill
-                  className="object-contain dark:block hidden"
-                  priority
-                />
-              </div>
-            </div>
+            <Image
+              src="/artha-manta-logo-white.png"
+              alt={imageAlt || "Default alt text"}
+              fill
+              className="object-contain dark:block hidden"
+              priority
+            />
           </div>
         </div>
       </div>

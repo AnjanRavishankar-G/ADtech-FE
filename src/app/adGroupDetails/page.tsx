@@ -59,35 +59,36 @@ type NegativeKeywordResponse = {
 };
 
 type SPAdData = {
-  endDate: string;
-  product_name: string; // Add this
+  date: string;
+  campaignName: string;
+  campaignId: string;
+  adGroupName: string;
+  adGroupId: string;
+  adId: string;
+  advertisedAsin: string;
+  advertisedSku: string;
+  productName: string;
   price: number;
-  unitsSoldClicks1d: number;
+  impressions: number;
+  clicks: number;
+  costPerClick: number;
+  clickThroughRate: number;
+  cost: number;
+  spend: number;
   sales1d: number;
   sales7d: number;
-  adGroupId: string;
-  spend: number;
-  purchasesSameSku1d: number;
-  campaignStatus: string;
-  advertisedSku: string;
-  advertisedAsin: string;
-  purchases1d: number;
-  purchases7d: number;
-  cost: number;
-  adGroupName: string;
-  acosClicks7d: number;
-  campaignId: string;
   sales14d: number;
   sales30d: number;
-  clickThroughRate: number;
-  impressions: number;
-  adId: string;
-  portfolioId: string;
-  clicks: number;
-  campaignName: string;
-  startDate: string;
+  purchases1d: number;
+  purchases7d: number;
+  purchases14d: number;
+  purchases30d: number;
+  acosClicks7d: number;
+  acosClicks14d: number;
   roasClicks7d: number;
-  created_at: string;
+  roasClicks14d: number;
+  campaignStatus: string;
+  portfolioId: string;
 };
 
 type KeywordRecommendation = {
@@ -154,12 +155,12 @@ async function fetchNegativeKeywords(campaignId: string) {
 async function fetchKeywordPerformance(campaignId: string, adGroupId: string) {
   try {
     const queryParams = new URLSearchParams({
-      campaignId: campaignId.replace(".0", ""),
-      "Ad Group ID": adGroupId.replace(".0", ""),
+      campaignId,
+      adGroupId,
     });
 
     const res = await fetch(
-      `${backendURL}/report/sp_1_targeting?${queryParams}`,
+      `${backendURL}/report/sp_targeting?${queryParams}`,
       {
         cache: "no-store",
         headers: getRequiredHeaders(),
@@ -169,27 +170,26 @@ async function fetchKeywordPerformance(campaignId: string, adGroupId: string) {
     if (!res.ok) throw new Error("Failed to fetch targeting data");
     const data = await res.json();
 
-    // Fix 1: Specify type instead of 'any'
     return data.map((item: Record<string, unknown>) => ({
       keyword: item.keyword || item.targeting || "-",
-      matchType: item.matchType || item.keywordType || "-",
+      matchType: item.match_type || item.keyword_type || "-",
       impressions: Number(item.impressions) || 0,
       spend: Number(item.cost) || 0,
-      sales1d: Number(item.sales1d) || 0,
-      sales7d: Number(item.sales7d) || 0,
-      sales14d: Number(item.sales14d) || 0,
-      sales30d: Number(item.sales30d) || 0,
-      cpc: Number(item.costPerClick) || 0,
+      sales1d: Number(item.sales_1d) || 0,
+      sales7d: Number(item.sales_7d) || 0,
+      sales14d: Number(item.sales_14d) || 0,
+      sales30d: Number(item.sales_30d) || 0,
+      cpc: Number(item.cost_per_click) || 0,
       clicks: Number(item.clicks) || 0,
-      bid: Number(item.keywordBid) || 0,
-      purchases1d: Number(item.purchases1d) || 0,
-      purchases7d: Number(item.purchases7d) || 0,
-      purchases14d: Number(item.purchases14d) || 0,
-      purchases30d: Number(item.purchases30d) || 0,
-      roas7d: item.roasClicks7d ? Number(item.roasClicks7d) : null,
-      roas14d: item.roasClicks14d ? Number(item.roasClicks14d) : null,
-      acos7d: item.acosClicks7d ? Number(item.acosClicks7d) : null,
-      acos14d: item.acosClicks14d ? Number(item.acosClicks14d) : null,
+      bid: Number(item.keyword_bid) || 0,
+      purchases1d: Number(item.purchases_1d) || 0,
+      purchases7d: Number(item.purchases_7d) || 0,
+      purchases14d: Number(item.purchases_14d) || 0,
+      purchases30d: Number(item.purchases_30d) || 0,
+      roas7d: item.roas_clicks_7d ? Number(item.roas_clicks_7d) : null,
+      roas14d: item.roas_clicks_14d ? Number(item.roas_clicks_14d) : null,
+      acos7d: item.acos_clicks_7d ? Number(item.acos_clicks_7d) : null,
+      acos14d: item.acos_clicks_14d ? Number(item.acos_clicks_14d) : null,
     }));
   } catch (error) {
     console.error("Error fetching targeting data:", error);
@@ -197,15 +197,47 @@ async function fetchKeywordPerformance(campaignId: string, adGroupId: string) {
   }
 }
 
+type SPAdDataResponse = {
+  date: string;
+  campaign_name: string;
+  campaign_id: string;
+  ad_group_name: string;
+  ad_group_id: string;
+  ad_id: string;
+  advertised_asin: string;
+  advertised_sku: string;
+  product_name: string;
+  price: string | number;
+  impressions: string | number;
+  clicks: string | number;
+  cost_per_click: string | number;
+  click_through_rate: string | number;
+  cost: string | number;
+  sales_1d: string | number;
+  sales_7d: string | number;
+  sales_14d: string | number;
+  sales_30d: string | number;
+  purchases_1d: string | number;
+  purchases_7d: string | number;
+  purchases_14d: string | number;
+  purchases_30d: string | number;
+  acos_clicks_7d: string | number;
+  acos_clicks_14d: string | number;
+  roas_clicks_7d: string | number;
+  roas_clicks_14d: string | number;
+  campaign_status: string;
+  portfolio_id: string;
+};
+
 async function fetchSPAdData(campaignId: string, adGroupId: string) {
   try {
     const queryParams = new URLSearchParams({
-      campaignId: campaignId.replace(".0", ""),
-      adGroupId: adGroupId.replace(".0", ""), // Make sure this matches the backend parameter name
+      campaignId,
+      adGroupId,
     });
 
     const res = await fetch(
-      `${backendURL}/report/sp_ad_details?${queryParams}`,
+      `${backendURL}/report/sp_advertised_products?${queryParams}`,
       {
         cache: "no-store",
         headers: getRequiredHeaders(),
@@ -214,8 +246,43 @@ async function fetchSPAdData(campaignId: string, adGroupId: string) {
 
     if (!res.ok) throw new Error("Failed to fetch SP ad data");
     const data = await res.json();
-    console.log("SP Ad Data:", data);
-    return data;
+
+    // Transform the data using the new type
+    const transformedData = data.map((item: SPAdDataResponse) => ({
+      date: item.date,
+      campaignName: item.campaign_name,
+      campaignId: item.campaign_id,
+      adGroupName: item.ad_group_name,
+      adGroupId: item.ad_group_id,
+      adId: item.ad_id,
+      advertisedAsin: item.advertised_asin,
+      advertisedSku: item.advertised_sku,
+      productName: item.product_name,
+      price: Number(item.price) || 0,
+      impressions: Number(item.impressions) || 0,
+      clicks: Number(item.clicks) || 0,
+      costPerClick: Number(item.cost_per_click) || 0,
+      clickThroughRate: Number(item.click_through_rate) || 0,
+      cost: Number(item.cost) || 0,
+      spend: Number(item.cost) || 0,
+      sales1d: Number(item.sales_1d) || 0,
+      sales7d: Number(item.sales_7d) || 0,
+      sales14d: Number(item.sales_14d) || 0,
+      sales30d: Number(item.sales_30d) || 0,
+      purchases1d: Number(item.purchases_1d) || 0,
+      purchases7d: Number(item.purchases_7d) || 0,
+      purchases14d: Number(item.purchases_14d) || 0,
+      purchases30d: Number(item.purchases_30d) || 0,
+      acosClicks7d: Number(item.acos_clicks_7d) || 0,
+      acosClicks14d: Number(item.acos_clicks_14d) || 0,
+      roasClicks7d: Number(item.roas_clicks_7d) || 0,
+      roasClicks14d: Number(item.roas_clicks_14d) || 0,
+      campaignStatus: item.campaign_status,
+      portfolioId: item.portfolio_id,
+    }));
+
+    console.log("Transformed SP Ad Data:", transformedData);
+    return transformedData;
   } catch (error) {
     console.error("Error fetching SP ad data:", error);
     throw error;
@@ -310,6 +377,7 @@ function AdGroupContent() {
   const [recommendations, setRecommendations] = useState<
     KeywordRecommendation[]
   >([]);
+  const [portfolioId, setPortfolioId] = useState<string>("");
 
   // Add this new state for negative keywords loading
   const [isNegativeKeywordsLoading, setIsNegativeKeywordsLoading] =
@@ -341,12 +409,20 @@ function AdGroupContent() {
   };
 
   const getSortedData = () => {
-    const filteredData = spAdData.filter(
-      (ad) =>
-        ad.advertisedAsin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (ad.product_name &&
-          ad.product_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredData = spAdData.filter((ad) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        // Safely check advertisedAsin
+        ad.advertisedAsin?.toLowerCase()?.includes(searchLower) ||
+        false ||
+        // Safely check advertisedSku
+        ad.advertisedSku?.toLowerCase()?.includes(searchLower) ||
+        false ||
+        // Safely check productName
+        ad.productName?.toLowerCase()?.includes(searchLower) ||
+        false
+      );
+    });
 
     if (sortConfig.key) {
       filteredData.sort((a, b) => {
@@ -355,19 +431,17 @@ function AdGroupContent() {
 
         // Special handling for text fields
         if (
-          sortConfig.key === "product_name" ||
-          sortConfig.key === "advertisedAsin"
+          ["productName", "advertisedAsin", "advertisedSku"].includes(
+            sortConfig.key
+          )
         ) {
           return sortConfig.direction === "asc"
-            ? String(aValue).localeCompare(String(bValue))
-            : String(bValue).localeCompare(String(aValue));
+            ? String(aValue || "").localeCompare(String(bValue || ""))
+            : String(bValue || "").localeCompare(String(aValue || ""));
         }
 
         // Handle percentage values
-        if (
-          sortConfig.key === "clickThroughRate" ||
-          sortConfig.key === "acosClicks7d"
-        ) {
+        if (["clickThroughRate", "acosClicks7d"].includes(sortConfig.key)) {
           return sortConfig.direction === "asc"
             ? Number(aValue || 0) - Number(bValue || 0)
             : Number(bValue || 0) - Number(aValue || 0);
@@ -428,6 +502,11 @@ function AdGroupContent() {
           fetchSPAdData(campaignId, adGroupId),
           fetchKeywordPerformance(campaignId, adGroupId),
         ]);
+
+        // Set the portfolioId from the first SP ad data entry
+        if (spData && spData.length > 0) {
+          setPortfolioId(spData[0].portfolioId);
+        }
 
         setSpAdData(spData);
         setKeywordPerformanceData(keywordPerformance);
@@ -557,7 +636,14 @@ function AdGroupContent() {
             </span>
           </Link>
           <Link
-            href={`/campaign?brand=${encodeURIComponent(selectedBrand || "")}`}
+            href={{
+              pathname: "/campaign",
+              query: {
+                brand: selectedBrand || "",
+                portfolioId:
+                  portfolioId || searchParams.get("portfolioId") || "",
+              },
+            }}
             className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
             font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
             dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
@@ -645,11 +731,12 @@ function AdGroupContent() {
           <div>
             <div className="shadow-2xl p-4 bg-white rounded-2xl dark:bg-black dark:text-white dark:shadow-[-20px_-10px_30px_6px_rgba(0,0,0,0.1),_15px_10px_30px_6px_rgba(45,78,255,0.15)]">
               <h2 className="text-2xl font-bold mb-8 text-center">
-                Asin Performance
+                ASIN Performance
               </h2>
               <div className="relative">
                 <div className="max-h-[600px] overflow-auto">
                   <table className="w-full border-collapse relative">
+                    {/* Replace the existing table headers with these */}
                     <thead className="sticky top-0 bg-black z-50">
                       <tr>
                         <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[250px]">
@@ -658,13 +745,15 @@ function AdGroupContent() {
                         {[
                           { key: "price", label: "Price (₹)" },
                           { key: "impressions", label: "Impressions" },
-                          { key: "spend", label: "Spend" },
-                          { key: "sales30d", label: "Sales" },
-                          { key: "purchases7d", label: "Orders" },
                           { key: "clicks", label: "Clicks" },
                           { key: "clickThroughRate", label: "CTR" },
+                          { key: "costPerClick", label: "CPC (₹)" },
+                          { key: "spend", label: "Spend (₹)" },
+                          { key: "sales1d", label: "Sales (₹)" },
+                          { key: "purchases1d", label: "Orders" },
                           { key: "acosClicks7d", label: "ACOS" },
-                          { key: "advertisedAsin", label: "Advertised ASIN" },
+                          { key: "roasClicks7d", label: "ROAS" },
+                          { key: "advertisedAsin", label: "ASIN" },
                         ].map(({ key, label }) => (
                           <th
                             key={key}
@@ -686,18 +775,18 @@ function AdGroupContent() {
                     <tbody className="bg-[#212830] text-white">
                       {getSortedData().map((ad) => (
                         <tr key={ad.adId}>
-                          <td
-                            className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-6 pt-2 pb-6 pl-3 relative min-w-[250px]"
-                            title={ad.product_name || "-"} // Simple native tooltip
-                          >
+                          <td className="sticky left-0 bg-[#212830] z-40 border border-gray-700 px-6 pt-2 pb-6 pl-3 relative min-w-[250px]">
                             <div className="text-left">
-                              <div className="truncate">
-                                {ad.product_name
-                                  ? ad.product_name
+                              <div
+                                className="truncate"
+                                title={ad.productName || "-"}
+                              >
+                                {ad.productName
+                                  ? ad.productName
                                       .split(" ")
                                       .slice(0, 7)
                                       .join(" ") +
-                                    (ad.product_name.split(" ").length > 7
+                                    (ad.productName.split(" ").length > 7
                                       ? "..."
                                       : "")
                                   : "-"}
@@ -715,22 +804,40 @@ function AdGroupContent() {
                             {ad.impressions?.toLocaleString()}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {ad.spend?.toLocaleString()}
+                            {ad.clicks?.toLocaleString()}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {ad.sales30d?.toLocaleString()}
+                            {`${(ad.clickThroughRate || 0).toFixed(2)}%`}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {ad.purchases7d}
+                            {ad.costPerClick?.toLocaleString("en-IN", {
+                              style: "currency",
+                              currency: "INR",
+                              minimumFractionDigits: 2,
+                            }) || "-"}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {ad.clicks}
+                            {ad.spend?.toLocaleString("en-IN", {
+                              style: "currency",
+                              currency: "INR",
+                              minimumFractionDigits: 2,
+                            }) || "-"}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {`${Number(ad.clickThroughRate || 0).toFixed(2)}%`}
+                            {ad.sales1d?.toLocaleString("en-IN", {
+                              style: "currency",
+                              currency: "INR",
+                              minimumFractionDigits: 2,
+                            }) || "-"}
                           </td>
                           <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
-                            {`${Number(ad.acosClicks7d || 0).toFixed(2)}%`}
+                            {ad.purchases1d?.toLocaleString()}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {`${(ad.acosClicks7d || 0).toFixed(2)}%`}
+                          </td>
+                          <td className="px-6 pt-2 pb-6 pr-3 whitespace-nowrap border border-gray-700 text-right">
+                            {(ad.roasClicks7d || 0).toFixed(2)}
                           </td>
                           <td className="px-6 pt-2 pb-6 pl-3 whitespace-nowrap border border-gray-700 text-left">
                             {ad.advertisedAsin}
@@ -879,7 +986,7 @@ function AdGroupContent() {
                   <table className="w-full border-collapse relative">
                     <thead className="sticky top-0 bg-black z-50">
                       <tr>
-                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 min-w-[250px]">
+                        <th className="sticky top-0 left-0 z-50 bg-black whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 text-left min-w-[250px]">
                           Keyword
                         </th>
                         <th className="z-30 whitespace-nowrap px-6 pt-2 pb-6 pl-3 font-semibold text-white border border-gray-700 bg-black min-w-[150px]">
@@ -888,13 +995,13 @@ function AdGroupContent() {
                         {[
                           { key: "impressions", label: "Impressions" },
                           { key: "spend", label: "Spend" },
-                          { key: "sales30d", label: "Sales" },
+                          { key: "sales1d", label: "Sales" }, // Changed from sales30d
                           { key: "cpc", label: "CPC" },
                           { key: "clicks", label: "Clicks" },
                           { key: "bid", label: "Bid" },
-                          { key: "purchases30d", label: "Orders" },
-                          { key: "roas14d", label: "ROAS" },
-                          { key: "acos14d", label: "ACOS" },
+                          { key: "purchases1d", label: "Orders" }, // Changed from purchases30d
+                          { key: "roas7d", label: "ROAS" }, // Changed field and label
+                          { key: "acos7d", label: "ACOS" }, // Changed field and label
                         ].map(({ key, label }) => (
                           <th
                             key={key}
