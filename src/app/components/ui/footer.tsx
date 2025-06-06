@@ -13,7 +13,7 @@ const Footer: React.FC<FooterProps> = ({ imageAlt }) => {
           <span className="text-black dark:text-white text-lg font-medium mr-0">
             Powered by
           </span>
-          <div className="h-20 w-[220px] relative -ml-16">
+          <div className="h-20 w-[230px] relative -ml-24 ">
             <Image
               src="/artha-manta-logo-black.png"
               alt={imageAlt || "Default alt text"}
