@@ -632,7 +632,7 @@ function AdGroupContent() {
             dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
             <span className="flex items-center">
-              Brand: {selectedBrand || "N/A"}
+              Portfolio: {selectedBrand || "N/A"}
             </span>
           </Link>
           <Link
@@ -657,7 +657,9 @@ function AdGroupContent() {
               selectedBrand || ""
             )}&campaign=${encodeURIComponent(
               selectedCampaign || ""
-            )}&campaignId=${searchParams.get("campaignId") || ""}`}
+            )}&campaignId=${searchParams.get("campaignId") || ""}&portfolioId=${
+              portfolioId || searchParams.get("portfolioId") || ""
+            }`}
             className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
             font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
             dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"

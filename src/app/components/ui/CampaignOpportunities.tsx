@@ -3,6 +3,7 @@ import Image from "next/image";
 import { TrendingUp } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 
 type OpportunityItem = {
   name: string;
@@ -292,6 +293,34 @@ export default function CampaignOpportunities() {
       : "Budget Efficiency Recommendation";
   };
 
+  // Add this new function inside your CampaignOpportunities component
+  const handleExport = () => {
+    // Get the current data based on selected card
+    const data = getDetailsData(selectedCard).filter((item) => !item.isBlurred);
+
+    // Transform data to match table columns
+    const exportData = data.map((item) => ({
+      "Campaign Name": item.campaignName,
+      "Ad Group": item.adGroup,
+      Keyword: item.keyword,
+      "Bid Adjustment": `₹${item.bidAdjustment.toFixed(2)}`,
+      "Budget Strategy": item.budgetStrategy,
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Campaign Data");
+
+    // Generate filename based on selected card
+    const filename = `${opportunities[selectedCard].name}_campaign_data.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+  };
+
   return (
     <div className="mt-8 mb-8">
       <div className="flex items-center justify-between max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -358,12 +387,35 @@ export default function CampaignOpportunities() {
               <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
                 Campaign Opportunity : {opportunities[selectedCard].name}
               </h3>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleExport}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">

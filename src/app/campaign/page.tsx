@@ -377,7 +377,7 @@ function CampaignContent() {
         purchases1d: "Orders",
         cost: "Spends",
         purchases: "Orders",
-        clickThroughRate: "Click Through Rate",
+        clickThroughRate: "CTR",
         detailPageViews: "Detail Page Views",
         topOfSearchImpressionShare: "Top Of Search Impression Share",
         campaignStatus: "Campaign Status",
@@ -906,7 +906,7 @@ function CampaignContent() {
       dark:border-gray-600"
           >
             <span className="whitespace-nowrap">
-              Brand: {selectedBrand || "All Brands"}
+              Portfolio: {selectedBrand || "All Brands"}
             </span>
           </Link>
 

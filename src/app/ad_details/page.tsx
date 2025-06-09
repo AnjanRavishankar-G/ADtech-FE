@@ -169,7 +169,6 @@ function AdDetailsContent() {
   const selectedBrand = searchParams.get("brand");
   const selectedCampaign = searchParams.get("campaign");
   const selectedCampaignId = searchParams.get("campaignId");
-  const portfolioId = searchParams.get("portfolioId"); // Add this line
 
   const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -324,20 +323,22 @@ function AdDetailsContent() {
                         dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
             <span className="flex items-center">
-              Brand: {selectedBrand || "N/A"}
+              Portfolio: {selectedBrand || "N/A"}
             </span>
           </Link>
 
           {/* Update Campaign Button to include portfolioId */}
           <Link
-            href={`/campaign?${new URLSearchParams({
-              brand: selectedBrand || "",
-              campaignId: selectedCampaignId || "",
-              ...(portfolioId && { portfolioId: portfolioId }),
-            }).toString()}`}
+            href={{
+              pathname: "/campaign",
+              query: {
+                brand: selectedBrand || "",
+                portfolioId: searchParams.get("portfolioId") || "", // This will now have the value
+              },
+            }}
             className="text-blue-600 bg-blue-50 shadow-md hover:bg-blue-100 focus:ring-2 focus:ring-blue-300 
-                        font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
-                        dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
+              font-medium rounded-lg text-sm px-6 py-2.5 transition-all duration-200 ease-in-out
+              dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40 dark:shadow-lg"
           >
             <span className="flex items-center">
               Campaign: {selectedCampaign || "N/A"}
@@ -436,9 +437,9 @@ function AdDetailsContent() {
                             campaign: selectedCampaign || "",
                             adGroup: adGroup.AdGroupName,
                             adGroupId: adGroup.adGroupId,
-                            // Add logging to debug
                             campaignId:
                               adGroup.campaignId || selectedCampaignId || "",
+                            portfolioId: searchParams.get("portfolioId") || "", // Add this line to pass portfolioId
                           },
                         }}
                         className="text-blue-500 hover:text-blue-700 cursor-pointer"
