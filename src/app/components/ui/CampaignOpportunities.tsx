@@ -20,10 +20,133 @@ type CampaignDetail = {
   isBlurred?: boolean;
 };
 
+// Update the opportunities array to include both cards
 const opportunities: OpportunityItem[] = [
   {
     name: "Havells - AC020625",
     spendRange: "7-10%",
+  },
+  {
+    name: "Havells - AC090625",
+    spendRange: "7-10%",
+  },
+];
+
+// Add new campaign details for AC090625
+const ac090625Details: CampaignDetail[] = [
+  {
+    campaignName: "Sok | SP | Generic | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "fans ceiling fans",
+    bidAdjustment: 7.0,
+    budgetStrategy: "Increase",
+  },
+  {
+    campaignName: "Sok | SP | Generic | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "411771654849539",
+    adGroup: "Broad",
+    keyword: "fans +ceiling +fans +5 +star",
+    bidAdjustment: 25.6,
+    budgetStrategy: "Increase",
+  },
+  {
+    campaignName: "Sok | SP | Generic | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "411771654849539",
+    adGroup: "Broad",
+    keyword: "ceiling fan",
+    bidAdjustment: 19.5,
+    budgetStrategy: "Increase",
+  },
+  {
+    campaignName: "Sok | SP | Generic | PM | Stealth | Premium BLDC",
+    campaignId: "509157882988033",
+    adGroupId: "369138017307077",
+    adGroup: "High SFR_Phrase",
+    keyword: "bldc ceiling fan",
+    bidAdjustment: 20.0,
+    budgetStrategy: "Decrease",
+  },
+  {
+    campaignName: "Sok | SP | AB test | BLDC | Generic",
+    campaignId: "513443460065622",
+    adGroupId: "479335278316129",
+    adGroup: "best seller",
+    keyword: "ceiling fan",
+    bidAdjustment: 12.0,
+    budgetStrategy: "Decrease",
+  },
+  {
+    campaignName: "Sok | SP | Generic | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "bldc ceiling fan",
+    bidAdjustment: 23.1,
+    budgetStrategy: "Increase",
+  },
+  {
+    campaignName: "Sok | SP | Generic | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "411771654849539",
+    adGroup: "Broad",
+    keyword: "bldc ceiling fan",
+    bidAdjustment: 12.0,
+    budgetStrategy: "Decrease",
+  },
+  // Add 5 blurred rows
+  {
+    campaignName: "Sok | SP | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "ceiling fans premium",
+    bidAdjustment: 15.5,
+    budgetStrategy: "Increase",
+    isBlurred: true,
+  },
+  {
+    campaignName: "Sok | SP | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "premium ceiling fans",
+    bidAdjustment: 17.0,
+    budgetStrategy: "Increase",
+    isBlurred: true,
+  },
+  {
+    campaignName: "Sok | SP | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "ceiling fan energy saving",
+    bidAdjustment: 14.0,
+    budgetStrategy: "Decrease",
+    isBlurred: true,
+  },
+  {
+    campaignName: "Sok | SP | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "best ceiling fans 2023",
+    bidAdjustment: 16.0,
+    budgetStrategy: "Decrease",
+    isBlurred: true,
+  },
+  {
+    campaignName: "Sok | SP | BLDC | Broad | Temp",
+    campaignId: "284147232441151",
+    adGroupId: "517963182025884",
+    adGroup: "broad 2",
+    keyword: "top rated ceiling fans",
+    bidAdjustment: 18.0,
+    budgetStrategy: "Decrease",
+    isBlurred: true,
   },
 ];
 
@@ -147,7 +270,13 @@ const campaignDetails: CampaignDetail[] = [
 export default function CampaignOpportunities() {
   const [showModal, setShowModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null);
+  const [hoveredStrategy, setHoveredStrategy] = useState<string | null>(null); // Change type to string | null
+  const [selectedCard, setSelectedCard] = useState<number>(0);
+
+  // Modify the details modal to use the correct data based on selectedCard
+  const getDetailsData = (cardIndex: number) => {
+    return cardIndex === 1 ? ac090625Details : campaignDetails;
+  };
 
   const handleApproveClick = () => {
     setShowModal(true);
@@ -181,41 +310,53 @@ export default function CampaignOpportunities() {
           </h2>
         </div>
 
-        {/* Right side - Single BLDC Card */}
-        <div className="flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-w-[300px]">
-          <div className="flex-1">
-            <h3 className="text-xl font-medium text-gray-800 dark:text-white mb-2">
-              {opportunities[0].name}
-            </h3>
-            <div className="flex items-center gap-2 mb-4 text-green-500">
-              <TrendingUp size={18} />
-              <span className="font-medium">{opportunities[0].spendRange}</span>
+        {/* Right side - Cards Container */}
+        <div className="flex justify-between gap-4">
+          {opportunities.map((opportunity, index) => (
+            <div
+              key={index}
+              className={`flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4 min-w-[300px] ${
+                index === 1 ? "order-first" : ""
+              }`}
+            >
+              <div className="flex-1">
+                <h3 className="text-xl font-medium text-gray-800 dark:text-white mb-2">
+                  {opportunity.name}
+                </h3>
+                <div className="flex items-center gap-2 mb-4 text-green-500">
+                  <TrendingUp size={18} />
+                  <span className="font-medium">{opportunity.spendRange}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={handleApproveClick}
+                    className="w-full bg-amber-400 hover:bg-amber-500 !text-black font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCard(index);
+                      handleShowMore();
+                    }}
+                    className="w-full bg-gray-200 hover:bg-gray-300 !text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Details
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={handleApproveClick}
-                className="w-full bg-amber-400 hover:bg-amber-500 !text-black font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-              >
-                Approve
-              </button>
-              <button
-                onClick={handleShowMore}
-                className="w-full bg-gray-200 hover:bg-gray-300 !text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
-              >
-                Details
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
       {/* Details Modal */}
       {showDetailsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-7xl mx-4 max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                Campaign Opportunity : {opportunities[0].name}
+                Campaign Opportunity : {opportunities[selectedCard].name}
               </h3>
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -225,11 +366,10 @@ export default function CampaignOpportunities() {
               </button>
             </div>
 
-            <div className="overflow-x-auto relative">
+            <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead className="bg-gray-100 dark:bg-gray-700">
+                <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0 z-[60]">
                   <tr>
-                    {/* All headers left aligned */}
                     <th className="px-6 pt-2 pb-6 pl-3 text-left font-semibold">
                       Campaign Name
                     </th>
@@ -248,7 +388,7 @@ export default function CampaignOpportunities() {
                   </tr>
                 </thead>
                 <tbody>
-                  {campaignDetails.map((detail, index) => (
+                  {getDetailsData(selectedCard).map((detail, index) => (
                     <tr
                       key={index}
                       className={`
@@ -286,14 +426,14 @@ export default function CampaignOpportunities() {
                         )}
                       </td>
                       <td className="px-6 pt-2 pb-6 pr-3 text-right">
-                        ₹{detail.bidAdjustment.toFixed(2)}
+                        ₹&nbsp;{detail.bidAdjustment.toFixed(2)}
                       </td>
                       <td className="px-6 pt-2 pb-6 pl-3">
                         <div
                           className="flex items-center justify-center gap-2 relative group"
                           onMouseEnter={() =>
                             !detail.isBlurred &&
-                            setHoveredStrategy(detail.keyword)
+                            setHoveredStrategy(`row-${index}`)
                           }
                           onMouseLeave={() => setHoveredStrategy(null)}
                         >
@@ -328,8 +468,8 @@ export default function CampaignOpportunities() {
                             {detail.budgetStrategy}
                           </span>
                           {!detail.isBlurred &&
-                            hoveredStrategy === detail.keyword && (
-                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-10 px-3 py-1.5 text-sm !bg-orange-400 !text-black rounded-md shadow-lg whitespace-nowrap font-medium">
+                            hoveredStrategy === `row-${index}` && (
+                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 z-[70] px-3 py-1.5 text-sm !bg-orange-400 !text-black rounded-md shadow-lg whitespace-nowrap font-medium">
                                 {getStrategyTooltip(detail.budgetStrategy)}
                               </div>
                             )}
@@ -340,20 +480,12 @@ export default function CampaignOpportunities() {
                 </tbody>
               </table>
 
-              {/* Moved overlay outside of table and tbody - this fixes the hydration error */}
-              {campaignDetails.some((detail) => detail.isBlurred) && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  style={{
-                    top: `${
-                      campaignDetails.findIndex((d) => d.isBlurred) * 56 + 56
-                    }px`,
-                    height: `${
-                      campaignDetails.filter((d) => d.isBlurred).length * 56
-                    }px`,
-                  }}
-                >
-                  <div className="bg-gray-800/90 text-white px-6 py-3 rounded-lg shadow-lg backdrop-blur-sm z-20">
+              {/* Overlay for blurred rows */}
+              {getDetailsData(selectedCard).some(
+                (detail) => detail.isBlurred
+              ) && (
+                <div className="sticky bottom-0 left-0 right-0 flex items-center justify-center py-4 bg-gray-800/95 backdrop-blur-sm z-[70]">
+                  <div className="text-white px-6 py-3 rounded-lg">
                     Please contact the Artha team to enable this feature
                   </div>
                 </div>
@@ -365,7 +497,7 @@ export default function CampaignOpportunities() {
 
       {/* Existing Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
             <p className="text-gray-700 dark:text-gray-300 mb-6">
               Please contact the Artha team to enable this feature

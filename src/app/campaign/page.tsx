@@ -883,18 +883,27 @@ function CampaignContent() {
             </div>
           </div>
         </div>
-        {/* Add spacing between logo and controls */}
-        <div className="h-[65px]"></div> {/* Add this spacer */}
+
+        {/* Add spacing between logo and Campaign Opportunities */}
+        <div className="h-[65px]"></div>
+
+        {/* Move Campaign Opportunities here - before the controls */}
+        {selectedBrand === "BLDC" && !isLoading && (
+          <div className="px-2 mb-6">
+            <CampaignOpportunities />
+          </div>
+        )}
+
         {/* Campaign Controls Section */}
-        <div className="flex flex-col sm:flex-row items-start gap-6 mb-4 px-2">
+        <div className="flex flex-col sm:flex-row items-start gap-6 mb-4 px-2 ml-8">
           {/* Brand Selection Button */}
           <Link
             href="/brand"
             className="inline-flex items-center px-6 py-2.5 bg-white text-black 
-              shadow-lg hover:bg-gray-100 font-medium rounded-lg text-sm 
-              transition-all duration-200 ease-in-out border border-gray-200 
-              dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 
-              dark:border-gray-600"
+      shadow-lg hover:bg-gray-100 font-medium rounded-lg text-sm 
+      transition-all duration-200 ease-in-out border border-gray-200 
+      dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 
+      dark:border-gray-600"
           >
             <span className="whitespace-nowrap">
               Brand: {selectedBrand || "All Brands"}
@@ -927,23 +936,23 @@ function CampaignContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full h-[40px] px-5 rounded-lg transition-all duration-200
-                                    ${
-                                      campaignType
-                                        ? "border-blue-200 focus:border-blue-400"
-                                        : "border-gray-200"
-                                    }
-                                    bg-white text-black placeholder-gray-500 text-base
-                                    hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500
-                                    dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
-                                    dark:border-gray-700 dark:hover:bg-gray-700/70
-                                    font-medium shadow-md border-2`}
+          ${
+            campaignType
+              ? "border-blue-200 focus:border-blue-400"
+              : "border-gray-200"
+          }
+          bg-white text-black placeholder-gray-500 text-base
+          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500
+          dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+          dark:border-gray-700 dark:hover:bg-gray-700/70
+          font-medium shadow-md border-2`}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 
-                                             hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200
-                                             transition-colors duration-200"
+            hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200
+            transition-colors duration-200"
                   title="Clear search"
                 >
                   <svg
@@ -983,10 +992,9 @@ function CampaignContent() {
             <div className="px-2">
               <CampaignTable />
 
-              {/* Add Campaign Opportunities section */}
+              {/* Move OutOfBudgetCampaigns to appear after the table */}
               {selectedBrand === "BLDC" && !isLoading && (
                 <div className="px-2 mt-6">
-                  <CampaignOpportunities />
                   <OutOfBudgetCampaigns />
                 </div>
               )}
