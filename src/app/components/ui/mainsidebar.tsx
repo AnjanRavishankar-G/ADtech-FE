@@ -1,11 +1,20 @@
 "use client";
 import React, { useState } from "react";
-import { useTheme } from '@/app/context/ThemeContext';
-import { FaMoon, FaSun, FaKey } from 'react-icons/fa';
+import { useTheme } from "@/app/context/ThemeContext";
+import { FaMoon, FaSun, FaKey } from "react-icons/fa";
 import { GiTargeting } from "react-icons/gi";
-import { Handshake, Home, LogOut, ChevronLeft, ChevronRight, ChevronDown, Package2, Settings } from "lucide-react";
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
+import {
+  Handshake,
+  Home,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Package2,
+  Settings,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -14,11 +23,11 @@ interface SidebarProps {
   setSelectedTab: (tab: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  collapsed, 
-  toggleSidebar, 
+const Sidebar: React.FC<SidebarProps> = ({
+  collapsed,
+  toggleSidebar,
   selectedTab,
-  setSelectedTab 
+  setSelectedTab,
 }) => {
   const { theme, toggleTheme } = useTheme();
   const [showTeams, setShowTeams] = useState(false);
@@ -26,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [showProducts, setShowProducts] = useState(true); // Start expanded
   const [showSettings, setShowSettings] = useState(false);
   const pathname = usePathname();
-  const isAdGroupPage = pathname?.includes('/adGroupDetails');
+  const isAdGroupPage = pathname?.includes("/adGroupDetails");
 
   return (
     <div
@@ -46,8 +55,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-4">
           <ul className="space-y-4">
             <li>
-              <a 
-                href="/brand" 
+              <a
+                href="/brand"
                 className={`flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 ${
                   collapsed ? "justify-center" : ""
                 }`}
@@ -73,18 +82,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {!collapsed && (
                     <ChevronDown
                       size={16}
-                      className={`transition-transform ${showProducts ? "rotate-180" : ""}`}
+                      className={`transition-transform ${
+                        showProducts ? "rotate-180" : ""
+                      }`}
                     />
                   )}
                 </button>
                 {!collapsed && showProducts && (
                   <ul className="mt-2 ml-6 space-y-2">
                     <li>
-                      <button 
-                        onClick={() => setSelectedTab('keywordPerformance')}
+                      <button
+                        onClick={() => setSelectedTab("keywordPerformance")}
                         className={`flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full ${
-                          selectedTab === 'keywordPerformance' 
-                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+                          selectedTab === "keywordPerformance"
+                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
                             : "text-gray-600 hover:text-black dark:text-gray-300"
                         }`}
                       >
@@ -93,11 +104,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </button>
                     </li>
                     <li>
-                      <button 
-                        onClick={() => setSelectedTab('NegativeKeyword')}
+                      <button
+                        onClick={() => setSelectedTab("NegativeKeyword")}
                         className={`flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full ${
-                          selectedTab === 'NegativeKeyword' 
-                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+                          selectedTab === "NegativeKeyword"
+                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
                             : "text-gray-600 hover:text-black dark:text-gray-300"
                         }`}
                       >
@@ -106,18 +117,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </button>
                     </li>
                     <li>
-                      <button 
-                        onClick={() => setSelectedTab('KeywordRecommendation')}
+                      <button
+                        onClick={() => setSelectedTab("KeywordRecommendation")}
                         className={`flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full whitespace-nowrap ${
-                          selectedTab === 'KeywordRecommendation' 
-                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" 
+                          selectedTab === "KeywordRecommendation"
+                            ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
                             : "text-gray-600 hover:text-black dark:text-gray-300"
                         }`}
                       >
-                        <Image 
+                        <Image
                           src="/keyword_recommendation.png"
                           alt="Keyword Recommendation"
-                          width={20}  // Increased from 16 to 20
+                          width={20} // Increased from 16 to 20
                           height={20} // Increased from 16 to 20
                           className="dark:filter dark:invert min-w-[20px]"
                         />
@@ -137,31 +148,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Image 
+                  <Image
                     src="/light_house.png"
                     alt="Lighthouse"
-                    width={24}    // Increased from 20 to 24
-                    height={24}   // Increased from 20 to 24
-                    className="dark:filter dark:invert min-w-[24px]"  // Added min-width to maintain size
+                    width={24} // Increased from 20 to 24
+                    height={24} // Increased from 20 to 24
+                    className="dark:filter dark:invert min-w-[24px]" // Added min-width to maintain size
                   />
                   {!collapsed && <span>Lighthouse</span>}
                 </div>
                 {!collapsed && (
                   <ChevronDown
                     size={16}
-                    className={`transition-transform ${showShastra ? "rotate-180" : ""}`}
+                    className={`transition-transform ${
+                      showShastra ? "rotate-180" : ""
+                    }`}
                   />
                 )}
               </button>
               {!collapsed && showShastra && (
                 <ul className="ml-6 mt-2 space-y-2">
                   <li>
-                    <a href="/googleTrends" className="text-gray-900 hover:text-black dark:text-white">
+                    <a
+                      href="/googleTrends"
+                      className="text-gray-900 hover:text-black dark:text-white"
+                    >
                       Search Trends
                     </a>
                   </li>
                   <li>
-                    <a href="/research" className="text-gray-900 hover:text-black dark:text-white">
+                    <a
+                      href="/research"
+                      className="text-gray-900 hover:text-black dark:text-white"
+                    >
                       Retail Insights
                     </a>
                   </li>
@@ -177,14 +196,33 @@ const Sidebar: React.FC<SidebarProps> = ({
                   collapsed ? "justify-center" : ""
                 }`}
               >
-                <Image 
+                <Image
                   src="/reports.png"
                   alt="Reports"
-                  width={24}    // Increased from 20 to 24
-                  height={24}   // Increased from 20 to 24
-                  className="dark:filter dark:invert min-w-[24px]"  // Added min-width to maintain size
+                  width={24} // Increased from 20 to 24
+                  height={24} // Increased from 20 to 24
+                  className="dark:filter dark:invert min-w-[24px]" // Added min-width to maintain size
                 />
                 {!collapsed && <span>Reports</span>}
+              </a>
+            </li>
+
+            {/* Add this in the first list of menu items, after the Reports menu item */}
+            <li>
+              <a
+                href="/keyword-recommendations"
+                className={`flex items-center gap-3 p-2 rounded-lg text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 ${
+                  collapsed ? "justify-center" : ""
+                }`}
+              >
+                <Image
+                  src="/keyword_recommendation.png"
+                  alt="KW Recommendations"
+                  width={24}
+                  height={24}
+                  className="dark:filter dark:invert min-w-[24px]"
+                />
+                {!collapsed && <span>KW Recommendations</span>}
               </a>
             </li>
           </ul>
@@ -195,16 +233,35 @@ const Sidebar: React.FC<SidebarProps> = ({
           <ul className="space-y-6">
             <li>
               <button
-                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black ${collapsed ? "justify-center" : ""}`}
+                className={`flex items-center gap-3 w-full text-gray-700 hover:text-black ${
+                  collapsed ? "justify-center" : ""
+                }`}
                 onClick={() => setShowTeams(!showTeams)}
               >
-                <Handshake size={20} className="text-gray-700 dark:text-white" />
+                <Handshake
+                  size={20}
+                  className="text-gray-700 dark:text-white"
+                />
                 {!collapsed && <span>Teams</span>}
-                {!collapsed && <ChevronDown size={16} className={`transition-transform ${showTeams ? 'rotate-180' : ''}dark:text-white`} />}
+                {!collapsed && (
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      showTeams ? "rotate-180" : ""
+                    }dark:text-white`}
+                  />
+                )}
               </button>
               {!collapsed && showTeams && (
                 <ul className="ml-6 mt-2 space-y-2">
-                  <li><a href="/teams/team1" className="text-gray-600 hover:text-black dark:text-white">Team 1</a></li>
+                  <li>
+                    <a
+                      href="/teams/team1"
+                      className="text-gray-600 hover:text-black dark:text-white"
+                    >
+                      Team 1
+                    </a>
+                  </li>
                 </ul>
               )}
             </li>
@@ -222,13 +279,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Settings size={20} className="text-gray-700 dark:text-white" />
+                  <Settings
+                    size={20}
+                    className="text-gray-700 dark:text-white"
+                  />
                   {!collapsed && <span>Settings</span>}
                 </div>
                 {!collapsed && (
                   <ChevronDown
                     size={16}
-                    className={`transition-transform ${showSettings ? "rotate-180" : ""}`}
+                    className={`transition-transform ${
+                      showSettings ? "rotate-180" : ""
+                    }`}
                   />
                 )}
               </button>
@@ -239,15 +301,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                       onClick={toggleTheme}
                       className="flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white w-full"
                     >
-                      {theme === 'light' ? 
-                        <FaMoon size={16} /> : 
+                      {theme === "light" ? (
+                        <FaMoon size={16} />
+                      ) : (
                         <FaSun size={16} className="text-yellow-400" />
-                      }
-                      <span>{theme === 'light' ? 'Dark' : 'Light'} Mode</span>
+                      )}
+                      <span>{theme === "light" ? "Dark" : "Light"} Mode</span>
                     </button>
                   </li>
                   <li>
-                    <a 
+                    <a
                       href="/login"
                       className="flex items-center gap-2 p-2 text-gray-600 hover:text-black dark:text-gray-300 dark:hover:text-white"
                     >
