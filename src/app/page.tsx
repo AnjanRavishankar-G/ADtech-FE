@@ -16,6 +16,10 @@ export default function Home() {
   const [inSection2, setInSection2] = useState(false);
   const [inSection3, setInSection3] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAccessibilityStatement, setShowAccessibilityStatement] =
+    useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsConditions, setShowTermsConditions] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const cubeRef = useRef<HTMLDivElement>(null);
@@ -161,6 +165,429 @@ export default function Home() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMenuOpen]);
+
+  // Accessibility Statement Modal component
+  const AccessibilityStatementModal = () => {
+    return (
+      <AnimatePresence>
+        {showAccessibilityStatement && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowAccessibilityStatement(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Accessibility Statement
+                </h2>
+                <button
+                  onClick={() => setShowAccessibilityStatement(false)}
+                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                className="prose dark:prose-invert max-w-none"
+                style={{ fontFamily: "League Spartan, sans-serif" }}
+              >
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  At Artha, we are committed to making our Platform accessible to
+                  everyone, including individuals with disabilities.
+                </p>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      1. Our Commitment
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We strive to adhere to the Web Content Accessibility
+                      Guidelines (WCAG) 2.1 Level AA and to ensure a usable
+                      experience for all users.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      2. Assistive Technologies
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We design our site to be compatible with screen readers and
+                      other assistive tools.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      3. Contact Us
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      If you encounter any accessibility barriers or require
+                      assistance, please contact us at{" "}
+                      <a
+                        href="mailto:team@artha360.com"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        team@artha360.com
+                      </a>
+                      . We will work with you to provide the content or
+                      information you need in an accessible manner.
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-8 text-gray-600 dark:text-gray-300 font-medium">
+                  Thank you for choosing Artha.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  // Privacy Policy Modal component
+  const PrivacyPolicyModal = () => {
+    return (
+      <AnimatePresence>
+        {showPrivacyPolicy && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPrivacyPolicy(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Privacy Policy
+                </h2>
+                <button
+                  onClick={() => setShowPrivacyPolicy(false)}
+                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                className="prose dark:prose-invert max-w-none"
+                style={{ fontFamily: "League Spartan, sans-serif" }}
+              >
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  88mph Tech Holdings Private Limited (&ldquo;Artha&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) respects your privacy. This Privacy Policy outlines how we collect, use, disclose, and protect personal and business information when you interact with our Platform.
+                </p>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      1. Scope
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      This Privacy Policy applies to all users of Artha,
+                      including brand partners, advertisers, agencies, and platform
+                      viewers who interact with our web interface, tools, or data
+                      systems.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      2. Information We Collect
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We may collect:
+                    </p>
+                    <ul className="list-disc pl-5 text-gray-600 dark:text-gray-300 mt-2 space-y-2">
+                      <li>
+                        Business data related to ad campaigns and ecommerce
+                        performance
+                      </li>
+                      <li>
+                        Platform usage information (e.g., log data, browser type,
+                        pages visited)
+                      </li>
+                      <li>
+                        Contact and account information (name, email, company
+                        details)
+                      </li>
+                    </ul>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      We do not knowingly collect personally identifiable
+                      information beyond what is necessary for account management
+                      and service delivery.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      3. How We Use Your Information
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">We use data to:</p>
+                    <ul className="list-disc pl-5 text-gray-600 dark:text-gray-300 mt-2 space-y-2">
+                      <li>Deliver campaign optimization insights</li>
+                      <li>Provide performance analytics and trend discovery</li>
+                      <li>Improve and personalize your experience</li>
+                      <li>Ensure data integrity and security</li>
+                    </ul>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      We do not sell or share user data for advertising purposes.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      4. Cookies and Tracking
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We may use cookies and tracking technologies for platform
+                      analytics and to improve functionality. You can manage cookie
+                      preferences through your browser settings.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      5. Data Sharing
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We may share your data with authorized third-party service
+                      providers under strict confidentiality agreements, only to the
+                      extent necessary to operate and improve the Platform.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      6. Third-Party Services
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Some services may be powered by third-party APIs or analytics
+                      providers. These partners adhere to their own privacy
+                      standards.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      7. Data Security
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We maintain industry-standard safeguards to protect data from
+                      unauthorized access or misuse. Despite this, no system is 100%
+                      secure.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      8. Your Choices
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      You can access, update, or request deletion of your information
+                      by contacting us at{" "}
+                      <a
+                        href="mailto:team@artha360.com"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        team@artha360.com
+                      </a>
+                      .
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      9. Updates to This Policy
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We may revise this Privacy Policy periodically. Any changes
+                      will be reflected on this page.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  // Terms & Conditions Modal component
+  const TermsConditionsModal = () => {
+    return (
+      <AnimatePresence>
+        {showTermsConditions && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowTermsConditions(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Terms & Conditions
+                </h2>
+                <button
+                  onClick={() => setShowTermsConditions(false)}
+                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                className="prose dark:prose-invert max-w-none"
+                style={{ fontFamily: "League Spartan, sans-serif" }}
+              >
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Welcome to Artha, a digital commerce intelligence platform developed by 88mph Tech Holdings Private Limited (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;). By accessing or using our website (www.artha360.com), applications, or services (collectively, the &ldquo;Platform&rdquo;), you agree to comply with and be bound by the following Terms and Conditions (&ldquo;Terms&rdquo;). If you do not agree with these Terms, please refrain from using the Platform.
+                </p>
+
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      1. Use of the Platform
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      You may use the Platform solely for lawful purposes and in accordance with these Terms. Unauthorized use, including but not limited to unauthorized access, interference with systems or data, and infringement of intellectual property rights, is strictly prohibited.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      2. Intellectual Property
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      All materials, including but not limited to code, design, data models, logos, trademarks, text, and graphics are the proprietary content of Artha and its licensors. No content may be reproduced, distributed, or otherwise used without our express written consent.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      3. User Data & Confidentiality
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      By using our services, you may provide us with access to data. We treat all client data as confidential and will only use it for the purpose of delivering insights, recommendations, and reporting, unless otherwise authorized. We do not sell or monetize user data.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      4. Third-Party Services
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      The Platform may integrate with or depend on APIs and services from third parties, including but not limited to marketplaces and search platforms. We are not responsible for the practices or content of these third-party services.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      5. Disclaimers
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                       The Platform is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis. We make no warranties regarding accuracy, reliability, or availability. Your use of the Platform is at your own risk.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      6. Limitation of Liability
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      To the maximum extent permitted by law, Artha shall not be liable for any indirect, incidental, consequential, or punitive damages arising from your use of or inability to use the Platform.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      7. Modifications
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      We reserve the right to update or modify these Terms at any time. Continued use of the Platform after any changes constitutes your acceptance of the new Terms.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      8. Governing Law
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      These Terms are governed by the laws of India. Any disputes shall be resolved in the courts of Mumbai, India.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
 
   return (
     <>
@@ -485,29 +912,34 @@ export default function Home() {
         <footer className="bg-gray-900 text-gray-300 py-4">
           <div className="max-w-6xl mx-auto px-8">
             <div className="flex flex-col md:flex-row justify-center items-center space-y-2 md:space-y-0 md:space-x-8 mb-4">
-              <a
+                <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowTermsConditions(true);
+                }}
                 className="hover:text-white transition-colors"
                 style={{ fontFamily: "League Spartan, sans-serif" }}
-              >
+                >
                 Terms & Conditions
-              </a>
-              <a
+                </a>
+                <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPrivacyPolicy(true);
+                }}
                 className="hover:text-white transition-colors"
                 style={{ fontFamily: "League Spartan, sans-serif" }}
-              >
+                >
                 Privacy Policy
-              </a>
+                </a>
               <a
                 href="#"
-                className="hover:text-white transition-colors"
-                style={{ fontFamily: "League Spartan, sans-serif" }}
-              >
-                Refund Policy
-              </a>
-              <a
-                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowAccessibilityStatement(true);
+                }}
                 className="hover:text-white transition-colors"
                 style={{ fontFamily: "League Spartan, sans-serif" }}
               >
@@ -521,6 +953,11 @@ export default function Home() {
             </div>
           </div>
         </footer>
+
+        {/* Accessibility Statement Modal - Add this component inside your Home component but before the return statement */}
+        <AccessibilityStatementModal />
+        <PrivacyPolicyModal />
+        <TermsConditionsModal />
       </div>
 
       {/* Styles */}
